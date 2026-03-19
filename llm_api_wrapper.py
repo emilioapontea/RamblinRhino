@@ -14,7 +14,7 @@ from typing import Optional
 import requests
 
 # GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE")
-GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "API_KEY")
+GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "API_KEY_HERE")
 
 _API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
