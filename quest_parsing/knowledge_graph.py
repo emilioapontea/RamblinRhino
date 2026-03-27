@@ -76,8 +76,8 @@ class KnowledgeGraph:
 
     Serialisation
     -------------
-    save(path)  – writes GraphML (human-readable, lossless for str attrs)
-    load(path)  – class-method, returns a new KnowledgeGraph
+    save(path)  - writes GraphML (human-readable, lossless for str attrs)
+    load(path)  - class-method, returns a new KnowledgeGraph
 
     Alternative backends
     --------------------
