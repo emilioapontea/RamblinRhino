@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 from typing import Optional
 import requests
 
-# GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE")
 GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "API_KEY_HERE")
 
 _API_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -25,10 +24,6 @@ _MODEL = "llama-3.3-70b-versatile"
 # Data Structures
 @dataclass
 class PlotEvent:
-    # This is a single narrative event in the QUEST format.
-    # description is a 1-sentence plot summary, characters are character names involved in that event, goals are 
-    # goals initiated, resolved, or obstructed by the event, caused_by are event_id's that cause this event,
-    # causes are event_id's that this event causes, and goal_type is either initiate, resolve, obstruct, or None.
     event_id:    str
     description: str
     characters:  list[str]     = field(default_factory=list)
@@ -36,6 +31,7 @@ class PlotEvent:
     caused_by:   list[str]     = field(default_factory=list)
     causes:      list[str]     = field(default_factory=list)
     goal_type:   Optional[str] = None
+
     def __str__(self) -> str:
         return (
             f"[{self.event_id}] {self.description}\n"
@@ -48,8 +44,6 @@ class PlotEvent:
 
 @dataclass
 class TokenUsage:
-    # this accumulates API token counts across all calls that are made by an LLMClient instance (keeping in mind we're still
-    # using the free tier)
     input_tokens:  int = 0
     output_tokens: int = 0
 
@@ -65,25 +59,18 @@ class TokenUsage:
         )
 
 
-
 class LLMClient:
-    # Wrapper around the Groq Chat Completions API (OpenAI-compatible)
-        # generate_plot_events() --> Engagement phase (forward plot generation)
-        # reflect_on_quest_gap() --> Reflection phase (causal/goal gap repair)
-        # generate_prose() --> final step, converts events into a readable story
     def __init__(
         self,
         api_key:       str   = GROQ_API_KEY,
         model:         str   = _MODEL,
-        max_tokens:    int   = 1024,
+        max_tokens:    int   = 4096,   # increased for longer output
         temperature:   float = 0.85,
         request_delay: float = 0.5,
         verbose:       bool  = False,
     ) -> None:
         if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
-            raise ValueError(
-                "No Groq API key found."
-            )
+            raise ValueError("No Groq API key found.")
         self.api_key       = api_key
         self.model         = model
         self.max_tokens    = max_tokens
@@ -106,16 +93,17 @@ class LLMClient:
         existing_events: Optional[list[PlotEvent]] = None,
         genre: str = "crime mystery",
     ) -> list[PlotEvent]:
-        # the Engagement phase, where we generate a sequence of abstract plot events
-        # The model gets prompted, and each element becomes a PlotEvent which has characters,
-        # goals, and causal links.
         user_prompt = _build_engagement_prompt(
             premise, num_events, existing_events, genre
         )
         raw = self._complete(_ENGAGEMENT_SYSTEM_PROMPT, user_prompt)
-        return _parse_plot_events(raw)
+        events = _parse_plot_events(raw)
+        if self.verbose or len(events) == 0:
+            print(f"[LLMClient] parsed {len(events)} events from engagement call")
+            if len(events) == 0:
+                print(f"[LLMClient] raw response (first 500 chars):\n{raw[:500]}")
+        return events
 
-    
     ## Reflection Phase
     def reflect_on_quest_gap(
         self,
@@ -123,39 +111,55 @@ class LLMClient:
         story_so_far: str,
         insert_after_event_id: Optional[str] = None,
     ) -> list[PlotEvent]:
-        # the Reflection phase, where we generate bridging events to repair any QUEST gaps
-        # It's called by the ComplexityChecker whenever it finds a missing causal relationship (no C-link), or a
-        # goal with no initiating event (no I-link)
         user_prompt = _build_reflection_prompt(
             gap_description, story_so_far, insert_after_event_id
         )
         raw = self._complete(_REFLECTION_SYSTEM_PROMPT, user_prompt)
         return _parse_plot_events(raw)
 
-
-    ## Prose Generation
+    ## Prose Generation, produces a long, plot-point-labeled story
     def generate_prose(
         self,
         events: list[PlotEvent],
         genre: str = "crime mystery",
         style_notes: str = "",
     ) -> str:
-        # This converts a list of PlotEvents into flowing narrative prose. It's called once after all the
-        # Engagement and Reflection cycles are done.
-        bullet_list = "\n".join(
-            f"- [{e.event_id}] {e.description}" for e in events
-        )
-        system = "You are a skilled fiction author writing in a literary style."
+        if not events:
+            return "[ERROR: No plot events were generated. Check API key and JSON parsing.]"
+
+        # Build a numbered, labeled plot-point list to pass to the LLM
+        plot_points = "\n".join(
+            f"  Plot Point {i+1} [{e.event_id}]: {e.description}"
+            for i, e in enumerate(events))
+
+        system = (
+            "You are a skilled literary fiction author. "
+            "You write long, detailed, immersive stories with rich prose, "
+            "vivid character development, and scene-setting description.")
+
         prompt = (
             f"Genre: {genre}\n"
             + (f"Style notes: {style_notes}\n" if style_notes else "")
-            + "Write a complete short story based ONLY on the following plot events, "
-            "in the order listed. Do not introduce major plot points not shown here. "
-            "Write in third-person, past tense. Aim for 400-600 words.\n\n"
-            f"Plot events:\n{bullet_list}\n\nStory:\n"
-        )
-        return self._complete(system, prompt)
+            + f"\nYou have {len(events)} plot points to cover. "
+            "Write a LONG, complete short story (aim for 1500-2000 words minimum) "
+            "that covers every single plot point below in order.\n\n"
+            "IMPORTANT FORMATTING RULES:\n"
+            "- Before writing the prose for each plot point, insert a clearly labeled "
+            "marker on its own line in this exact format:\n"
+            "  --- Plot Point N: [one-sentence summary] ---\n"
+            "- After that marker, write 2-4 paragraphs of rich narrative prose for that plot point.\n"
+            "- Do NOT skip any plot points.\n"
+            "- Write in third-person, past tense.\n"
+            "- Each plot point section should be substantial: at least 150 words of prose.\n\n"
+            f"Plot points to cover:\n{plot_points}\n\n"
+            "Begin the story now:\n")
 
+        # Use a higher token limit for prose generation
+        old_max = self.max_tokens
+        self.max_tokens = 8192
+        prose = self._complete(system, prompt)
+        self.max_tokens = old_max
+        return prose
 
     ## Raw API Call
     def _complete(
@@ -176,11 +180,17 @@ class LLMClient:
 
         for attempt in range(1, retries + 1):
             try:
-                resp = self._session.post(_API_URL, json=payload, timeout=60)
+                resp = self._session.post(_API_URL, json=payload, timeout=120)
                 if resp.status_code == 429 or resp.status_code >= 500:
-                    wait = self.request_delay * (2 ** attempt)
-                    print(f"[LLMClient] HTTP {resp.status_code} — retrying in "
-                          f"{wait:.1f}s (attempt {attempt}/{retries})")
+                    # Use longer backoff for 429 rate-limit errors
+                    if resp.status_code == 429:
+                        wait = 15 * attempt   # 15s, 30s, 45s
+                        print(f"[LLMClient] Rate limited (429): waiting {wait}s "
+                              f"(attempt {attempt}/{retries})")
+                    else:
+                        wait = self.request_delay * (2 ** attempt)
+                        print(f"[LLMClient] HTTP {resp.status_code}: retrying in "
+                              f"{wait:.1f}s (attempt {attempt}/{retries})")
                     time.sleep(wait)
                     continue
                 resp.raise_for_status()
@@ -191,7 +201,7 @@ class LLMClient:
                     usage.get("completion_tokens", 0),
                 )
                 text = data["choices"][0]["message"]["content"]
-                if (self.verbose):
+                if self.verbose:
                     print(f"[LLMClient] response:\n{text}\n{'─'*60}")
                 return text
             except requests.RequestException as exc:
@@ -200,20 +210,23 @@ class LLMClient:
         raise RuntimeError(f"[LLMClient] All {retries} attempts failed.")
 
 
-
 ## Prompt Templates
 _ENGAGEMENT_SYSTEM_PROMPT = """\
 You are a story planner for a reader-model-driven narrative system (QUEST framework).
 Your job is to generate ABSTRACT PLOT EVENTS: not prose, not dialogue.
 Each event is a single declarative sentence describing what happens.
-Always respond with valid JSON only: no extra text, no markdown fences.
+You MUST respond with a valid JSON array and absolutely nothing else.
+Do not include any explanation, preamble, or markdown formatting.
+Start your response with [ and end with ].
 """
 
 _REFLECTION_SYSTEM_PROMPT = """\
 You are a narrative coherence editor for a QUEST-based story system.
 Your job is to insert bridging plot events that repair logical or causal gaps.
 Each event must remain at the abstract plot level: 1 sentence, no prose.
-Always respond with valid JSON only: no extra text, no markdown fences.
+You MUST respond with a valid JSON array and absolutely nothing else.
+Do not include any explanation, preamble, or markdown formatting.
+Start your response with [ and end with ].
 """
 
 
@@ -225,7 +238,8 @@ def _build_engagement_prompt(
 ) -> str:
     context = ""
     if existing_events:
-        context = "Events generated so far:\n"
+        last_id = existing_events[-1].event_id
+        context = f"Events generated so far (last event_id was {last_id}):\n"
         for ev in existing_events:
             context += f"  [{ev.event_id}] {ev.description}\n"
         context += "\nContinue the story from the last event above.\n"
@@ -243,24 +257,35 @@ Rules:
 - Note any story goals this event initiates, resolves, or obstructs
 - List which prior event_id(s) causally enable this event
 
-Respond ONLY with a JSON array. Each element must have:
-  "event_id": a string (e.g. "E1", "E2" — continue numbering if events exist)
-  "description": a 1-sentence abstract event
-  "characters": a list of character name strings
-  "goals": a list of short goal-phrase strings
-  "caused_by": a list of event_id strings that enable this event ([] for the first event)
-  "goal_type": "initiate" | "resolve" | "obstruct" | null
+Your response must be ONLY a JSON array. Each element must have exactly these fields:
+  "event_id": string (ex. "E1", "E2": if continuing, start from the next number)
+  "description": one-sentence abstract event
+  "characters": list of character name strings
+  "goals": list of short goal-phrase strings
+  "caused_by": list of event_id strings that enable this event ([] for the first event)
+  "goal_type": "initiate" or "resolve" or "obstruct" or null
 
-Example element:
-{{
-  "event_id": "E3",
-  "description": "The detective discovers a hidden compartment in the victim's desk.",
-  "characters": ["Detective Mills"],
-  "goals": ["find evidence of the theft"],
-  "caused_by": ["E2"],
-  "goal_type": "initiate"
-}}
-"""
+Example of correct output format:
+[
+  {{
+    "event_id": "E1",
+    "description": "The archivist arrives at the museum and finds the display case shattered.",
+    "characters": ["Clara"],
+    "goals": ["discover what happened"],
+    "caused_by": [],
+    "goal_type": "initiate"
+  }},
+  {{
+    "event_id": "E2",
+    "description": "Clara realizes the priceless manuscript is missing.",
+    "characters": ["Clara"],
+    "goals": ["recover the manuscript"],
+    "caused_by": ["E1"],
+    "goal_type": "initiate"
+  }}
+]
+
+Now generate exactly {num_events} events in that format:"""
 
 
 def _build_reflection_prompt(
@@ -287,40 +312,60 @@ Generate 1-2 bridging plot events that repair this gap.
 Rules:
 - Abstract level only (no dialogue, no prose)
 - Each event is 1 sentence
-- New events must logically connect the gap
 
-Respond ONLY with a JSON array using the same schema as engagement:
-  "event_id" (use "E_b1", "E_b2", …), "description", "characters", "goals",
+Your response must be ONLY a JSON array using the same schema:
+  "event_id" (use "E_b1", "E_b2", etc.), "description", "characters", "goals",
   "caused_by", "goal_type"
-"""
 
+Output only the JSON array, nothing else:"""
 
 
 ## The JSON Parser
 def _parse_plot_events(raw: str) -> list[PlotEvent]:
-    # Parses a JSON array of plot-event dicts from the LLM's raw text output
-    # It handles the case where the model wraps its response in markdown code fences
+    if not raw or not raw.strip():
+        print("[_parse_plot_events] WARNING: empty response")
+        return []
     cleaned = re.sub(r"```(?:json)?", "", raw).strip().strip("`").strip()
     start = cleaned.find("[")
     end   = cleaned.rfind("]") + 1
+
     if (start == -1 or end == 0):
-        print(f"[_parse_plot_events] WARNING: no JSON array found.\nRaw:\n{raw[:400]}")
+        print(f"[_parse_plot_events] WARNING: no JSON array found. Raw (first 300):\n{raw[:300]}")
         return []
+
+    json_str = cleaned[start:end]
+
     try:
-        records = json.loads(cleaned[start:end])
+        records = json.loads(json_str)
     except json.JSONDecodeError as exc:
-        print(f"[_parse_plot_events] JSON error: {exc}\nFragment:\n{cleaned[start:end][:500]}")
+        # Try to fix common issues: trailing commas, single quotes
+        try:
+            json_str_fixed = re.sub(r",\s*([}\]])", r"\1", json_str)  # trailing commas
+            records = json.loads(json_str_fixed)
+        except json.JSONDecodeError:
+            print(f"[_parse_plot_events] JSON error: {exc}")
+            print(f"[_parse_plot_events] Fragment (first 500):\n{json_str[:500]}")
+            return []
+
+    if not isinstance(records, list):
+        print(f"[_parse_plot_events] WARNING: parsed JSON is not a list: {type(records)}")
         return []
+
     events: list[PlotEvent] = []
     for rec in records:
         if not isinstance(rec, dict):
             continue
+        event_id = str(rec.get("event_id", f"E{len(events)+1}"))
+        description = str(rec.get("description", "")).strip()
+        if not description:
+            continue  # skip empty events
         events.append(PlotEvent(
-            event_id=    str(rec.get("event_id",    f"E{len(events)+1}")),
-            description= str(rec.get("description", "")),
+            event_id=    event_id,
+            description= description,
             characters=  list(rec.get("characters", [])),
             goals=       list(rec.get("goals",      [])),
             caused_by=   list(rec.get("caused_by",  [])),
             goal_type=   rec.get("goal_type"),
         ))
+
     return events
