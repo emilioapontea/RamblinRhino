@@ -93,13 +93,7 @@ python3 main_system_script.py
 Example run:
 
 ```bash
-python3 main_system_script.py \
-  --premise "A museum archivist discovers that the theft of a manuscript is tied to a decades-old murder." \
-  --genre "crime mystery" \
-  --events 6 \
-  --reflection-passes 2 \
-  --output-dir ./output \
-  --verbose
+python3 main_system_script.py   --premise "A museum archivist discovers that the theft of a manuscript is tied to a decades-old murder."   --genre "crime mystery"   --crime-events 6   --solving-events 15   --reflection-passes 2   --output-dir ./output   --verbose
 ```
 
 Useful flags:
