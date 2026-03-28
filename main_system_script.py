@@ -135,6 +135,23 @@ class ComplexityChecker:
         return f"ComplexityChecker: {causal} causal gap(s), {goal} goal gap(s)"
 
 
+def _label_plot_point(self, idx: int, total: int) -> str:
+    if idx == 0:
+        return "SETUP"
+    elif idx == 1:
+        return "INCITING INCIDENT"
+    elif idx < total * 0.4:
+        return "RISING ACTION"
+    elif idx < total * 0.7:
+        return "MIDPOINT"
+    elif idx < total - 2:
+        return "COMPLICATIONS"
+    elif idx == total - 2:
+        return "CLIMAX"
+    elif idx == total - 1:
+        return "RESOLUTION"
+    return "EVENT"
+
 
 ## KnowledgeGraph Population Helper
 def _events_to_kg(events: list[PlotEvent], kg: KnowledgeGraph) -> None:
@@ -218,9 +235,9 @@ class RamblingRhinoDriver:
         self,
         premise:            str,
         genre:              str   = "crime mystery",
-        events_per_batch:   int   = 8,
-        engagement_batches: int   = 1,
-        reflection_passes:  int   = 2,
+        events_per_batch:   int   = 20,
+        engagement_batches: int   = 4,
+        reflection_passes:  int   = 5,
         output_dir:         Optional[str] = None,
         verbose:            bool  = False,
     ) -> None:
@@ -386,8 +403,10 @@ class RamblingRhinoDriver:
     # Helper Functions
     def _print_events(self) -> None:
         print("\nCurrent event list:")
-        for ev in self.events:
-            print(f"  [{ev.event_id}] {ev.description}")
+        total = len(self.events)
+        for i, ev in enumerate(self.events):
+            label = self._label_plot_point(i, total)
+            print(f"  [{ev.event_id}] ({label}) {ev.description}")
             if ev.caused_by:
                 print(f"           caused_by: {ev.caused_by}")
 
