@@ -1,4 +1,6 @@
 # Reading Model Driven Story Generation
+> ***System Name:** Rambling Rhino Story Engine
+> **Project Template:** Reader Model Driven Story Generation
 > Team Rambling Rhino
 
 To install our conda environment (`rhino`) with necessary dependencies:
@@ -7,11 +9,50 @@ conda env create -file environment.yml
 conda activate rhino
 ```
 
+Then install spaCy and download the language model:
+```bash
+pip install spacy
+python -m spacy download en_core_web_sm
+```
+
 If you have pip dependencies to add (be sure you are in the `rhino` environment):
 ```bash
 conda install <package> pip
 conda env export > environment.yml
 ```
+
+## API Key Setup
+Our system uses the free tier of the Groq API. To get a Groq API key:
+1. Go to [https://console.groq.com/keys](https://console.groq.com/keys)
+2. Log in with your Google account
+3. Click "Create API Key," create an API key, and copy it.
+4. In llm_api_wrapper.py, replace API_KEY_HERE with your API key, so that it reads:
+> python GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "gsk_YOUR_KEY_HERE
+
+## How to Run the System
+Run 'python main_system_script.py' in the terminal.
+### With a custom premise and genre:
+Run 'python main_system_script.py --premise "Your premise goes here" --genre "Your genre goes here"'
+### With more events or reflection passes
+Run ''python main_system_script.py --events m --reflection-passes n', replacing m and n with numbers
+### Saving output to files
+Run 'python main_system_script.py --output-dir ./output', which saves 2 files to the output directory: story_events.json (all plot events with QUEST metadata), and story_prose.txt (the final generated story)
+### Verbose mode (which prints the raw LLM responses)
+Run 'python main_system_script.py --verbose'
+
+## Repository Structure
+├── main_system_script.py                 # The top-level driver
+├── llm_api_wrapper.py                    # Groq API wrapper (Engagement + Reflection + Prose)
+├── environment.yml
+├── Graesser-Question-answering.pdf
+├── complexity_checking/
+│   └── complexity_checker.py             # QUEST coherence checker (node/arc requirements)
+└── quest_parsing/
+    ├── arc_classifier.py                 # Classifies arc types between narrative nodes
+    ├── knowledge_graph.py
+    ├── narrative_ingestor.py             # End-to-end text -> KG pipeline
+    ├── narrative_schema.py               # Node and arc data structures (ex. EventNode, GoalNode)
+    └── node_classifier.py                # This classifies clauses into Event/Action/Goal/State nodes
 
 ## Engagement Modules
 ### ContextPrompter
