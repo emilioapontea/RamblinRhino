@@ -44,9 +44,13 @@ Run 'python main_system_script.py --verbose'
 
 ## Repository Structure
 main_system_script.py (the top-level driver)
+
 llm_api_wrapper.py (Groq API warpper, engagement + reflection + prose)
+
 environment.yml
+
 Graesser-Question-answering.pdf
+
 complexity_checking/
 
 > complexity_checker.py (QUEST coherence checker, node/arc requirements)
