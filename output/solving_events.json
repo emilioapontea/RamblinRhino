@@ -4,68 +4,67 @@
     "description": "Detective initiates investigation into mysterious disappearance",
     "characters": [
       "Detective",
-      "Victim"
+      "Missing Person"
     ],
     "goals": [
-      "Uncover clues",
-      "Identify suspects"
+      "Uncover truth",
+      "Find missing person"
     ],
     "caused_by": [],
-    "goal_type": "Investigation"
+    "goal_type": "Information Gathering"
   },
   {
     "event_id": "E_b3",
-    "description": "Detective defines the investigation's objective as finding the missing person",
+    "description": "Detective defines investigation objectives and priorities",
     "characters": [
       "Detective"
     ],
     "goals": [
-      "Find missing person"
+      "Uncover the truth behind the disappearance"
     ],
     "caused_by": [
       "E_b1"
     ],
-    "goal_type": "Primary"
+    "goal_type": "Information Gathering"
   },
   {
     "event_id": "E_b4",
-    "description": "Detective creates a list of potential leads and suspects to interview",
+    "description": "Detective identifies key individuals to interview and potential leads",
     "characters": [
       "Detective"
     ],
     "goals": [
-      "Gather information",
-      "Identify suspects"
+      "Gather relevant information and clues"
     ],
     "caused_by": [
       "E_b3"
     ],
-    "goal_type": "Subsidiary"
+    "goal_type": "Investigative Planning"
   },
   {
     "event_id": "E_b2",
-    "description": "Detective discovers suspicious transaction on victim's account",
+    "description": "Forensic team collects evidence from crime scene",
     "characters": [
-      "Detective",
-      "Victim"
+      "Forensic Team",
+      "Detective"
     ],
     "goals": [
-      "Analyze financial records",
-      "Follow up on leads"
+      "Analyze clues",
+      "Identify suspects"
     ],
     "caused_by": [
       "E_b1"
     ],
-    "goal_type": "Evidence collection"
+    "goal_type": "Evidence Collection"
   },
   {
     "event_id": "E_b3",
-    "description": "Detective becomes driven to uncover the truth about the victim's disappearance",
+    "description": "Detective analyzes forensic evidence to uncover potential leads",
     "characters": [
       "Detective"
     ],
     "goals": [
-      "Uncover truth"
+      "Uncover leads"
     ],
     "caused_by": [
       "E_b2"
@@ -74,13 +73,45 @@
   },
   {
     "event_id": "E_b4",
-    "description": "Detective decides to interview the victim's financial advisor to learn more about the suspicious transaction",
+    "description": "Detective identifies personal connection to missing person as motivation for investigation",
     "characters": [
-      "Detective",
-      "Financial Advisor"
+      "Detective"
     ],
     "goals": [
-      "Gather information"
+      "Find missing person"
+    ],
+    "caused_by": [
+      "E_b1",
+      "E_b3"
+    ],
+    "goal_type": "Personal"
+  },
+  {
+    "event_id": "E_b3",
+    "description": "Forensic analysis of evidence reveals suspicious fingerprints",
+    "characters": [
+      "Detective",
+      "Forensic team"
+    ],
+    "goals": [
+      "Uncover leads",
+      "Identify suspects"
+    ],
+    "caused_by": [
+      "E_b2"
+    ],
+    "goal_type": "Investigation"
+  },
+  {
+    "event_id": "E_b4",
+    "description": "Detective interviews potential witnesses matching the fingerprint profiles",
+    "characters": [
+      "Detective",
+      "Potential witnesses"
+    ],
+    "goals": [
+      "Gather information",
+      "Verify alibis"
     ],
     "caused_by": [
       "E_b3"
@@ -89,107 +120,62 @@
   },
   {
     "event_id": "E_b3",
-    "description": "Detective obtains bank records to investigate the suspicious transaction further",
+    "description": "Detective reviews forensic evidence and identifies potential leads",
     "characters": [
       "Detective"
     ],
     "goals": [
-      "Uncover transaction details"
+      "Uncover clues",
+      "Progress investigation"
     ],
     "caused_by": [
       "E_b2"
-    ],
-    "goal_type": "Investigation"
-  },
-  {
-    "event_id": "E_b4",
-    "description": "Detective identifies a potential suspect linked to the suspicious transaction",
-    "characters": [
-      "Detective",
-      "Potential suspect"
-    ],
-    "goals": [
-      "Identify suspect"
-    ],
-    "caused_by": [
-      "E_b3"
-    ],
-    "goal_type": "Revelation"
-  },
-  {
-    "event_id": "E_b3",
-    "description": "Detective obtains security footage of the ATM where the suspicious transaction occurred",
-    "characters": [
-      "Detective",
-      "Victim"
-    ],
-    "goals": [
-      "Gather evidence",
-      "Identify suspect"
-    ],
-    "caused_by": [
-      "E",
-      "_",
-      "b",
-      "2"
     ],
     "goal_type": "Investigative"
   },
   {
     "event_id": "E_b4",
-    "description": "Detective interviews the bank employee who processed the suspicious transaction",
+    "description": "Detective conducts interviews with witnesses and family members",
     "characters": [
       "Detective",
-      "Bank Employee"
+      "Witnesses",
+      "Family members"
     ],
     "goals": [
-      "Verify transaction details",
-      "Uncover potential motives"
+      "Gather information",
+      "Piece together events"
     ],
     "caused_by": [
-      "E",
-      "_",
-      "b",
-      "3"
+      "E_b3"
     ],
     "goal_type": "Informative"
   },
   {
     "event_id": "E_b3",
-    "description": "Detective interviews victim's family and friends to gather more information about the suspicious transaction",
+    "description": "Detective reviews initial evidence and identifies a suspicious witness",
     "characters": [
       "Detective",
-      "Victim's family",
-      "Victim's friends"
+      "Witness"
     ],
     "goals": [
-      "Uncover the truth behind the disappearance",
-      "Identify potential suspects"
+      "Uncover witness testimony"
     ],
     "caused_by": [
-      "E",
-      "_",
-      "b",
-      "2"
+      "E_b2"
     ],
     "goal_type": "Investigative"
   },
   {
     "event_id": "E_b4",
-    "description": "Detective discovers a cryptic message on the victim's phone that may be linked to the suspicious transaction",
+    "description": "Forensic team analyzes suspicious object found at crime scene for potential leads",
     "characters": [
-      "Detective",
-      "Victim"
+      "Forensic team"
     ],
     "goals": [
-      "Decipher the cryptic message",
-      "Connect the message to the disappearance"
+      "Analyze physical evidence"
     ],
     "caused_by": [
-      "E",
-      "_",
-      "b",
-      "3"
+      "E_b2"
     ],
     "goal_type": "Analytical"
   }

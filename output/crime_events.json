@@ -1,91 +1,24 @@
 [
   {
     "event_id": "E1",
-    "description": "A valuable manuscript is stolen from the museum's archives during a charity gala.",
+    "description": "A museum archivist named Emma Taylor discovers the theft of a valuable manuscript from the museum's collection.",
     "characters": [
-      "Museum Archivist",
-      "Thief"
+      "Emma Taylor"
     ],
     "goals": [
-      "steal the manuscript"
+      "investigate the theft"
     ],
     "caused_by": [],
     "goal_type": "initiate"
   },
   {
-    "event_id": "E_b1",
-    "description": "The thief receives a lucrative offer from a rival collector to steal the manuscript and use it as leverage in a high-stakes negotiation.",
-    "characters": [
-      "thief",
-      "rival collector"
-    ],
-    "goals": [
-      "acquire manuscript",
-      "leverage in negotiation"
-    ],
-    "caused_by": [
-      "E1"
-    ],
-    "goal_type": "instrumental"
-  },
-  {
-    "event_id": "E_b2",
-    "description": "The rival collector intends to use the manuscript to force the museum to relinquish ownership of a complementary artifact, completing a rare collection.",
-    "characters": [
-      "rival collector",
-      "museum"
-    ],
-    "goals": [
-      "complete rare collection",
-      "gain ownership of artifact"
-    ],
-    "caused_by": [
-      "E_b1"
-    ],
-    "goal_type": "terminal"
-  },
-  {
-    "event_id": "E_b3",
-    "description": "The mysterious figure hacks into the collector's financial records to verify the payment for the manuscript's theft",
-    "characters": [
-      "mysterious figure",
-      "collector"
-    ],
-    "goals": [
-      "verify payment",
-      "ensure leverage"
-    ],
-    "caused_by": [
-      "E_b2"
-    ],
-    "goal_type": "revenge"
-  },
-  {
-    "event_id": "E_b4",
-    "description": "The team of thieves demands additional payment from the mysterious figure after discovering the manuscript's true value",
-    "characters": [
-      "team of thieves",
-      "mysterious figure"
-    ],
-    "goals": [
-      "increase profit",
-      "negotiate payment"
-    ],
-    "caused_by": [
-      "E_b2"
-    ],
-    "goal_type": "financial gain"
-  },
-  {
     "event_id": "E2",
-    "description": "The museum archivist discovers the theft and reports it to the police, who begin an investigation.",
+    "description": "Emma Taylor finds a cryptic note at the scene of the theft that suggests the crime is linked to a decades-old murder.",
     "characters": [
-      "Museum Archivist",
-      "Detective James"
+      "Emma Taylor"
     ],
     "goals": [
-      "recover the stolen manuscript",
-      "catch the thief"
+      "uncover the connection to the murder"
     ],
     "caused_by": [
       "E1"
@@ -94,12 +27,13 @@
   },
   {
     "event_id": "E3",
-    "description": "The detective discovers a decades-old cold case file with a similar modus operandi to the current theft.",
+    "description": "Emma Taylor meets with the museum's director, James Parker, to discuss the theft and the possible connection to the old murder case.",
     "characters": [
-      "Detective James"
+      "Emma Taylor",
+      "James Parker"
     ],
     "goals": [
-      "connect the theft to the cold case"
+      "get permission to investigate the murder"
     ],
     "caused_by": [
       "E2"
@@ -108,13 +42,14 @@
   },
   {
     "event_id": "E4",
-    "description": "The detective interviews the museum archivist and learns about a former employee who was obsessed with the stolen manuscript.",
+    "description": "James Parker reveals that he was a suspect in the decades-old murder investigation, but was never charged due to lack of evidence.",
     "characters": [
-      "Detective James",
-      "Museum Archivist"
+      "Emma Taylor",
+      "James Parker"
     ],
     "goals": [
-      "identify a suspect"
+      "clear his name",
+      "uncover the truth"
     ],
     "caused_by": [
       "E3"
@@ -123,193 +58,92 @@
   },
   {
     "event_id": "E5",
-    "description": "The detective investigates the former employee, who has a solid alibi for the night of the theft, but seems nervous and evasive.",
+    "description": "Emma Taylor discovers a hidden diary belonging to the original murder victim, which contains clues pointing to James Parker's involvement in the crime.",
     "characters": [
-      "Detective James",
-      "Former Employee"
+      "Emma Taylor"
     ],
     "goals": [
-      "clear or implicate the former employee"
+      "confront James Parker with the new evidence"
     ],
     "caused_by": [
       "E4"
     ],
-    "goal_type": "initiate"
+    "goal_type": "obstruct"
   },
   {
     "event_id": "E6",
-    "description": "The detective discovers a hidden journal belonging to the former employee, containing cryptic notes about the manuscript and the cold case.",
+    "description": "Emma Taylor's investigation is put in jeopardy when she realizes that James Parker has been manipulating her and hiding crucial information about the murder and the manuscript theft.",
     "characters": [
-      "Detective James"
+      "Emma Taylor",
+      "James Parker"
     ],
     "goals": [
-      "decode the journal's secrets"
+      "regain control of the investigation",
+      "expose James Parker's deceit"
     ],
     "caused_by": [
       "E5"
     ],
-    "goal_type": "initiate"
+    "goal_type": "obstruct"
   },
   {
-    "event_id": "E_b3",
-    "description": "The former employee's cryptic notes in the hidden journal reveal a connection to the mysterious figure, who had been planning the heist for years",
+    "event_id": "E_b1",
+    "description": "Emma Taylor's investigation uncovers a forgery ring that James Parker was involved with, which motivated the manuscript theft",
     "characters": [
-      "former employee",
-      "mysterious figure"
+      "Emma Taylor",
+      "James Parker"
     ],
     "goals": [
-      "revenge",
-      "acquiring the manuscript"
+      "Uncover the truth behind the manuscript theft"
     ],
     "caused_by": [
       "E6"
     ],
-    "goal_type": "motivation"
-  },
-  {
-    "event_id": "E_b4",
-    "description": "The mysterious figure, seeking revenge, manipulates the former employee into providing crucial information about the manuscript's location and security",
-    "characters": [
-      "mysterious figure",
-      "former employee"
-    ],
-    "goals": [
-      "gaining access to the manuscript",
-      "setting up the heist"
-    ],
-    "caused_by": [
-      "E_b3"
-    ],
-    "goal_type": "opportunity"
-  },
-  {
-    "event_id": "E7",
-    "description": "The detective learns that the former employee had a secret relationship with a wealthy collector, who has a history of using underhanded methods to acquire rare items.",
-    "characters": [
-      "Detective James"
-    ],
-    "goals": [
-      "investigate the collector's involvement"
-    ],
-    "caused_by": [
-      "E6"
-    ],
-    "goal_type": "initiate"
-  },
-  {
-    "event_id": "E8",
-    "description": "The detective obtains a search warrant for the collector's estate and finds a hidden room containing the stolen manuscript and other rare, stolen items.",
-    "characters": [
-      "Detective James",
-      "Wealthy Collector"
-    ],
-    "goals": [
-      "recover the stolen manuscript",
-      "bring the collector to justice"
-    ],
-    "caused_by": [
-      "E7"
-    ],
-    "goal_type": "resolve"
-  },
-  {
-    "event_id": "E9",
-    "description": "The collector reveals that the theft was orchestrated by a mysterious figure from the collector's past, who used the manuscript to settle an old score.",
-    "characters": [
-      "Wealthy Collector",
-      "Mysterious Figure"
-    ],
-    "goals": [
-      "uncover the true motive behind the theft"
-    ],
-    "caused_by": [
-      "E8"
-    ],
-    "goal_type": "initiate"
-  },
-  {
-    "event_id": "E10",
-    "description": "The detective discovers that the mysterious figure is a former accomplice of the cold case victim, seeking revenge for a past betrayal.",
-    "characters": [
-      "Detective James",
-      "Mysterious Figure"
-    ],
-    "goals": [
-      "close the cold case",
-      "bring the mysterious figure to justice"
-    ],
-    "caused_by": [
-      "E9"
-    ],
-    "goal_type": "resolve"
-  },
-  {
-    "event_id": "E_b1",
-    "description": "The former accomplice seeks revenge against the collector for testifying against them in the cold case",
-    "characters": [
-      "former accomplice",
-      "collector"
-    ],
-    "goals": [
-      "revenge"
-    ],
-    "caused_by": [
-      "E",
-      "1",
-      "0"
-    ],
-    "goal_type": "revenge"
+    "goal_type": "Investigation"
   },
   {
     "event_id": "E_b2",
-    "description": "The former accomplice uses the stolen manuscript to blackmail the collector, forcing them to reveal their involvement in the cold case",
+    "description": "The forgery ring's leader is revealed to be a former accomplice of James Parker from the decades-old murder case",
     "characters": [
-      "former accomplice",
-      "collector"
+      "James Parker",
+      "Forgery ring leader"
     ],
     "goals": [
-      "blackmail",
-      "exposure"
-    ],
-    "caused_by": [
-      "E",
-      "_",
-      "b",
-      "1"
-    ],
-    "goal_type": "manipulation"
-  },
-  {
-    "event_id": "E_b1",
-    "description": "The detective uncovers evidence of a money trail leading from the collector to an offshore account linked to the mysterious figure",
-    "characters": [
-      "detective",
-      "collector",
-      "mysterious figure"
-    ],
-    "goals": [
-      "uncover evidence",
-      "track money trail"
-    ],
-    "caused_by": [
-      "E10"
-    ],
-    "goal_type": "investigative"
-  },
-  {
-    "event_id": "E_b2",
-    "description": "The mysterious figure is revealed to have hired a team of skilled thieves to execute the heist in exchange for a share of the manuscript's value",
-    "characters": [
-      "mysterious figure",
-      "thieves"
-    ],
-    "goals": [
-      "execute heist",
-      "acquire manuscript"
+      "Conceal the truth behind the murder and manuscript theft"
     ],
     "caused_by": [
       "E_b1"
     ],
-    "goal_type": "criminal"
+    "goal_type": "Concealment"
+  },
+  {
+    "event_id": "E_b3",
+    "description": "The forgery ring's leader orders James Parker to steal the valuable manuscript to use as a template for creating a forged copy",
+    "characters": [
+      "James Parker",
+      "The forgery ring's leader"
+    ],
+    "goals": [
+      "Create a forged copy of the manuscript"
+    ],
+    "caused_by": [
+      "E_b2"
+    ],
+    "goal_type": "Instrumental"
+  },
+  {
+    "event_id": "E_b4",
+    "description": "James Parker recruits an insider at the museum to help him bypass security and steal the manuscript",
+    "characters": [
+      "James Parker",
+      "The insider"
+    ],
+    "goals": [
+      "Steal the manuscript without detection"
+    ],
+    "caused_by": [
+      "E_b3"
+    ],
+    "goal_type": "Instrumental"
   }
 ]
