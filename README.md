@@ -683,4 +683,4 @@ RUN SUMMARY
   Token usage   : TokenUsage(input=1,291, output=5,792, cost=$0.00 [Groq free tier])
 
 ## Rambling Rhino Driver
-We will have a class/script/notebook with defined methods for the execution of our system.
+This is main_system_script.py in the main directory.
