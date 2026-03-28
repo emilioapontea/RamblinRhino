@@ -105,12 +105,14 @@ class LLMClient:
         num_events: int = 8,
         existing_events: Optional[list[PlotEvent]] = None,
         genre: str = "crime mystery",
+        mode: str = "crime",
+        hidden_context: str = "",
     ) -> list[PlotEvent]:
         # the Engagement phase, where we generate a sequence of abstract plot events
         # The model gets prompted, and each element becomes a PlotEvent which has characters,
         # goals, and causal links.
         user_prompt = _build_engagement_prompt(
-            premise, num_events, existing_events, genre
+            premise, num_events, existing_events, genre, mode, hidden_context
         )
         raw = self._complete(_ENGAGEMENT_SYSTEM_PROMPT, user_prompt)
         return _parse_plot_events(raw)
@@ -143,7 +145,7 @@ class LLMClient:
         # This converts a list of PlotEvents into flowing narrative prose. It's called once after all the
         # Engagement and Reflection cycles are done.
         bullet_list = "\n".join(
-            f"- [{e.event_id}] {e.description}" for e in events
+            f"- {e.description}" for e in events
         )
         system = "You are a skilled fiction author writing in a literary style."
         prompt = (
@@ -151,7 +153,9 @@ class LLMClient:
             + (f"Style notes: {style_notes}\n" if style_notes else "")
             + "Write a complete short story based ONLY on the following plot events, "
             "in the order listed. Do not introduce major plot points not shown here. "
-            "Write in third-person, past tense. Aim for 400-600 words.\n\n"
+            "Write in third-person, past tense. Do not mention internal event IDs, labels, or bracketed markers. "
+            "Expand the investigation through scene development, clue interpretation, character reasoning, and gradual revelation, "
+            "while staying faithful to the provided event sequence.\n\n"
             f"Plot events:\n{bullet_list}\n\nStory:\n"
         )
         return self._complete(system, prompt)
@@ -222,6 +226,8 @@ def _build_engagement_prompt(
     num_events: int,
     existing_events: Optional[list[PlotEvent]],
     genre: str,
+    mode: str,
+    hidden_context: str,
 ) -> str:
     context = ""
     if existing_events:
@@ -230,15 +236,42 @@ def _build_engagement_prompt(
             context += f"  [{ev.event_id}] {ev.description}\n"
         context += "\nContinue the story from the last event above.\n"
 
+    mode_instructions = {
+        "crime": (
+            "Generate the hidden ground-truth crime timeline: what really happened, why it happened, "
+            "who acted, and how the crime and cover-up unfolded."
+        ),
+        "solving": (
+            "Generate the visible investigation timeline only. Use the hidden crime context as ground truth. "
+            "Focus on clues, interviews, discoveries, obstacles, deductions, and staged reveals. Reveal the hidden crime progressively rather than all at once. "
+            "By the end of the solving thread, the investigator must discover who committed the crime, why they committed it, how it was carried out, "
+            "and how the present mystery connects to the hidden crime timeline. Avoid generic investigative filler that does not change what the investigator knows. "
+            "The final events should function as a resolution or explanation, not just another clue."
+        ),
+    }
+    mode_instruction = mode_instructions.get(mode, mode_instructions["crime"])
+
+    hidden_context_block = ""
+    if hidden_context:
+        hidden_context_block = (
+            "Hidden crime context for the model only:\n"
+            f"{hidden_context}\n\n"
+            "Use this as ground truth, but generate only the requested thread.\n"
+        )
+
     return f"""\
 Genre: {genre}
 Premise: {premise}
+Thread mode: {mode}
+Objective: {mode_instruction}
+{hidden_context_block}
 {context}
 Generate exactly {num_events} new plot events.
 
 Rules:
 - One sentence per event, abstract plot level only
 - Chronologically ordered and causally plausible
+- Stay within the {mode} thread
 - Identify characters involved
 - Note any story goals this event initiates, resolves, or obstructs
 - List which prior event_id(s) causally enable this event

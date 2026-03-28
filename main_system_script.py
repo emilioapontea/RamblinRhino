@@ -1,49 +1,6 @@
 # main_system_script.py
 # Rambling Rhino: Reader-Model-Driven Story Generation Driver
 
-# Uses the Groq API, free, with a limit of ~6000 tokens a min, ~500,000 tokens a day
-# Model used: llama-3.3-70b-versatile
-
-# This script is the top-level script that wires together all the system components and runs a full
-# Engagement --> Reflection --> Prose pipeline to generate a coherent short story using the QUEST reader-model framework
-
-# The architecture of the system is as follows:
-# main.py: RamblingRhinoDriver
-    # 1. run_engagement() --> LLMClient
-    # 2. run_reflection() --> ComplexityChecker, LLMClient (repair)
-    # 3. run_prose() --> LLMClient
-
-# llm_api_wrapper.py: LLMClient
-    # generate_plot_events()
-    # reflect_on_quest_gap()
-    # generate_prose()
-
-# knowledge_graph.py: KnowledgeGraph
-    # add_triples()
-    # get_neighbours()
-    # find_path()
-    # subgraph()
-
-# nlp_ingestor.py: NLPIngestor
-    # from_sentences(), parses event descriptions into KG triples
-
-# complexity_checker.py
-    # find_causal_gaps()
-    # find_goal_gaps()
-
-# To run the system:
-    # Basic run
-        # python main_system_script.py
-    # Customer premise and genre:
-        # python main_system_script.py --premise "A librarian discovers a coded message hidden in a
-        #                       first-edition novel." --genre "mystery thriller"
-    # More events, more reflection passes:
-        # python main_system_script.py --events 12 --reflection-passes 3
-    # Save output to files:
-        # python main_system_script.py --output-dir ./output
-    # Verbose (print raw LLM responses):
-        # python main_system_script.py --verbose
-
 from __future__ import annotations
 
 import argparse
@@ -52,365 +9,378 @@ import os
 import sys
 import textwrap
 import time
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-
 from llm_api_wrapper import LLMClient, PlotEvent
-from knowledge_graph import KnowledgeGraph, KBSource, Triple
-
-try:
-    from nlp_ingestor import NLPIngestor
-    _NLP_AVAILABLE = True
-except Exception as _nlp_err:
-    print(f"[main] NLPIngestor unavailable: {_nlp_err}\n"
-          "  KnowledgeGraph will not be populated from event text.")
-    _NLP_AVAILABLE = False
+from quest_parsing.knowledge_graph import KnowledgeGraph
+from quest_parsing.narrative_ingestor import NarrativeIngestor
+from quest_parsing.narrative_schema import ArcType, NodeType
+from complexity_checking.complexity_checker import ComplexityChecker
 
 
-## Complexity Checker
-class ComplexityChecker:
-    # The ComplexityChecker inspects a list of PlotEvents and identifies QUEST coherence gaps
-    # Looks for 2 types of gaps: causal gaps (C-link missing), goal gaps (I-link)
-    # Causal gaps are where an event lists event_id X in its caused_by field, but X does not exist in the current
-    # event list
-    # Goal gaps are where an event has goal_type == "resolve" or "obstruct" but no earlier event initiates the same
-    # goal string
-    # The reflection loop calls find_gaps() iteratively until either no gaps remain or the maximum number of passes is reached
+CRIME_NODE_REQUIREMENTS = {
+    NodeType.EVENT: (3, -1),
+    NodeType.ACTION: (2, -1),
+    NodeType.GOAL: (1, -1),
+}
+
+CRIME_ARC_REQUIREMENTS = {
+    ArcType.CONSEQUENCE: (2, -1),
+    ArcType.REASON: (1, -1),
+}
+
+SOLVING_NODE_REQUIREMENTS = {
+    NodeType.EVENT: (3, -1),
+    NodeType.ACTION: (2, -1),
+    NodeType.GOAL: (1, -1),
+}
+
+SOLVING_ARC_REQUIREMENTS = {
+    ArcType.CONSEQUENCE: (2, -1),
+    ArcType.REASON: (1, -1),
+}
 
 
-    def find_gaps(self, events: list[PlotEvent]) -> list[dict]:
-        # Returns a list of gap descriptors (dicts with type: causal/goal, description, insert_after)
-        gaps: list[dict] = []
-        event_ids   = {ev.event_id for ev in events}
-        goal_inits  = {
-            goal
-            for ev in events
-            if ev.goal_type == "initiate"
-            for goal in ev.goals
-        }
-        for ev in events:
-            # Causal gaps
-            for cid in ev.caused_by:
-                if cid and cid not in event_ids:
-                    gaps.append({
-                        "type": "causal",
-                        "description": (
-                            f"Event [{ev.event_id}] states it was caused by "
-                            f"[{cid}], but that event does not exist in the story. "
-                            "A bridging event is needed to establish this causal link."
-                        ),
-                        "insert_after": self._find_predecessor(ev, events),
-                    })
-            # Goal gaps
-            if ev.goal_type in ("resolve", "obstruct"):
-                for goal in ev.goals:
-                    if goal and goal not in goal_inits:
-                        gaps.append({
-                            "type": "goal",
-                            "description": (
-                                f"Event [{ev.event_id}] resolves/obstructs goal "
-                                f'"{goal}", but no earlier event initiates this goal. '
-                                "An event that establishes the goal is needed."
-                            ),
-                            "insert_after": self._find_predecessor(ev, events),
-                        })
-        return gaps
-
-    def _find_predecessor(
-        self,
-        event: PlotEvent,
-        all_events: list[PlotEvent],
-    ) -> Optional[str]:
-        """Return the event_id of the event immediately before *event*, if any."""
-        ids = [ev.event_id for ev in all_events]
-        idx = ids.index(event.event_id) if event.event_id in ids else -1
-        return ids[idx - 1] if idx > 0 else None
-
-    def summary(self, events: list[PlotEvent]) -> str:
-        """One-line summary of gap counts."""
-        gaps = self.find_gaps(events)
-        causal = sum(1 for g in gaps if g["type"] == "causal")
-        goal   = sum(1 for g in gaps if g["type"] == "goal")
-        return f"ComplexityChecker: {causal} causal gap(s), {goal} goal gap(s)"
-
-
-
-## KnowledgeGraph Population Helper
-def _events_to_kg(events: list[PlotEvent], kg: KnowledgeGraph) -> None:
-    # Populates the KnowledgeGraph with triples derived from PlotEvents
-    # (event_id) --Causes-->          (caused_event_id)   [C-link]
-    # (event_id) --InitiatesGoal-->   (goal_string)       [I-link]
-    # (event_id) --ResolvesGoal-->    (goal_string)       [O-link]
-    # (event_id) --ObstructsGoal-->   (goal_string)       [O-link variant]
-    # (character) --ParticipatesIn--> (event_id)
-    nlp: Optional[NLPIngestor] = None
-    if _NLP_AVAILABLE:
-        try:
-            nlp = NLPIngestor(namespace="story")
-        except Exception as exc:
-            print(f"[main] NLPIngestor init failed: {exc}")
-
-    for ev in events:
-        ev_node = f"event:{ev.event_id}"
-        # Causal links (C-link in QUEST)
-        for cause_id in ev.caused_by:
-            if cause_id:
-                kg.add_triple(Triple(
-                    subject=f"event:{cause_id}",
-                    predicate="Causes",
-                    obj=ev_node,
-                    source=KBSource.DOMAIN,
-                    confidence=1.0,
-                    provenance=f"plot_event:{ev.event_id}",
-                ))
-        # Goal links (I-link / O-link in QUEST)
-        goal_pred = {
-            "initiate": "InitiatesGoal",
-            "resolve":  "ResolvesGoal",
-            "obstruct": "ObstructsGoal",
-        }.get(ev.goal_type or "", "RelatedToGoal")
-
-        for goal in ev.goals:
-            if goal:
-                kg.add_triple(Triple(
-                    subject=ev_node,
-                    predicate=goal_pred,
-                    obj=f"goal:{goal.lower().replace(' ', '_')}",
-                    source=KBSource.DOMAIN,
-                    confidence=1.0,
-                    provenance=f"plot_event:{ev.event_id}",
-                ))
-        # Character participation
-        for char in ev.characters:
-            if char:
-                kg.add_triple(Triple(
-                    subject=f"char:{char.lower().replace(' ', '_')}",
-                    predicate="ParticipatesIn",
-                    obj=ev_node,
-                    source=KBSource.DOMAIN,
-                    confidence=1.0,
-                    provenance=f"plot_event:{ev.event_id}",
-                ))
-        # NLP-extracted semantic triples from event description
-        if nlp and ev.description:
-            try:
-                text_triples = nlp.from_text(
-                    ev.description,
-                    provenance=f"event_description:{ev.event_id}",
-                )
-                kg.add_triples(text_triples)
-            except Exception as exc:
-                print(f"[main] NLP extraction error for [{ev.event_id}]: {exc}")
-
-
+@dataclass
+class ThreadState:
+    name: str
+    events: list[PlotEvent] = field(default_factory=list)
+    kg: KnowledgeGraph = field(default_factory=KnowledgeGraph)
+    checker: Optional[ComplexityChecker] = None
+    feedback_history: list[list[str]] = field(default_factory=list)
 
 
 class RamblingRhinoDriver:
-    # This is where the full engagement --> reflection --> promse pipeline takes place
-    # In engagement, LLMClient generates plot events
-    # In KG build, _events_to_kg() populates KnowledgeGraph
-    # In reflection, for each reflection pass, ComplexityChecker finds gaps. For each gap, LLMClient reflects on the
-    # QUEST gaps, inserts bridging events, rebuilds KG
-    # In prose, LLMClient generated prose (the final story text)
-
     def __init__(
         self,
-        premise:            str,
-        genre:              str   = "crime mystery",
-        events_per_batch:   int   = 8,
-        engagement_batches: int   = 1,
-        reflection_passes:  int   = 2,
-        output_dir:         Optional[str] = None,
-        verbose:            bool  = False,
+        premise: str,
+        genre: str = "crime mystery",
+        crime_events_per_batch: int = 6,
+        solving_events_per_batch: int = 15,
+        engagement_batches: int = 1,
+        reflection_passes: int = 2,
+        output_dir: Optional[str] = None,
+        verbose: bool = False,
     ) -> None:
-        self.premise            = premise
-        self.genre              = genre
-        self.events_per_batch   = events_per_batch
+        self.premise = premise
+        self.genre = genre
+        self.crime_events_per_batch = crime_events_per_batch
+        self.solving_events_per_batch = solving_events_per_batch
         self.engagement_batches = engagement_batches
-        self.reflection_passes  = reflection_passes
-        self.output_dir         = Path(output_dir) if output_dir else None
-        self.verbose            = verbose
+        self.reflection_passes = reflection_passes
+        self.output_dir = Path(output_dir) if output_dir else None
+        self.verbose = verbose
 
-        self.llm     = LLMClient(verbose=verbose)
-        self.checker = ComplexityChecker()
-        self.kg      = KnowledgeGraph()
-        self.events: list[PlotEvent] = []
+        self.llm = LLMClient(verbose=verbose)
+        self.ingestor = NarrativeIngestor(include_attr_triples=False)
 
-    
-    ## Phase 1: Engagement
-    def run_engagement(self) -> None:
-        # Generated the initial event sequence using LLM calls. Multiple batches let the story grow incrementally, with
-        # each batch conditioning on all previosuly-generated events.
-        print("\n" + "═"*60)
-        print("PHASE 1: ENGAGEMENT")
-        print("═"*60)
+        self.crime = ThreadState(name="crime")
+        self.solving = ThreadState(name="solving")
 
-        for batch_num in range(1, self.engagement_batches + 1):
-            print(f"\n[Engagement batch {batch_num}/{self.engagement_batches}]")
-            new_events = self.llm.generate_plot_events(
-                premise=         self.premise,
-                num_events=      self.events_per_batch,
-                existing_events= self.events if self.events else None,
-                genre=           self.genre,
-            )
-            self.events.extend(new_events)
-            print(f"  Generated {len(new_events)} events "
-                  f"(total: {len(self.events)})")
+    def run_crime_thread(self) -> None:
+        print("\n" + "═" * 60)
+        print("PHASE 1: CRIME THREAD")
+        print("═" * 60)
+        self._run_thread(
+            state=self.crime,
+            premise=self.premise,
+            hidden_context="",
+            events_per_batch=self.crime_events_per_batch,
+        )
 
-        print(f"\nEngagement complete: {len(self.events)} plot events.")
-        self._print_events()
+    def run_solving_thread(self) -> None:
+        print("\n" + "═" * 60)
+        print("PHASE 2: SOLVING THREAD")
+        print("═" * 60)
+        self._run_thread(
+            state=self.solving,
+            premise=self.premise,
+            hidden_context=self._crime_context_for_solving(),
+            events_per_batch=self.solving_events_per_batch,
+        )
 
-    
-    ## Phase 2: KG Population
-    def build_knowledge_graph(self) -> None:
-        # Converts the current event list into KnowledgeGraph tripes, called after each engagement batch and after each
-        # reflection pass.
-        self.kg = KnowledgeGraph()   # rebuild from scratch for clean state
-        _events_to_kg(self.events, self.kg)
-        print(f"\nKnowledgeGraph: {self.kg}")
-
-    
-    ## Phase 3: Reflection
-    def run_reflection(self) -> None:
-        # Iterative gap detection and repair loop
-        # During each pass, ComplexityChecker scans the event list for QUEST gaps. For each gap, the LLM generates a bridging
-        # event. The bridging event is inserted at the correct position, and the KG is rebuilt. The loop stops when there's
-        # no gaps, or we've reached the max number of passes.
-        print("\n" + "═"*60)
-        print("PHASE 3: REFLECTION")
-        print("═"*60)
-
-        for pass_num in range(1, self.reflection_passes + 1):
-            print(f"\n[Reflection pass {pass_num}/{self.reflection_passes}]")
-            gaps = self.checker.find_gaps(self.events)
-            print(f"  {self.checker.summary(self.events)}")
-            if (not gaps):
-                print("  No gaps found, story is QUEST-coherent.")
-                break
-            story_summary = "\n".join(
-                f"  [{ev.event_id}] {ev.description}" for ev in self.events
-            )
-            for gap in gaps:
-                print(f"\n  Repairing {gap['type']} gap:")
-                print(f"    {gap['description']}")
-                bridging = self.llm.reflect_on_quest_gap(
-                    gap_description=       gap["description"],
-                    story_so_far=          story_summary,
-                    insert_after_event_id= gap["insert_after"],
-                )
-                if (not bridging):
-                    print("    [WARNING] LLM returned no bridging events.")
-                    continue
-                # Insert bridging events after the specified position
-                insert_after = gap.get("insert_after")
-                insert_idx   = len(self.events)
-                if insert_after:
-                    for i, ev in enumerate(self.events):
-                        if ev.event_id == insert_after:
-                            insert_idx = i + 1
-                            break
-                for j, bridge_ev in enumerate(bridging):
-                    self.events.insert(insert_idx + j, bridge_ev)
-                    print(f"    + Inserted [{bridge_ev.event_id}]: {bridge_ev.description}")
-            # Rebuild KG after each reflection pass
-            self.build_knowledge_graph()
-        print(f"\nReflection complete: {len(self.events)} total events.")
-
-    
-    ## Phase 4: Prose Generation
     def run_prose(self) -> str:
-        # Converts the final event list into narrative prose
-        print("\n" + "═"*60)
+        print("\n" + "═" * 60)
         print("PHASE 3: PROSE GENERATION")
-        print("═"*60)
+        print("═" * 60)
 
         prose = self.llm.generate_prose(
-            events=      self.events,
-            genre=       self.genre,
+            events=self.solving.events,
+            genre=self.genre,
+            style_notes=(
+                "Write only the visible solving story. Reveal the hidden crime through "
+                "investigation and discovery instead of narrating the full crime timeline upfront."
+            ),
         )
-        print("\n" + "-"*60)
+        print("\n" + "-" * 60)
         print("GENERATED STORY")
-        print("-"*60)
+        print("-" * 60)
         print(textwrap.fill(prose, width=72))
         return prose
 
-
-
     def run(self) -> dict:
-        # This executes the full pipeline and returns a results dict.
-        # Returns a dict with keys: premise, genre, events , kg_stats (KnowledgeGraph statistics dict), prose (final
-        # story string), usage (token usage string)
         start_time = time.time()
-        # 1. Engagement
-        self.run_engagement()
-        # 2. Initial KG build
-        self.build_knowledge_graph()
-        # 3. Reflection loop
-        self.run_reflection()
-        # 4. Prose
+        self.run_crime_thread()
+        self.run_solving_thread()
         prose = self.run_prose()
         elapsed = time.time() - start_time
 
-        print("\n" + "═"*60)
+        print("\n" + "═" * 60)
         print("RUN SUMMARY")
-        print("═"*60)
-        print(f"  Elapsed time  : {elapsed:.1f} s")
-        print(f"  Total events  : {len(self.events)}")
-        print(f"  KG stats      : {self.kg.stats()}")
-        print(f"  Token usage   : {self.llm.usage}")
+        print("═" * 60)
+        print(f"  Elapsed time     : {elapsed:.1f} s")
+        print(f"  Crime events     : {len(self.crime.events)}")
+        print(f"  Solving events   : {len(self.solving.events)}")
+        print(f"  Crime KG stats   : {self.crime.kg.stats()}")
+        print(f"  Solving KG stats : {self.solving.kg.stats()}")
+        print(f"  Token usage      : {self.llm.usage}")
 
         result = {
-            "premise":  self.premise,
-            "genre":    self.genre,
-            "events":   [
-                {
-                    "event_id":    ev.event_id,
-                    "description": ev.description,
-                    "characters":  ev.characters,
-                    "goals":       ev.goals,
-                    "caused_by":   ev.caused_by,
-                    "goal_type":   ev.goal_type,
-                }
-                for ev in self.events
-            ],
-            "kg_stats": self.kg.stats(),
-            "prose":    prose,
-            "usage":    str(self.llm.usage),
+            "premise": self.premise,
+            "genre": self.genre,
+            "crime_events": self._serialize_events(self.crime.events),
+            "crime_kg_stats": self.crime.kg.stats(),
+            "crime_feedback_history": self.crime.feedback_history,
+            "solving_events": self._serialize_events(self.solving.events),
+            "solving_kg_stats": self.solving.kg.stats(),
+            "solving_feedback_history": self.solving.feedback_history,
+            "prose": prose,
+            "usage": str(self.llm.usage),
         }
         if self.output_dir:
             self._save_outputs(result)
         return result
 
-  
-    # Helper Functions
-    def _print_events(self) -> None:
-        print("\nCurrent event list:")
-        for ev in self.events:
+    def _run_thread(
+        self,
+        state: ThreadState,
+        premise: str,
+        hidden_context: str,
+        events_per_batch: int,
+    ) -> None:
+        self._run_engagement(state, premise, hidden_context, events_per_batch)
+        self._build_knowledge_graph(state)
+        self._run_reflection(state)
+
+    def _run_engagement(
+        self,
+        state: ThreadState,
+        premise: str,
+        hidden_context: str,
+        events_per_batch: int,
+    ) -> None:
+        for batch_num in range(1, self.engagement_batches + 1):
+            print(f"\n[{state.name.title()} engagement batch {batch_num}/{self.engagement_batches}]")
+            new_events = self.llm.generate_plot_events(
+                premise=premise,
+                num_events=events_per_batch,
+                existing_events=state.events if state.events else None,
+                genre=self.genre,
+                mode=state.name,
+                hidden_context=hidden_context,
+            )
+            state.events.extend(new_events)
+            print(f"  Generated {len(new_events)} {state.name} events (total: {len(state.events)})")
+
+        print(f"\n{state.name.title()} engagement complete: {len(state.events)} plot events.")
+        self._print_events(state)
+
+    def _build_knowledge_graph(self, state: ThreadState) -> None:
+        state.kg = KnowledgeGraph()
+        event_text = "\n".join(ev.description for ev in state.events if ev.description)
+        provenance = f"{state.name}_thread"
+        self.ingestor.from_text(event_text, state.kg, provenance=provenance)
+        state.checker = self._build_checker(state.name, state.kg)
+        print(f"\n{state.name.title()} KnowledgeGraph: {state.kg}")
+
+    def _run_reflection(self, state: ThreadState) -> None:
+        print(f"\n{state.name.title()} reflection:")
+        for pass_num in range(1, self.reflection_passes + 1):
+            print(f"\n[{state.name.title()} reflection pass {pass_num}/{self.reflection_passes}]")
+            if state.checker is None:
+                self._build_knowledge_graph(state)
+
+            feedback = state.checker() if state.checker is not None else []
+            state.feedback_history.append(feedback)
+
+            print(f"  ComplexityChecker feedback: {len(feedback)} issue(s)")
+            for msg in feedback:
+                print(f"    - {msg}")
+
+            if not feedback:
+                print(f"  No gaps found in the {state.name} thread.")
+                break
+
+            repairs = self._feedback_to_repairs(feedback, state)
+            story_summary = self._events_summary(state.events)
+            for repair in repairs:
+                print("\n  Repairing graph issue:")
+                print(f"    {repair['description']}")
+                bridging = self.llm.reflect_on_quest_gap(
+                    gap_description=repair["description"],
+                    story_so_far=story_summary,
+                    insert_after_event_id=repair["insert_after"],
+                )
+                if not bridging:
+                    print("    [WARNING] LLM returned no bridging events.")
+                    continue
+                self._insert_events(state.events, bridging, repair.get("insert_after"))
+                for bridge_ev in bridging:
+                    print(f"    + Inserted [{bridge_ev.event_id}]: {bridge_ev.description}")
+
+            self._build_knowledge_graph(state)
+
+        print(f"\n{state.name.title()} reflection complete: {len(state.events)} total events.")
+
+    def _build_checker(self, mode: str, kg: KnowledgeGraph) -> ComplexityChecker:
+        node_reqs = CRIME_NODE_REQUIREMENTS if mode == "crime" else SOLVING_NODE_REQUIREMENTS
+        arc_reqs = CRIME_ARC_REQUIREMENTS if mode == "crime" else SOLVING_ARC_REQUIREMENTS
+        return ComplexityChecker(
+            kg,
+            node_reqs=node_reqs,
+            arc_reqs=arc_reqs,
+            req_dag=True,
+            req_conn=True,
+        )
+
+    def _feedback_to_repairs(
+        self,
+        feedback: list[str],
+        state: ThreadState,
+    ) -> list[dict[str, Optional[str]]]:
+        return [
+            {
+                "description": self._build_repair_prompt(message, state.name),
+                "insert_after": self._choose_insert_after(message, state.events),
+            }
+            for message in feedback
+        ]
+
+    def _build_repair_prompt(self, message: str, mode: str) -> str:
+        if mode == "crime":
+            base_rules = (
+                "Add 1-2 abstract crime-thread events only. Focus on what truly happened, "
+                "why it happened, and how one event caused the next."
+            )
+            prompt_map = {
+                "Not enough EVENT nodes.": "Add concrete crime developments so the hidden timeline contains more distinct happenings.",
+                "Not enough ACTION nodes.": "Add intentional actions by the culprit or accomplices that advance the crime or cover-up.",
+                "Not enough GOAL nodes.": "Add an event that clearly establishes the culprit's goal or motive.",
+                "Not enough CONSEQUENCE arcs.": "Add bridging crime events so the hidden timeline has clearer causal progression.",
+                "Not enough REASON arcs.": "Add an event that makes the culprit's reason for acting explicit.",
+                "Contains circular events.": "Revise the hidden crime timeline so it moves forward without causal loops.",
+                "Contains story discontinuity.": "Add linking crime events that connect isolated parts of the hidden timeline.",
+            }
+        else:
+            base_rules = (
+                "Add 1-2 abstract solving-thread events only. Focus on investigation, clues, interviews, deductions, "
+                "obstacles, and gradual revelation of the hidden crime."
+            )
+            prompt_map = {
+                "Not enough EVENT nodes.": "Add concrete investigation developments so the solving story advances through more distinct discoveries.",
+                "Not enough ACTION nodes.": "Add intentional investigative actions that move the case forward.",
+                "Not enough GOAL nodes.": "Add an event that clearly establishes the investigator's goal or motive.",
+                "Not enough CONSEQUENCE arcs.": "Add bridging solving events so one clue or discovery clearly leads to the next.",
+                "Not enough REASON arcs.": "Add an event that makes a character's investigative motivation explicit.",
+                "Contains circular events.": "Revise the investigation so discoveries move forward instead of looping back.",
+                "Contains story discontinuity.": "Add linking solving events that connect isolated discoveries into one continuous investigation.",
+            }
+
+        repair_instruction = prompt_map.get(
+            message,
+            "Repair this QUEST graph issue by adding events that improve coherence and explanatory structure.",
+        )
+        return f"{repair_instruction} {base_rules} Issue to fix: {message}"
+
+    def _choose_insert_after(self, message: str, events: list[PlotEvent]) -> Optional[str]:
+        if not events:
+            return None
+        if message == "Not enough GOAL nodes.":
+            return events[0].event_id
+        if message == "Contains story discontinuity.":
+            return events[max(len(events) // 2 - 1, 0)].event_id
+        return events[-1].event_id
+
+    def _crime_context_for_solving(self) -> str:
+        if not self.crime.events:
+            return ""
+        lines = [
+            "Hidden crime timeline:",
+            *[
+                f"- [{event.event_id}] {event.description}"
+                for event in self.crime.events
+            ],
+        ]
+        return "\n".join(lines)
+
+    def _insert_events(
+        self,
+        events: list[PlotEvent],
+        new_events: list[PlotEvent],
+        insert_after: Optional[str],
+    ) -> None:
+        insert_idx = len(events)
+        if insert_after:
+            for i, event in enumerate(events):
+                if event.event_id == insert_after:
+                    insert_idx = i + 1
+                    break
+        for offset, event in enumerate(new_events):
+            events.insert(insert_idx + offset, event)
+
+    def _events_summary(self, events: list[PlotEvent]) -> str:
+        return "\n".join(f"  [{ev.event_id}] {ev.description}" for ev in events)
+
+    def _serialize_events(self, events: list[PlotEvent]) -> list[dict]:
+        return [
+            {
+                "event_id": ev.event_id,
+                "description": ev.description,
+                "characters": ev.characters,
+                "goals": ev.goals,
+                "caused_by": ev.caused_by,
+                "goal_type": ev.goal_type,
+            }
+            for ev in events
+        ]
+
+    def _print_events(self, state: ThreadState) -> None:
+        print(f"\nCurrent {state.name} event list:")
+        for ev in state.events:
             print(f"  [{ev.event_id}] {ev.description}")
             if ev.caused_by:
                 print(f"           caused_by: {ev.caused_by}")
 
     def _save_outputs(self, result: dict) -> None:
-        # Saving the events JSON and prose text to output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        json_path  = self.output_dir / "story_events.json"
-        prose_path = self.output_dir / "story_prose.txt"
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(result, f, indent=2)
+        crime_events_path = self.output_dir / "crime_events.json"
+        solving_events_path = self.output_dir / "solving_events.json"
+        prose_path = self.output_dir / "solving_story.txt"
+        result_path = self.output_dir / "run_summary.json"
+
+        with open(crime_events_path, "w", encoding="utf-8") as f:
+            json.dump(result["crime_events"], f, indent=2)
+        with open(solving_events_path, "w", encoding="utf-8") as f:
+            json.dump(result["solving_events"], f, indent=2)
         with open(prose_path, "w", encoding="utf-8") as f:
             f.write(result["prose"])
-        print(f"\n  Events saved to : {json_path}")
-        print(f"  Prose saved to  : {prose_path}")
+        with open(result_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
+
+        print(f"\n  Crime events saved to   : {crime_events_path}")
+        print(f"  Solving events saved to : {solving_events_path}")
+        print(f"  Solving prose saved to  : {prose_path}")
+        print(f"  Run summary saved to    : {result_path}")
 
 
-
-## CLI Entry Point
 DEFAULT_PREMISE = (
     "A small-town archivist discovers that a priceless 18th-century manuscript "
     "has been stolen from the local museum the night before its auction. "
     "She is the only one who knows what was truly hidden inside it."
 )
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -418,10 +388,10 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""
             Examples:
-              python main.py
-              python main.py --premise "A spy goes rogue in Berlin." --genre "spy thriller"
-              python main.py --events 10 --reflection-passes 3 --output-dir ./output
-              python main.py --verbose
+              python main_system_script.py
+              python main_system_script.py --premise "A spy goes rogue in Berlin." --genre "spy thriller"
+              python main_system_script.py --events 10 --reflection-passes 3 --output-dir ./output
+              python main_system_script.py --verbose
         """),
     )
     parser.add_argument(
@@ -433,20 +403,24 @@ def main() -> None:
         help="Genre hint for the LLM (default: 'crime mystery').",
     )
     parser.add_argument(
-        "--events", type=int, default=8, dest="events_per_batch",
-        help="Events to generate per engagement batch (default: 8).",
+        "--crime-events", type=int, default=6, dest="crime_events_per_batch",
+        help="Events to generate per crime-thread batch (default: 6).",
+    )
+    parser.add_argument(
+        "--solving-events", type=int, default=15, dest="solving_events_per_batch",
+        help="Events to generate per solving-thread batch (default: 15).",
     )
     parser.add_argument(
         "--batches", type=int, default=1, dest="engagement_batches",
-        help="Number of engagement batches (default: 1).",
+        help="Number of engagement batches per thread (default: 1).",
     )
     parser.add_argument(
         "--reflection-passes", type=int, default=2,
-        help="Max reflection / gap-repair passes (default: 2).",
+        help="Max reflection / gap-repair passes per thread (default: 2).",
     )
     parser.add_argument(
         "--output-dir", type=str, default=None,
-        help="If set, saves story_events.json and story_prose.txt here.",
+        help="If set, saves crime events, solving events, prose, and run summary here.",
     )
     parser.add_argument(
         "--verbose", action="store_true",
@@ -454,33 +428,30 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Validate API key
-    # api_key = os.environ.get("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE")
     api_key = os.environ.get("GROQ_API_KEY", "API_KEY")
     if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
-        print(
-            "\n[ERROR] No Groq API key found.",
-            file=sys.stderr,
-        )
+        print("\n[ERROR] No Groq API key found.", file=sys.stderr)
         sys.exit(1)
 
-    print("\n" + "═"*60)
+    print("\n" + "═" * 60)
     print("  RAMBLING RHINO: Story Generation System")
     print("  Team Rambling Rhino | Reader-Model-Driven Generation")
-    print("═"*60)
+    print("═" * 60)
     print(f"  Premise : {textwrap.shorten(args.premise, width=55)}")
     print(f"  Genre   : {args.genre}")
-    print(f"  Events  : {args.events_per_batch} × {args.engagement_batches} batch(es)")
-    print(f"  Reflect : {args.reflection_passes} pass(es)")
+    print(f"  Crime   : {args.crime_events_per_batch} × {args.engagement_batches} batch(es)")
+    print(f"  Solving : {args.solving_events_per_batch} × {args.engagement_batches} batch(es)")
+    print(f"  Reflect : {args.reflection_passes} pass(es) per thread")
 
     driver = RamblingRhinoDriver(
-        premise=            args.premise,
-        genre=              args.genre,
-        events_per_batch=   args.events_per_batch,
-        engagement_batches= args.engagement_batches,
-        reflection_passes=  args.reflection_passes,
-        output_dir=         args.output_dir,
-        verbose=            args.verbose,
+        premise=args.premise,
+        genre=args.genre,
+        crime_events_per_batch=args.crime_events_per_batch,
+        solving_events_per_batch=args.solving_events_per_batch,
+        engagement_batches=args.engagement_batches,
+        reflection_passes=args.reflection_passes,
+        output_dir=args.output_dir,
+        verbose=args.verbose,
     )
     driver.run()
 

@@ -32,6 +32,9 @@ class ComplexityChecker:
         Returns:
             A list of feedback messages indicating any complexity requirement violations. An empty list indicates that all requirements are satisfied.
         """
+        if self.kg._g.number_of_nodes() == 0:
+            return ["Story graph is empty."]
+
         node_breakdown = self._node_breakdown()
         arc_breakdown = self._arc_breakdown()
 

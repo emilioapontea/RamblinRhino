@@ -1,108 +1,165 @@
 # Reading Model Driven Story Generation
 > Team Rambling Rhino
 
-To install our conda environment (`rhino`) with necessary dependencies:
+This repo contains a two-thread QUEST-based story generation pipeline for mystery narratives:
+
+- a hidden `crime` thread representing what really happened
+- a visible `solving` thread representing what the investigator discovers
+- a QUEST parser that converts event descriptions into narrative graphs
+- a graph-based complexity checker used to trigger reflection and repair
+- a final prose generator that writes only the solving story
+
+## Setup
+
+Create and activate the environment:
+
 ```bash
-conda env create -file environment.yml
+conda env create -f environment.yml
 conda activate rhino
 ```
 
-If you have pip dependencies to add (be sure you are in the `rhino` environment):
+Install the spaCy English model required by `NarrativeIngestor`:
+
 ```bash
-conda install <package> pip
-conda env export > environment.yml
+python -m spacy download en_core_web_sm
 ```
 
-## Engagement Modules
-### ContextPrompter
-A class that manages feedback from the `ComplexityChecker` and generates an engineered prompt to pass on to the LLM.
-### LLM
-A wrapper class to handle API requests to our chosen LLM and receive output in the form of QUEST events, goals, etc. to be parsed into the QUEST `KnowledgeGraph`.
+Set your Groq API key in the current shell:
 
-## Reflection Modules
-### KnowledgeGraph
-A class (`quest_parsing.KnowledgeGraph`) to support `(subject --predicate--> object)` relationships in our QUEST graph. We will primarily be using the `NarrativeIngestor` (`quest_parsing.narrative_ingestor`) class which uses `spaCy`'s [`en_core_web_sm`](https://spacy.io/models/en#en_core_web_sm) (12 MB) CPU pipeline for tokenization, part of speech tagging, named entity recognition, etc., to build up the knowledge graph from our LLM's text responses.
+```bash
+export GROQ_API_KEY="your-real-groq-api-key"
+```
 
-> Example usage
+## Current Architecture
+
+### LLM Wrapper
+
+- [`llm_api_wrapper.py`](/Users/nejaatapattu/Downloads/Spring2026/RamblinRhino/llm_api_wrapper.py)
+  Contains `LLMClient`, which can:
+  - generate hidden crime-thread events
+  - generate visible solving-thread events
+  - generate reflection/repair events
+  - generate final prose from the solving thread
+
+### QUEST Parsing
+
+- [`quest_parsing/narrative_ingestor.py`](/Users/nejaatapattu/Downloads/Spring2026/RamblinRhino/quest_parsing/narrative_ingestor.py)
+  Parses text into QUEST-style nodes and arcs.
+
+- [`quest_parsing/knowledge_graph.py`](/Users/nejaatapattu/Downloads/Spring2026/RamblinRhino/quest_parsing/knowledge_graph.py)
+  Stores the resulting narrative graph.
+
+### Reflection
+
+- [`complexity_checking/complexity_checker.py`](/Users/nejaatapattu/Downloads/Spring2026/RamblinRhino/complexity_checking/complexity_checker.py)
+  Checks the graph against structural requirements such as:
+  - minimum node counts
+  - minimum arc counts
+  - DAG requirement
+  - connectivity requirement
+
+### Driver
+
+- [`main_system_script.py`](/Users/nejaatapattu/Downloads/Spring2026/RamblinRhino/main_system_script.py)
+  Runs the full two-thread pipeline:
+  1. generate the hidden crime thread
+  2. parse crime events into a QUEST graph
+  3. reflect/repair the crime thread using graph feedback
+  4. generate the solving thread using the crime thread as hidden context
+  5. parse solving events into a QUEST graph
+  6. reflect/repair the solving thread using graph feedback
+  7. generate final prose from the solving thread only
+
+## Story Model
+
+The system treats mystery generation as two connected narrative threads:
+
+- `crime thread`
+  The hidden ground-truth timeline. This includes motive, actions, concealment, and causal structure behind the crime.
+
+- `solving thread`
+  The reader-visible investigation timeline. This includes clues, interviews, obstacles, deductions, and staged revelation of the hidden crime.
+
+Only the solving thread is turned into final prose.
+
+## Running The System
+
+Basic run:
+
+```bash
+python3 main_system_script.py
+```
+
+Example run:
+
+```bash
+python3 main_system_script.py \
+  --premise "A museum archivist discovers that the theft of a manuscript is tied to a decades-old murder." \
+  --genre "crime mystery" \
+  --events 6 \
+  --reflection-passes 2 \
+  --output-dir ./output \
+  --verbose
+```
+
+Useful flags:
+
+- `--premise`: 1-3 sentence story premise
+- `--genre`: genre hint for the LLM
+- `--events`: number of events to generate per thread batch
+- `--batches`: number of engagement batches per thread
+- `--reflection-passes`: maximum repair passes per thread
+- `--output-dir`: save thread outputs and prose
+- `--verbose`: print raw LLM responses
+
+## Output
+
+When `--output-dir` is provided, the driver saves:
+
+- `crime_events.json`: hidden crime-thread events
+- `solving_events.json`: visible solving-thread events
+- `solving_story.txt`: final prose generated only from the solving thread
+- `run_summary.json`: combined run metadata, graph stats, and feedback history
+
+## Example ComplexityChecker Usage
+
 ```python
 from quest_parsing.narrative_ingestor import NarrativeIngestor
 from quest_parsing.knowledge_graph import KnowledgeGraph
-
-kg = KnowledgeGraph()
-ingestor = NarrativeIngestor(include_attr_triples=False)
-
-ingestor.from_file('testing/claude_lighthouse.txt', kg) # replace with .txt file containing LLM generated story points.
-
-# List KnowledgeGraph nodes
-list(kg._g.nodes(data=True))
-
-# List KnowledgeGraph edges
-list(kg._g.edges(data=True))
-
-# Use plt to plot KnowledgeGraph with node and edge labels.
-import matplotlib.pyplot as plt
-import networkx as nx
-
-G = kg._g
-pos = nx.spring_layout(G)
-# subax1 = plt.subplot(121)
-nx.draw(
-    G,
-    pos=pos,
-    font_weight='bold',
-    labels={n : f'{d['type']} : {d['label'][:10]}...' for n, d in G.nodes(data=True)},
-    node_size=100,
-    font_size=5,
-    horizontalalignment='left',
-)
-nx.draw_networkx_edge_labels(
-    G,
-    pos=pos,
-    edge_labels={(u,v) : f'{d['predicate']} ({d['weight']})' for u, v, d in G.edges(data=True)},
-    font_size=2
-)
-
-plt.show()
-```
-
-### ComplexityChecker
-A class with defined methods to evaluate the complexity of the quest graph in order to determine the system's control flow. Teh `ComplexityChecker` class allows you to initialize a `ComplexityChecker` object with the following parameters, and then call the object to check against the defined complexity parameters.
-
-```python
-"""
-Args:
-    kg: The knowledge graph to check.
-    node_reqs: Optional dict mapping NodeType to (min_count, max_count) for that node type. Use max_count=-1 for no upper bound.
-    arc_reqs: Optional dict mapping ArcType to (min_count, max_count) for that arc type. Use max_count=-1 for no upper bound.
-    req_dag: If True, require that the graph is a directed acyclic graph (no circular events).
-    req_conn: If True, require that the graph is weakly connected (no story discontinuity).
-
-
-Returns:
-    A list of feedback messages indicating any complexity requirement violations. An empty list indicates that all requirements are satisfied.
-"""
-```
-
-> Example usage
-```python
-from quest_parsing.narrative_ingestor import NarrativeIngestor
-from quest_parsing.knowledge_graph import KnowledgeGraph
-
-kg = KnowledgeGraph()
-ingestor = NarrativeIngestor(include_attr_triples=False)
-
-ingestor.from_file('testing/claude_lighthouse.txt', kg) # replace with .txt file containing LLM generated story points.
-
-
-from quest_parsing.narrative_schema import NodeType, ArcType
+from quest_parsing.narrative_schema import ArcType, NodeType
 from complexity_checking.complexity_checker import ComplexityChecker
 
-# Define ComplexityChecker with simple requirement: minimum 10 EVENT nodes and no max
-c = ComplexityChecker(kg, node_reqs={NodeType.EVENT : (10, -1)})
+kg = KnowledgeGraph()
+ingestor = NarrativeIngestor(include_attr_triples=False)
 
-# Call the ComplexityChecker to get feedback (list of strings)
-c()
+text = (
+    "The archivist notices that the manuscript is missing. "
+    "She decides to investigate the curator. "
+    "She wants to discover who stole the manuscript."
+)
+
+ingestor.from_text(text, kg, provenance="example")
+
+checker = ComplexityChecker(
+    kg,
+    node_reqs={
+        NodeType.EVENT: (2, -1),
+        NodeType.GOAL: (1, -1),
+    },
+    arc_reqs={
+        ArcType.CONSEQUENCE: (1, -1),
+    },
+    req_dag=True,
+    req_conn=True,
+)
+
+feedback = checker()
+print(feedback)
 ```
 
-## Rambling Rhino Driver
-We will have a class/script/notebook with defined methods for the execution of our system.
+## Notes
+
+- The current driver translates checker feedback into targeted repair prompts inside [`main_system_script.py`](/Users/nejaatapattu/Downloads/Spring2026/RamblinRhino/main_system_script.py).
+- The crime thread is used as hidden context for the solving thread, not as final prose input.
+- There is not currently a separate `ContextPrompter` class in the repo.
+- The reflection rubrics for the crime and solving threads are intentionally simple and can be tuned as you test more stories.

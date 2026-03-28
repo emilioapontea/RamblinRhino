@@ -1,0 +1,199 @@
+{
+  "premise": "A museum archivist discovers that the theft of a manuscript is tied to a decades-old murder.",
+  "genre": "crime mystery",
+  "events": [
+    {
+      "event_id": "E1",
+      "description": "Museum archivist Emma Taylor notices the theft of a rare manuscript from the museum's collection.",
+      "characters": [
+        "Emma Taylor"
+      ],
+      "goals": [
+        "recover stolen manuscript"
+      ],
+      "caused_by": [],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E2",
+      "description": "Emma Taylor discovers a cryptic note at the scene of the theft referencing a decades-old murder case.",
+      "characters": [
+        "Emma Taylor"
+      ],
+      "goals": [
+        "uncover connection to murder"
+      ],
+      "caused_by": [
+        "E1"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E3",
+      "description": "Emma Taylor meets with retired detective Jameson to discuss the cold case and its possible connection to the manuscript theft.",
+      "characters": [
+        "Emma Taylor",
+        "Jameson"
+      ],
+      "goals": [
+        "gain insight into the murder case"
+      ],
+      "caused_by": [
+        "E2"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E4",
+      "description": "Jameson shares a previously undisclosed lead about a suspect in the decades-old murder case, who is now deceased.",
+      "characters": [
+        "Emma Taylor",
+        "Jameson"
+      ],
+      "goals": [
+        "follow new lead",
+        "uncover connection to murder"
+      ],
+      "caused_by": [
+        "E3"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "Emma Taylor asks Jameson about potential living associates of the deceased suspect",
+      "characters": [
+        "Emma Taylor",
+        "Jameson"
+      ],
+      "goals": [
+        "uncover new leads"
+      ],
+      "caused_by": [
+        "E4"
+      ],
+      "goal_type": "investigative"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "Jameson provides Emma Taylor with a list of individuals who may have had contact with the deceased suspect",
+      "characters": [
+        "Jameson",
+        "Emma Taylor"
+      ],
+      "goals": [
+        "identify potential suspects"
+      ],
+      "caused_by": [
+        "E_b3"
+      ],
+      "goal_type": "informative"
+    },
+    {
+      "event_id": "E5",
+      "description": "Emma Taylor's research into the suspect's past reveals a potential motive for the murder and the manuscript theft.",
+      "characters": [
+        "Emma Taylor"
+      ],
+      "goals": [
+        "understand motive",
+        "recover stolen manuscript"
+      ],
+      "caused_by": [
+        "E4"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E6",
+      "description": "The museum's head of security, Michael, is found to be withholding information about the theft, obstructing Emma Taylor's investigation.",
+      "characters": [
+        "Emma Taylor",
+        "Michael"
+      ],
+      "goals": [
+        "recover stolen manuscript",
+        "uncover connection to murder"
+      ],
+      "caused_by": [
+        "E1",
+        "E5"
+      ],
+      "goal_type": "obstruct"
+    },
+    {
+      "event_id": "E_b1",
+      "description": "Emma Taylor investigates Michael's background to understand his motives for withholding information",
+      "characters": [
+        "Emma Taylor",
+        "Michael"
+      ],
+      "goals": [
+        "uncover truth",
+        "clear investigation obstacles"
+      ],
+      "caused_by": [
+        "E6"
+      ],
+      "goal_type": "investigative"
+    },
+    {
+      "event_id": "E_b2",
+      "description": "Emma Taylor discovers a connection between Michael and the deceased suspect from the decades-old murder case",
+      "characters": [
+        "Emma Taylor",
+        "Michael"
+      ],
+      "goals": [
+        "link cases",
+        "identify conspirators"
+      ],
+      "caused_by": [
+        "E_b1",
+        "E4"
+      ],
+      "goal_type": "connective"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "Emma Taylor uncovers a hidden safe in Michael's office containing a letter from the deceased suspect",
+      "characters": [
+        "Emma Taylor",
+        "Michael"
+      ],
+      "goals": [
+        "Uncover Michael's motives",
+        "Reveal new leads"
+      ],
+      "caused_by": [
+        "E_b2"
+      ],
+      "goal_type": "Investigation"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "The letter reveals a decades-old conspiracy involving Michael's family and the manuscript's author",
+      "characters": [
+        "Emma Taylor",
+        "Michael"
+      ],
+      "goals": [
+        "Explain the motive for the manuscript theft",
+        "Implicate Michael in the conspiracy"
+      ],
+      "caused_by": [
+        "E_b3"
+      ],
+      "goal_type": "Plot Twist"
+    }
+  ],
+  "kg_stats": {
+    "nodes": 11,
+    "edges": 15,
+    "edges_by_source": {
+      "text": 15
+    }
+  },
+  "prose": "Emma Taylor's fingers trembled as she grasped the empty display case, her eyes scanning the vacant space where the rare manuscript once lay. The museum's collection was her domain, and she knew every item by heart. The theft was a personal affront, a desecration of the institution she revered. As she searched the area, a small, cryptic note caught her attention. It read: \"Echoes of '75 still whisper.\" The phrase sent a shiver down her spine, referencing a decades-old murder case that had shaken the city.\n\nIntrigued, Emma sought out retired detective Jameson, a man who had worked on the '75 case. They met in a quiet caf\u00e9, where Jameson listened intently as Emma described the theft and the mysterious note. His eyes clouded, and he nodded thoughtfully, \"I think I can help you, Emma. There was a lead we never pursued, a suspect who always seemed just out of reach.\" He paused, collecting his thoughts before continuing, \"The suspect's name was Alexander Gray. He's been deceased for years, but I always suspected he was involved.\"\n\nEmma's curiosity was piqued, and she asked Jameson about potential living associates of Gray. Jameson provided her with a list of individuals who may have had contact with Gray, and Emma began to dig into their pasts. As she delved deeper into Gray's history, a motive for the murder and the manuscript theft began to emerge. It seemed that Gray had been obsessed with the manuscript's author, a man named Edward Blackstone, and had sought to claim Blackstone's work as his own.\n\nHowever, Emma's investigation was hindered by the museum's head of security, Michael, who seemed to be withholding information about the theft. She decided to look into Michael's background, searching for any connections to the case. The more she dug, the more she discovered. Michael's family had a history with the manuscript's author, and it seemed that Michael himself had been in contact with Alexander Gray before his death.\n\nAs Emma dug deeper, she uncovered a hidden safe in Michael's office. Inside, she found a letter from Alexander Gray, addressed to Michael's father. The letter revealed a decades-old conspiracy involving Michael's family and Edward Blackstone. It seemed that Gray had been working with Michael's family to steal Blackstone's work, and the manuscript was just the beginning. Emma's eyes widened as she realized the true extent of the crime. The theft was not just a random act of vandalism; it was a carefully planned move in a much larger game. And Michael, the museum's head of security, was right at the center of it all.",
+  "usage": "TokenUsage(input=2,169, output=1,543, cost=$0.00 [Groq free tier])"
+}

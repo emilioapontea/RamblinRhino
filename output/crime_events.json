@@ -1,0 +1,315 @@
+[
+  {
+    "event_id": "E1",
+    "description": "A valuable manuscript is stolen from the museum's archives during a charity gala.",
+    "characters": [
+      "Museum Archivist",
+      "Thief"
+    ],
+    "goals": [
+      "steal the manuscript"
+    ],
+    "caused_by": [],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E_b1",
+    "description": "The thief receives a lucrative offer from a rival collector to steal the manuscript and use it as leverage in a high-stakes negotiation.",
+    "characters": [
+      "thief",
+      "rival collector"
+    ],
+    "goals": [
+      "acquire manuscript",
+      "leverage in negotiation"
+    ],
+    "caused_by": [
+      "E1"
+    ],
+    "goal_type": "instrumental"
+  },
+  {
+    "event_id": "E_b2",
+    "description": "The rival collector intends to use the manuscript to force the museum to relinquish ownership of a complementary artifact, completing a rare collection.",
+    "characters": [
+      "rival collector",
+      "museum"
+    ],
+    "goals": [
+      "complete rare collection",
+      "gain ownership of artifact"
+    ],
+    "caused_by": [
+      "E_b1"
+    ],
+    "goal_type": "terminal"
+  },
+  {
+    "event_id": "E_b3",
+    "description": "The mysterious figure hacks into the collector's financial records to verify the payment for the manuscript's theft",
+    "characters": [
+      "mysterious figure",
+      "collector"
+    ],
+    "goals": [
+      "verify payment",
+      "ensure leverage"
+    ],
+    "caused_by": [
+      "E_b2"
+    ],
+    "goal_type": "revenge"
+  },
+  {
+    "event_id": "E_b4",
+    "description": "The team of thieves demands additional payment from the mysterious figure after discovering the manuscript's true value",
+    "characters": [
+      "team of thieves",
+      "mysterious figure"
+    ],
+    "goals": [
+      "increase profit",
+      "negotiate payment"
+    ],
+    "caused_by": [
+      "E_b2"
+    ],
+    "goal_type": "financial gain"
+  },
+  {
+    "event_id": "E2",
+    "description": "The museum archivist discovers the theft and reports it to the police, who begin an investigation.",
+    "characters": [
+      "Museum Archivist",
+      "Detective James"
+    ],
+    "goals": [
+      "recover the stolen manuscript",
+      "catch the thief"
+    ],
+    "caused_by": [
+      "E1"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E3",
+    "description": "The detective discovers a decades-old cold case file with a similar modus operandi to the current theft.",
+    "characters": [
+      "Detective James"
+    ],
+    "goals": [
+      "connect the theft to the cold case"
+    ],
+    "caused_by": [
+      "E2"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E4",
+    "description": "The detective interviews the museum archivist and learns about a former employee who was obsessed with the stolen manuscript.",
+    "characters": [
+      "Detective James",
+      "Museum Archivist"
+    ],
+    "goals": [
+      "identify a suspect"
+    ],
+    "caused_by": [
+      "E3"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E5",
+    "description": "The detective investigates the former employee, who has a solid alibi for the night of the theft, but seems nervous and evasive.",
+    "characters": [
+      "Detective James",
+      "Former Employee"
+    ],
+    "goals": [
+      "clear or implicate the former employee"
+    ],
+    "caused_by": [
+      "E4"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E6",
+    "description": "The detective discovers a hidden journal belonging to the former employee, containing cryptic notes about the manuscript and the cold case.",
+    "characters": [
+      "Detective James"
+    ],
+    "goals": [
+      "decode the journal's secrets"
+    ],
+    "caused_by": [
+      "E5"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E_b3",
+    "description": "The former employee's cryptic notes in the hidden journal reveal a connection to the mysterious figure, who had been planning the heist for years",
+    "characters": [
+      "former employee",
+      "mysterious figure"
+    ],
+    "goals": [
+      "revenge",
+      "acquiring the manuscript"
+    ],
+    "caused_by": [
+      "E6"
+    ],
+    "goal_type": "motivation"
+  },
+  {
+    "event_id": "E_b4",
+    "description": "The mysterious figure, seeking revenge, manipulates the former employee into providing crucial information about the manuscript's location and security",
+    "characters": [
+      "mysterious figure",
+      "former employee"
+    ],
+    "goals": [
+      "gaining access to the manuscript",
+      "setting up the heist"
+    ],
+    "caused_by": [
+      "E_b3"
+    ],
+    "goal_type": "opportunity"
+  },
+  {
+    "event_id": "E7",
+    "description": "The detective learns that the former employee had a secret relationship with a wealthy collector, who has a history of using underhanded methods to acquire rare items.",
+    "characters": [
+      "Detective James"
+    ],
+    "goals": [
+      "investigate the collector's involvement"
+    ],
+    "caused_by": [
+      "E6"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E8",
+    "description": "The detective obtains a search warrant for the collector's estate and finds a hidden room containing the stolen manuscript and other rare, stolen items.",
+    "characters": [
+      "Detective James",
+      "Wealthy Collector"
+    ],
+    "goals": [
+      "recover the stolen manuscript",
+      "bring the collector to justice"
+    ],
+    "caused_by": [
+      "E7"
+    ],
+    "goal_type": "resolve"
+  },
+  {
+    "event_id": "E9",
+    "description": "The collector reveals that the theft was orchestrated by a mysterious figure from the collector's past, who used the manuscript to settle an old score.",
+    "characters": [
+      "Wealthy Collector",
+      "Mysterious Figure"
+    ],
+    "goals": [
+      "uncover the true motive behind the theft"
+    ],
+    "caused_by": [
+      "E8"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E10",
+    "description": "The detective discovers that the mysterious figure is a former accomplice of the cold case victim, seeking revenge for a past betrayal.",
+    "characters": [
+      "Detective James",
+      "Mysterious Figure"
+    ],
+    "goals": [
+      "close the cold case",
+      "bring the mysterious figure to justice"
+    ],
+    "caused_by": [
+      "E9"
+    ],
+    "goal_type": "resolve"
+  },
+  {
+    "event_id": "E_b1",
+    "description": "The former accomplice seeks revenge against the collector for testifying against them in the cold case",
+    "characters": [
+      "former accomplice",
+      "collector"
+    ],
+    "goals": [
+      "revenge"
+    ],
+    "caused_by": [
+      "E",
+      "1",
+      "0"
+    ],
+    "goal_type": "revenge"
+  },
+  {
+    "event_id": "E_b2",
+    "description": "The former accomplice uses the stolen manuscript to blackmail the collector, forcing them to reveal their involvement in the cold case",
+    "characters": [
+      "former accomplice",
+      "collector"
+    ],
+    "goals": [
+      "blackmail",
+      "exposure"
+    ],
+    "caused_by": [
+      "E",
+      "_",
+      "b",
+      "1"
+    ],
+    "goal_type": "manipulation"
+  },
+  {
+    "event_id": "E_b1",
+    "description": "The detective uncovers evidence of a money trail leading from the collector to an offshore account linked to the mysterious figure",
+    "characters": [
+      "detective",
+      "collector",
+      "mysterious figure"
+    ],
+    "goals": [
+      "uncover evidence",
+      "track money trail"
+    ],
+    "caused_by": [
+      "E10"
+    ],
+    "goal_type": "investigative"
+  },
+  {
+    "event_id": "E_b2",
+    "description": "The mysterious figure is revealed to have hired a team of skilled thieves to execute the heist in exchange for a share of the manuscript's value",
+    "characters": [
+      "mysterious figure",
+      "thieves"
+    ],
+    "goals": [
+      "execute heist",
+      "acquire manuscript"
+    ],
+    "caused_by": [
+      "E_b1"
+    ],
+    "goal_type": "criminal"
+  }
+]

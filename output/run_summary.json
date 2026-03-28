@@ -1,0 +1,554 @@
+{
+  "premise": "A museum archivist discovers that the theft of a manuscript is tied to a decades-old murder.",
+  "genre": "crime mystery",
+  "crime_events": [
+    {
+      "event_id": "E1",
+      "description": "A valuable manuscript is stolen from the museum's archives during a charity gala.",
+      "characters": [
+        "Museum Archivist",
+        "Thief"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E_b1",
+      "description": "The thief receives a lucrative offer from a rival collector to steal the manuscript and use it as leverage in a high-stakes negotiation.",
+      "characters": [
+        "thief",
+        "rival collector"
+      ],
+      "goals": [
+        "acquire manuscript",
+        "leverage in negotiation"
+      ],
+      "caused_by": [
+        "E1"
+      ],
+      "goal_type": "instrumental"
+    },
+    {
+      "event_id": "E_b2",
+      "description": "The rival collector intends to use the manuscript to force the museum to relinquish ownership of a complementary artifact, completing a rare collection.",
+      "characters": [
+        "rival collector",
+        "museum"
+      ],
+      "goals": [
+        "complete rare collection",
+        "gain ownership of artifact"
+      ],
+      "caused_by": [
+        "E_b1"
+      ],
+      "goal_type": "terminal"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "The mysterious figure hacks into the collector's financial records to verify the payment for the manuscript's theft",
+      "characters": [
+        "mysterious figure",
+        "collector"
+      ],
+      "goals": [
+        "verify payment",
+        "ensure leverage"
+      ],
+      "caused_by": [
+        "E_b2"
+      ],
+      "goal_type": "revenge"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "The team of thieves demands additional payment from the mysterious figure after discovering the manuscript's true value",
+      "characters": [
+        "team of thieves",
+        "mysterious figure"
+      ],
+      "goals": [
+        "increase profit",
+        "negotiate payment"
+      ],
+      "caused_by": [
+        "E_b2"
+      ],
+      "goal_type": "financial gain"
+    },
+    {
+      "event_id": "E2",
+      "description": "The museum archivist discovers the theft and reports it to the police, who begin an investigation.",
+      "characters": [
+        "Museum Archivist",
+        "Detective James"
+      ],
+      "goals": [
+        "recover the stolen manuscript",
+        "catch the thief"
+      ],
+      "caused_by": [
+        "E1"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E3",
+      "description": "The detective discovers a decades-old cold case file with a similar modus operandi to the current theft.",
+      "characters": [
+        "Detective James"
+      ],
+      "goals": [
+        "connect the theft to the cold case"
+      ],
+      "caused_by": [
+        "E2"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E4",
+      "description": "The detective interviews the museum archivist and learns about a former employee who was obsessed with the stolen manuscript.",
+      "characters": [
+        "Detective James",
+        "Museum Archivist"
+      ],
+      "goals": [
+        "identify a suspect"
+      ],
+      "caused_by": [
+        "E3"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E5",
+      "description": "The detective investigates the former employee, who has a solid alibi for the night of the theft, but seems nervous and evasive.",
+      "characters": [
+        "Detective James",
+        "Former Employee"
+      ],
+      "goals": [
+        "clear or implicate the former employee"
+      ],
+      "caused_by": [
+        "E4"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E6",
+      "description": "The detective discovers a hidden journal belonging to the former employee, containing cryptic notes about the manuscript and the cold case.",
+      "characters": [
+        "Detective James"
+      ],
+      "goals": [
+        "decode the journal's secrets"
+      ],
+      "caused_by": [
+        "E5"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "The former employee's cryptic notes in the hidden journal reveal a connection to the mysterious figure, who had been planning the heist for years",
+      "characters": [
+        "former employee",
+        "mysterious figure"
+      ],
+      "goals": [
+        "revenge",
+        "acquiring the manuscript"
+      ],
+      "caused_by": [
+        "E6"
+      ],
+      "goal_type": "motivation"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "The mysterious figure, seeking revenge, manipulates the former employee into providing crucial information about the manuscript's location and security",
+      "characters": [
+        "mysterious figure",
+        "former employee"
+      ],
+      "goals": [
+        "gaining access to the manuscript",
+        "setting up the heist"
+      ],
+      "caused_by": [
+        "E_b3"
+      ],
+      "goal_type": "opportunity"
+    },
+    {
+      "event_id": "E7",
+      "description": "The detective learns that the former employee had a secret relationship with a wealthy collector, who has a history of using underhanded methods to acquire rare items.",
+      "characters": [
+        "Detective James"
+      ],
+      "goals": [
+        "investigate the collector's involvement"
+      ],
+      "caused_by": [
+        "E6"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E8",
+      "description": "The detective obtains a search warrant for the collector's estate and finds a hidden room containing the stolen manuscript and other rare, stolen items.",
+      "characters": [
+        "Detective James",
+        "Wealthy Collector"
+      ],
+      "goals": [
+        "recover the stolen manuscript",
+        "bring the collector to justice"
+      ],
+      "caused_by": [
+        "E7"
+      ],
+      "goal_type": "resolve"
+    },
+    {
+      "event_id": "E9",
+      "description": "The collector reveals that the theft was orchestrated by a mysterious figure from the collector's past, who used the manuscript to settle an old score.",
+      "characters": [
+        "Wealthy Collector",
+        "Mysterious Figure"
+      ],
+      "goals": [
+        "uncover the true motive behind the theft"
+      ],
+      "caused_by": [
+        "E8"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E10",
+      "description": "The detective discovers that the mysterious figure is a former accomplice of the cold case victim, seeking revenge for a past betrayal.",
+      "characters": [
+        "Detective James",
+        "Mysterious Figure"
+      ],
+      "goals": [
+        "close the cold case",
+        "bring the mysterious figure to justice"
+      ],
+      "caused_by": [
+        "E9"
+      ],
+      "goal_type": "resolve"
+    },
+    {
+      "event_id": "E_b1",
+      "description": "The former accomplice seeks revenge against the collector for testifying against them in the cold case",
+      "characters": [
+        "former accomplice",
+        "collector"
+      ],
+      "goals": [
+        "revenge"
+      ],
+      "caused_by": [
+        "E",
+        "1",
+        "0"
+      ],
+      "goal_type": "revenge"
+    },
+    {
+      "event_id": "E_b2",
+      "description": "The former accomplice uses the stolen manuscript to blackmail the collector, forcing them to reveal their involvement in the cold case",
+      "characters": [
+        "former accomplice",
+        "collector"
+      ],
+      "goals": [
+        "blackmail",
+        "exposure"
+      ],
+      "caused_by": [
+        "E",
+        "_",
+        "b",
+        "1"
+      ],
+      "goal_type": "manipulation"
+    },
+    {
+      "event_id": "E_b1",
+      "description": "The detective uncovers evidence of a money trail leading from the collector to an offshore account linked to the mysterious figure",
+      "characters": [
+        "detective",
+        "collector",
+        "mysterious figure"
+      ],
+      "goals": [
+        "uncover evidence",
+        "track money trail"
+      ],
+      "caused_by": [
+        "E10"
+      ],
+      "goal_type": "investigative"
+    },
+    {
+      "event_id": "E_b2",
+      "description": "The mysterious figure is revealed to have hired a team of skilled thieves to execute the heist in exchange for a share of the manuscript's value",
+      "characters": [
+        "mysterious figure",
+        "thieves"
+      ],
+      "goals": [
+        "execute heist",
+        "acquire manuscript"
+      ],
+      "caused_by": [
+        "E_b1"
+      ],
+      "goal_type": "criminal"
+    }
+  ],
+  "crime_kg_stats": {
+    "nodes": 18,
+    "edges": 28,
+    "edges_by_source": {
+      "text": 28
+    }
+  },
+  "crime_feedback_history": [
+    [
+      "Not enough EVENT nodes.",
+      "Not enough GOAL nodes.",
+      "Not enough REASON arcs."
+    ],
+    [
+      "Not enough EVENT nodes.",
+      "Contains story discontinuity."
+    ]
+  ],
+  "solving_events": [
+    {
+      "event_id": "E_b1",
+      "description": "Detective initiates investigation into mysterious disappearance",
+      "characters": [
+        "Detective",
+        "Victim"
+      ],
+      "goals": [
+        "Uncover clues",
+        "Identify suspects"
+      ],
+      "caused_by": [],
+      "goal_type": "Investigation"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "Detective defines the investigation's objective as finding the missing person",
+      "characters": [
+        "Detective"
+      ],
+      "goals": [
+        "Find missing person"
+      ],
+      "caused_by": [
+        "E_b1"
+      ],
+      "goal_type": "Primary"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "Detective creates a list of potential leads and suspects to interview",
+      "characters": [
+        "Detective"
+      ],
+      "goals": [
+        "Gather information",
+        "Identify suspects"
+      ],
+      "caused_by": [
+        "E_b3"
+      ],
+      "goal_type": "Subsidiary"
+    },
+    {
+      "event_id": "E_b2",
+      "description": "Detective discovers suspicious transaction on victim's account",
+      "characters": [
+        "Detective",
+        "Victim"
+      ],
+      "goals": [
+        "Analyze financial records",
+        "Follow up on leads"
+      ],
+      "caused_by": [
+        "E_b1"
+      ],
+      "goal_type": "Evidence collection"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "Detective becomes driven to uncover the truth about the victim's disappearance",
+      "characters": [
+        "Detective"
+      ],
+      "goals": [
+        "Uncover truth"
+      ],
+      "caused_by": [
+        "E_b2"
+      ],
+      "goal_type": "Investigation"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "Detective decides to interview the victim's financial advisor to learn more about the suspicious transaction",
+      "characters": [
+        "Detective",
+        "Financial Advisor"
+      ],
+      "goals": [
+        "Gather information"
+      ],
+      "caused_by": [
+        "E_b3"
+      ],
+      "goal_type": "Interview"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "Detective obtains bank records to investigate the suspicious transaction further",
+      "characters": [
+        "Detective"
+      ],
+      "goals": [
+        "Uncover transaction details"
+      ],
+      "caused_by": [
+        "E_b2"
+      ],
+      "goal_type": "Investigation"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "Detective identifies a potential suspect linked to the suspicious transaction",
+      "characters": [
+        "Detective",
+        "Potential suspect"
+      ],
+      "goals": [
+        "Identify suspect"
+      ],
+      "caused_by": [
+        "E_b3"
+      ],
+      "goal_type": "Revelation"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "Detective obtains security footage of the ATM where the suspicious transaction occurred",
+      "characters": [
+        "Detective",
+        "Victim"
+      ],
+      "goals": [
+        "Gather evidence",
+        "Identify suspect"
+      ],
+      "caused_by": [
+        "E",
+        "_",
+        "b",
+        "2"
+      ],
+      "goal_type": "Investigative"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "Detective interviews the bank employee who processed the suspicious transaction",
+      "characters": [
+        "Detective",
+        "Bank Employee"
+      ],
+      "goals": [
+        "Verify transaction details",
+        "Uncover potential motives"
+      ],
+      "caused_by": [
+        "E",
+        "_",
+        "b",
+        "3"
+      ],
+      "goal_type": "Informative"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "Detective interviews victim's family and friends to gather more information about the suspicious transaction",
+      "characters": [
+        "Detective",
+        "Victim's family",
+        "Victim's friends"
+      ],
+      "goals": [
+        "Uncover the truth behind the disappearance",
+        "Identify potential suspects"
+      ],
+      "caused_by": [
+        "E",
+        "_",
+        "b",
+        "2"
+      ],
+      "goal_type": "Investigative"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "Detective discovers a cryptic message on the victim's phone that may be linked to the suspicious transaction",
+      "characters": [
+        "Detective",
+        "Victim"
+      ],
+      "goals": [
+        "Decipher the cryptic message",
+        "Connect the message to the disappearance"
+      ],
+      "caused_by": [
+        "E",
+        "_",
+        "b",
+        "3"
+      ],
+      "goal_type": "Analytical"
+    }
+  ],
+  "solving_kg_stats": {
+    "nodes": 2,
+    "edges": 1,
+    "edges_by_source": {
+      "text": 1
+    }
+  },
+  "solving_feedback_history": [
+    [
+      "Story graph is empty."
+    ],
+    [
+      "Not enough EVENT nodes.",
+      "Not enough ACTION nodes.",
+      "Not enough GOAL nodes.",
+      "Not enough CONSEQUENCE arcs.",
+      "Not enough REASON arcs."
+    ]
+  ],
+  "prose": "Detective Jameson sat at his desk, staring at the file in front of him. The mysterious disappearance of 25-year-old Emily Wilson had all the makings of a baffling case. With no leads, no signs of foul play, and no indication of where she might have gone, Jameson knew he had his work cut out for him. He initiated the investigation, determined to get to the bottom of the enigma.\n\nAs he delved deeper into the case, Jameson defined the investigation's objective: finding Emily. It was a simple yet daunting task. He began by creating a list of potential leads and suspects to interview, starting with Emily's family, friends, and acquaintances. The people closest to her might hold the key to unraveling the mystery of her disappearance.\n\nAs Jameson pored over Emily's financial records, one transaction caught his eye. A large withdrawal had been made from her account on the day she vanished. The suspicious transaction sent a spark of curiosity through Jameson's mind. He became driven to uncover the truth about Emily's disappearance, and this transaction seemed like the perfect place to start.\n\nJameson decided to interview Emily's financial advisor, hoping to learn more about the suspicious transaction. The advisor, a bespectacled woman named Mrs. Thompson, seemed nervous and fidgety during the interview. She claimed that Emily had come to her office a week before her disappearance, asking to withdraw a large sum of cash. Mrs. Thompson had tried to dissuade her, but Emily had been adamant. Jameson thanked Mrs. Thompson for her time and left her office, his mind whirling with possibilities.\n\nTo investigate the suspicious transaction further, Jameson obtained Emily's bank records. The documents revealed a pattern of small transactions in the days leading up to her disappearance, each one drawing closer to the large withdrawal. It was as if Emily had been planning something, but what? Jameson's eyes scanned the pages, searching for any clue that might lead him to Emily.\n\nAs he studied the records, Jameson identified a potential suspect linked to the suspicious transaction. A man named Alex had been making deposits into his own account around the same time Emily made her withdrawals. The coincidence was too striking to ignore. Jameson made a mental note to look into Alex's alibi for the day Emily disappeared.\n\nJameson's next step was to obtain security footage of the ATM where the suspicious transaction occurred. The grainy video showed a figure resembling Emily making the withdrawal, but the quality was too poor to make out any defining features. Jameson's eyes narrowed as he watched the footage, his mind working overtime to piece together the events surrounding Emily's disappearance.\n\nThe detective's attention turned to the bank employee who had processed the suspicious transaction. Jameson interviewed the teller, a nervous young woman named Sarah, who remembered Emily coming into the bank on the day of the withdrawal. Sarah recalled that Emily had seemed anxious and on edge, glancing over her shoulder as if she feared being watched. Jameson's instincts told him that Emily had been in a precarious situation, but he still had no idea what had driven her to make the withdrawal.\n\nAs Jameson continued his investigation, he interviewed Emily's family and friends, gathering more information about the suspicious transaction. They all described Emily as a happy and carefree person, with no known enemies or secrets. But Jameson knew that appearances could be deceiving. He sensed that there was more to Emily's story than met the eye.\n\nIt wasn't until Jameson discovered a cryptic message on Emily's phone that the pieces began to fall into place. The message, sent to an unknown number, read: \"Meet me at the old warehouse at midnight. Come alone.\" The words sent a chill down Jameson's spine. What had Emily gotten herself into? And who was on the other end of that message? Jameson's determination to find Emily had never been stronger. He was driven to uncover the truth, no matter what secrets lay hidden.",
+  "usage": "TokenUsage(input=6,773, output=4,554, cost=$0.00 [Groq free tier])"
+}
