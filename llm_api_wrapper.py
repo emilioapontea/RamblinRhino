@@ -130,35 +130,65 @@ class LLMClient:
         # Build a numbered, labeled plot-point list to pass to the LLM
         plot_points = "\n".join(
             f"  Plot Point {i+1} [{e.event_id}]: {e.description}"
-            for i, e in enumerate(events))
+            for i, e in enumerate(events)
+        )
+
+        # Derive a one-sentence ending summary from the last event for the closing instruction
+        last_event = events[-1].description
 
         system = (
             "You are a skilled literary fiction author. "
             "You write long, detailed, immersive stories with rich prose, "
-            "vivid character development, and scene-setting description.")
+            "vivid character development, and scene-setting description. "
+            "You always write stories that reach a fully resolved, satisfying conclusion."
+        )
 
         prompt = (
             f"Genre: {genre}\n"
             + (f"Style notes: {style_notes}\n" if style_notes else "")
             + f"\nYou have {len(events)} plot points to cover. "
-            "Write a LONG, complete short story (aim for 1500-2000 words minimum) "
+            "Write a LONG, complete short story (aim for 1500-2000 words) "
             "that covers every single plot point below in order.\n\n"
-            "IMPORTANT FORMATTING RULES:\n"
+            "CRITICAL RULES:\n"
+            "- The story MUST end with a fully resolved, complete conclusion. "
+            "Do NOT end mid-sentence, mid-investigation, or on an open note. "
+            f"The final paragraph must resolve the story, the last plot point is: \"{last_event}\"\n"
             "- Before writing the prose for each plot point, insert a clearly labeled "
             "marker on its own line in this exact format:\n"
             "  --- Plot Point N: [one-sentence summary] ---\n"
-            "- After that marker, write 2-4 paragraphs of rich narrative prose for that plot point.\n"
+            "- After that marker, write 2-4 paragraphs of rich narrative prose.\n"
             "- Do NOT skip any plot points.\n"
             "- Write in third-person, past tense.\n"
-            "- Each plot point section should be substantial: at least 150 words of prose.\n\n"
+            "- Keep each plot point section to 100-150 words so you have room to finish.\n\n"
             f"Plot points to cover:\n{plot_points}\n\n"
-            "Begin the story now:\n")
+            "Begin the story now, and make sure the final paragraph is a complete, "
+            "satisfying ending that wraps up all loose threads:\n"
+        )
 
         # Use a higher token limit for prose generation
         old_max = self.max_tokens
         self.max_tokens = 8192
         prose = self._complete(system, prompt)
         self.max_tokens = old_max
+
+        # Safety check: if the prose appears to be cut off (ends mid-sentence),
+        # make a short follow-up call to complete the ending.
+        prose_stripped = prose.rstrip()
+        last_char = prose_stripped[-1] if prose_stripped else ""
+        if last_char not in ".!?\"'":
+            print("[LLMClient] Prose appears cut off, requesting a conclusion...")
+            conclusion_prompt = (
+                f"The following story was cut off mid-sentence. "
+                f"Write ONLY the concluding 1-2 paragraphs that finish it with a satisfying, "
+                f"complete ending. Do not repeat any earlier content. "
+                f"The story so far ends with:\n...{prose_stripped[-300:]}\n\n"
+                f"Continue and conclude:"
+            )
+            self.max_tokens = 512
+            conclusion = self._complete(system, conclusion_prompt)
+            self.max_tokens = old_max
+            prose = prose_stripped + " " + conclusion.strip()
+
         return prose
 
     ## Raw API Call
@@ -185,11 +215,11 @@ class LLMClient:
                     # Use longer backoff for 429 rate-limit errors
                     if resp.status_code == 429:
                         wait = 15 * attempt   # 15s, 30s, 45s
-                        print(f"[LLMClient] Rate limited (429): waiting {wait}s "
+                        print(f"[LLMClient] Rate limited (429), waiting {wait}s "
                               f"(attempt {attempt}/{retries})")
                     else:
                         wait = self.request_delay * (2 ** attempt)
-                        print(f"[LLMClient] HTTP {resp.status_code}: retrying in "
+                        print(f"[LLMClient] HTTP {resp.status_code}, retrying in "
                               f"{wait:.1f}s (attempt {attempt}/{retries})")
                     time.sleep(wait)
                     continue
@@ -332,15 +362,13 @@ def _parse_plot_events(raw: str) -> list[PlotEvent]:
     if (start == -1 or end == 0):
         print(f"[_parse_plot_events] WARNING: no JSON array found. Raw (first 300):\n{raw[:300]}")
         return []
-
     json_str = cleaned[start:end]
 
     try:
         records = json.loads(json_str)
     except json.JSONDecodeError as exc:
-        # Try to fix common issues: trailing commas, single quotes
         try:
-            json_str_fixed = re.sub(r",\s*([}\]])", r"\1", json_str)  # trailing commas
+            json_str_fixed = re.sub(r",\s*([}\]])", r"\1", json_str)
             records = json.loads(json_str_fixed)
         except json.JSONDecodeError:
             print(f"[_parse_plot_events] JSON error: {exc}")
@@ -358,7 +386,7 @@ def _parse_plot_events(raw: str) -> list[PlotEvent]:
         event_id = str(rec.get("event_id", f"E{len(events)+1}"))
         description = str(rec.get("description", "")).strip()
         if not description:
-            continue  # skip empty events
+            continue
         events.append(PlotEvent(
             event_id=    event_id,
             description= description,
