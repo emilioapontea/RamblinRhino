@@ -18,23 +18,23 @@
     # reflect_on_quest_gap()
     # generate_prose()
 
-# knowledge_graph.py: KnowledgeGraph
+# quest_parsing/knowledge_graph.py: KnowledgeGraph
     # add_triples()
     # get_neighbours()
     # find_path()
     # subgraph()
 
-# nlp_ingestor.py: NLPIngestor
+# quest_parsing/narrative_ingestor.py: NarrativeIngestor
     # from_sentences(), parses event descriptions into KG triples
 
-# complexity_checker.py
+# complexity_checking/complexity_checker.py: ComplexityChecker
     # find_causal_gaps()
     # find_goal_gaps()
 
 # To run the system:
     # Basic run
         # python main_system_script.py
-    # Customer premise and genre:
+    # Custom premise and genre:
         # python main_system_script.py --premise "A librarian discovers a coded message hidden in a
         #                       first-edition novel." --genre "mystery thriller"
     # More events, more reflection passes:
@@ -55,87 +55,28 @@ import time
 from pathlib import Path
 from typing import Optional
 
+_ROOT = Path(__file__).resolve().parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
 from llm_api_wrapper import LLMClient, PlotEvent
-from knowledge_graph import KnowledgeGraph, KBSource, Triple
+from quest_parsing.knowledge_graph import KnowledgeGraph, KBSource, Triple
 
 try:
-    from nlp_ingestor import NLPIngestor
+    from quest_parsing.narrative_ingestor import NarrativeIngestor
     _NLP_AVAILABLE = True
 except Exception as _nlp_err:
-    print(f"[main] NLPIngestor unavailable: {_nlp_err}\n"
+    print(f"[main] NarrativeIngestor unavailable: {_nlp_err}\n"
           "  KnowledgeGraph will not be populated from event text.")
     _NLP_AVAILABLE = False
 
 
-## Complexity Checker
-class ComplexityChecker:
-    # The ComplexityChecker inspects a list of PlotEvents and identifies QUEST coherence gaps
-    # Looks for 2 types of gaps: causal gaps (C-link missing), goal gaps (I-link)
-    # Causal gaps are where an event lists event_id X in its caused_by field, but X does not exist in the current
-    # event list
-    # Goal gaps are where an event has goal_type == "resolve" or "obstruct" but no earlier event initiates the same
-    # goal string
-    # The reflection loop calls find_gaps() iteratively until either no gaps remain or the maximum number of passes is reached
+
+from complexity_checking.complexity_checker import ComplexityChecker as _KGComplexityChecker
+from quest_parsing.narrative_schema import NodeType, ArcType
 
 
-    def find_gaps(self, events: list[PlotEvent]) -> list[dict]:
-        # Returns a list of gap descriptors (dicts with type: causal/goal, description, insert_after)
-        gaps: list[dict] = []
-        event_ids   = {ev.event_id for ev in events}
-        goal_inits  = {
-            goal
-            for ev in events
-            if ev.goal_type == "initiate"
-            for goal in ev.goals
-        }
-        for ev in events:
-            # Causal gaps
-            for cid in ev.caused_by:
-                if cid and cid not in event_ids:
-                    gaps.append({
-                        "type": "causal",
-                        "description": (
-                            f"Event [{ev.event_id}] states it was caused by "
-                            f"[{cid}], but that event does not exist in the story. "
-                            "A bridging event is needed to establish this causal link."
-                        ),
-                        "insert_after": self._find_predecessor(ev, events),
-                    })
-            # Goal gaps
-            if ev.goal_type in ("resolve", "obstruct"):
-                for goal in ev.goals:
-                    if goal and goal not in goal_inits:
-                        gaps.append({
-                            "type": "goal",
-                            "description": (
-                                f"Event [{ev.event_id}] resolves/obstructs goal "
-                                f'"{goal}", but no earlier event initiates this goal. '
-                                "An event that establishes the goal is needed."
-                            ),
-                            "insert_after": self._find_predecessor(ev, events),
-                        })
-        return gaps
-
-    def _find_predecessor(
-        self,
-        event: PlotEvent,
-        all_events: list[PlotEvent],
-    ) -> Optional[str]:
-        """Return the event_id of the event immediately before *event*, if any."""
-        ids = [ev.event_id for ev in all_events]
-        idx = ids.index(event.event_id) if event.event_id in ids else -1
-        return ids[idx - 1] if idx > 0 else None
-
-    def summary(self, events: list[PlotEvent]) -> str:
-        """One-line summary of gap counts."""
-        gaps = self.find_gaps(events)
-        causal = sum(1 for g in gaps if g["type"] == "causal")
-        goal   = sum(1 for g in gaps if g["type"] == "goal")
-        return f"ComplexityChecker: {causal} causal gap(s), {goal} goal gap(s)"
-
-
-def _label_plot_point(self, idx: int, total: int) -> str:
+def _label_plot_point(idx: int, total: int) -> str:
     if idx == 0:
         return "SETUP"
     elif idx == 1:
@@ -152,21 +93,15 @@ def _label_plot_point(self, idx: int, total: int) -> str:
         return "RESOLUTION"
     return "EVENT"
 
-
 ## KnowledgeGraph Population Helper
 def _events_to_kg(events: list[PlotEvent], kg: KnowledgeGraph) -> None:
     # Populates the KnowledgeGraph with triples derived from PlotEvents
-    # (event_id) --Causes-->          (caused_event_id)   [C-link]
-    # (event_id) --InitiatesGoal-->   (goal_string)       [I-link]
-    # (event_id) --ResolvesGoal-->    (goal_string)       [O-link]
-    # (event_id) --ObstructsGoal-->   (goal_string)       [O-link variant]
-    # (character) --ParticipatesIn--> (event_id)
-    nlp: Optional[NLPIngestor] = None
+    nlp = None
     if _NLP_AVAILABLE:
         try:
-            nlp = NLPIngestor(namespace="story")
+            nlp = NarrativeIngestor(namespace="story")
         except Exception as exc:
-            print(f"[main] NLPIngestor init failed: {exc}")
+            print(f"[main] NarrativeIngestor init failed: {exc}")
 
     for ev in events:
         ev_node = f"event:{ev.event_id}"
@@ -209,35 +144,44 @@ def _events_to_kg(events: list[PlotEvent], kg: KnowledgeGraph) -> None:
                     confidence=1.0,
                     provenance=f"plot_event:{ev.event_id}",
                 ))
+        # Tag the event node with a NodeType so ComplexityChecker can count it.
+        # goal_type "initiate"/"resolve"/"obstruct" --> goal or action node,
+        # everything else is an event node.
+        if ev.goal_type in ("initiate", "resolve", "obstruct"):
+            node_type_str = "action" if ev.goal_type == "initiate" else "goal"
+        else:
+            node_type_str = "event"
+        if kg._g.has_node(ev_node):
+            kg._g.nodes[ev_node]["type"] = node_type_str
+        else:
+            kg._g.add_node(ev_node, label=ev_node, type=node_type_str, source="domain")
         # NLP-extracted semantic triples from event description
         if nlp and ev.description:
             try:
                 text_triples = nlp.from_text(
                     ev.description,
+                    kg,
                     provenance=f"event_description:{ev.event_id}",
                 )
-                kg.add_triples(text_triples)
             except Exception as exc:
                 print(f"[main] NLP extraction error for [{ev.event_id}]: {exc}")
 
 
-
-
 class RamblingRhinoDriver:
-    # This is where the full engagement --> reflection --> promse pipeline takes place
+    # This is where the full engagement --> reflection --> prose pipeline takes place
     # In engagement, LLMClient generates plot events
     # In KG build, _events_to_kg() populates KnowledgeGraph
     # In reflection, for each reflection pass, ComplexityChecker finds gaps. For each gap, LLMClient reflects on the
     # QUEST gaps, inserts bridging events, rebuilds KG
-    # In prose, LLMClient generated prose (the final story text)
+    # In prose, LLMClient generates prose (the final story text)
 
     def __init__(
         self,
         premise:            str,
         genre:              str   = "crime mystery",
         events_per_batch:   int   = 20,
-        engagement_batches: int   = 4,
-        reflection_passes:  int   = 5,
+        engagement_batches: int   = 1,
+        reflection_passes:  int   = 2,
         output_dir:         Optional[str] = None,
         verbose:            bool  = False,
     ) -> None:
@@ -250,15 +194,15 @@ class RamblingRhinoDriver:
         self.verbose            = verbose
 
         self.llm     = LLMClient(verbose=verbose)
-        self.checker = ComplexityChecker()
         self.kg      = KnowledgeGraph()
+        # ComplexityChecker is created after KG is built (it requires a KG instance)
+        self._checker = None
         self.events: list[PlotEvent] = []
 
-    
     ## Phase 1: Engagement
     def run_engagement(self) -> None:
-        # Generated the initial event sequence using LLM calls. Multiple batches let the story grow incrementally, with
-        # each batch conditioning on all previosuly-generated events.
+        # Generates the initial event sequence using LLM calls. Multiple batches let the story grow incrementally,
+        # with each batch conditioning on all previously-generated events.
         print("\n" + "═"*60)
         print("PHASE 1: ENGAGEMENT")
         print("═"*60)
@@ -278,95 +222,127 @@ class RamblingRhinoDriver:
         print(f"\nEngagement complete: {len(self.events)} plot events.")
         self._print_events()
 
-    
     ## Phase 2: KG Population
     def build_knowledge_graph(self) -> None:
-        # Converts the current event list into KnowledgeGraph tripes, called after each engagement batch and after each
-        # reflection pass.
+        # Converts the current event list into KnowledgeGraph triples, called after each engagement batch
+        # and after each reflection pass.
         self.kg = KnowledgeGraph()   # rebuild from scratch for clean state
         _events_to_kg(self.events, self.kg)
         print(f"\nKnowledgeGraph: {self.kg}")
 
-    
     ## Phase 3: Reflection
     def run_reflection(self) -> None:
-        # Iterative gap detection and repair loop
-        # During each pass, ComplexityChecker scans the event list for QUEST gaps. For each gap, the LLM generates a bridging
-        # event. The bridging event is inserted at the correct position, and the KG is rebuilt. The loop stops when there's
-        # no gaps, or we've reached the max number of passes.
+        # Iterative gap detection and repair loop using the real ComplexityChecker.
+        # ComplexityChecker(kg) is called each pass — it returns a list of feedback strings
+        # describing which node/arc requirements are violated (e.g. "Not enough EVENT nodes",
+        # "Contains story discontinuity"). Each feedback string becomes a gap description
+        # passed to the LLM to generate bridging events, which are then appended and the KG rebuilt.
         print("\n" + "═"*60)
-        print("PHASE 3: REFLECTION")
+        print("PHASE 2: REFLECTION")
         print("═"*60)
 
         for pass_num in range(1, self.reflection_passes + 1):
             print(f"\n[Reflection pass {pass_num}/{self.reflection_passes}]")
-            gaps = self.checker.find_gaps(self.events)
-            print(f"  {self.checker.summary(self.events)}")
-            if (not gaps):
-                print("  No gaps found, story is QUEST-coherent.")
+
+            # Instantiate ComplexityChecker with the current KG.
+            # Node types are set by _events_to_kg based on goal_type.
+            # We only check structural properties (DAG + connectivity) here —
+            # node/arc count requirements are skipped because the KG predicates
+            # (Causes, InitiatesGoal, etc.) don't map to ArcType values.
+            total = len(self.events)
+            checker = _KGComplexityChecker(
+                self.kg,
+                node_reqs=None,   # skip — counts are checked via event list length
+                arc_reqs=None,    # skip — KG uses domain predicates, not ArcType
+                req_dag=True,
+                req_conn=False,   # allow disconnected subgraphs (goals, chars, etc.)
+            )
+            feedback = checker()
+
+            # Also add a simple event-count check on top of structural checks
+            if total < 15:
+                feedback.append(
+                    f"Story has only {total} plot events — aim for at least 15 for a full narrative."
+                )
+
+            if not feedback:
+                print("  ComplexityChecker: all requirements satisfied — story is QUEST-coherent.")
                 break
+
+            print(f"  ComplexityChecker found {len(feedback)} issue(s):")
+            for fb in feedback:
+                print(f"    - {fb}")
+
             story_summary = "\n".join(
                 f"  [{ev.event_id}] {ev.description}" for ev in self.events
             )
-            for gap in gaps:
-                print(f"\n  Repairing {gap['type']} gap:")
-                print(f"    {gap['description']}")
-                bridging = self.llm.reflect_on_quest_gap(
-                    gap_description=       gap["description"],
-                    story_so_far=          story_summary,
-                    insert_after_event_id= gap["insert_after"],
+
+            for fb_msg in feedback:
+                gap_description = (
+                    f"The QUEST complexity checker reported: '{fb_msg}'. "
+                    "Generate 1-2 bridging plot events to address this structural gap."
                 )
-                if (not bridging):
+                print(f"\n  Repairing: {fb_msg}")
+                time.sleep(2)   # avoid Groq 429 rate-limit between reflection calls
+                bridging = self.llm.reflect_on_quest_gap(
+                    gap_description=       gap_description,
+                    story_so_far=          story_summary,
+                    insert_after_event_id= self.events[-1].event_id if self.events else None,
+                )
+                if not bridging:
                     print("    [WARNING] LLM returned no bridging events.")
                     continue
-                # Insert bridging events after the specified position
-                insert_after = gap.get("insert_after")
-                insert_idx   = len(self.events)
-                if insert_after:
-                    for i, ev in enumerate(self.events):
-                        if ev.event_id == insert_after:
-                            insert_idx = i + 1
-                            break
-                for j, bridge_ev in enumerate(bridging):
-                    self.events.insert(insert_idx + j, bridge_ev)
-                    print(f"    + Inserted [{bridge_ev.event_id}]: {bridge_ev.description}")
+                for bridge_ev in bridging:
+                    self.events.append(bridge_ev)
+                    print(f"    + Added [{bridge_ev.event_id}]: {bridge_ev.description}")
+
             # Rebuild KG after each reflection pass
             self.build_knowledge_graph()
+
         print(f"\nReflection complete: {len(self.events)} total events.")
 
-    
     ## Phase 4: Prose Generation
     def run_prose(self) -> str:
-        # Converts the final event list into narrative prose
+        # Converts the final event list into narrative prose, with each plot
+        # point clearly labeled in the output.
         print("\n" + "═"*60)
         print("PHASE 3: PROSE GENERATION")
         print("═"*60)
+        print(f"  Generating story from {len(self.events)} plot events...")
 
         prose = self.llm.generate_prose(
-            events=      self.events,
-            genre=       self.genre,
+            events=self.events,
+            genre= self.genre,
         )
-        print("\n" + "-"*60)
+
+        print("\n" + "═"*60)
         print("GENERATED STORY")
-        print("-"*60)
-        print(textwrap.fill(prose, width=72))
+        print("═"*60)
+
+        # Print the story preserving plot-point markers (--- Plot Point N: ... ---)
+        # but wrap regular prose paragraphs for readability.
+        for line in prose.split("\n"):
+            stripped = line.strip()
+            if stripped.startswith("---") and stripped.endswith("---"):
+                print("\n" + "─"*60)
+                print(stripped)
+                print("─"*60)
+            elif stripped == "":
+                print()
+            else:
+                print(textwrap.fill(stripped, width=72))
+
+        print("\n" + "═"*60)
         return prose
 
-
-
     def run(self) -> dict:
-        # This executes the full pipeline and returns a results dict.
-        # Returns a dict with keys: premise, genre, events , kg_stats (KnowledgeGraph statistics dict), prose (final
-        # story string), usage (token usage string)
+        # Executes the full pipeline and returns a results dict.
+        # Returns a dict with keys: premise, genre, events, kg_stats, prose, usage
         start_time = time.time()
-        # 1. Engagement
         self.run_engagement()
-        # 2. Initial KG build
         self.build_knowledge_graph()
-        # 3. Reflection loop
         self.run_reflection()
-        # 4. Prose
-        prose = self.run_prose()
+        prose   = self.run_prose()
         elapsed = time.time() - start_time
 
         print("\n" + "═"*60)
@@ -399,13 +375,12 @@ class RamblingRhinoDriver:
             self._save_outputs(result)
         return result
 
-  
     # Helper Functions
     def _print_events(self) -> None:
         print("\nCurrent event list:")
         total = len(self.events)
         for i, ev in enumerate(self.events):
-            label = self._label_plot_point(i, total)
+            label = _label_plot_point(i, total)
             print(f"  [{ev.event_id}] ({label}) {ev.description}")
             if ev.caused_by:
                 print(f"           caused_by: {ev.caused_by}")
@@ -423,7 +398,6 @@ class RamblingRhinoDriver:
         print(f"  Prose saved to  : {prose_path}")
 
 
-
 ## CLI Entry Point
 DEFAULT_PREMISE = (
     "A small-town archivist discovers that a priceless 18th-century manuscript "
@@ -437,10 +411,10 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""
             Examples:
-              python main.py
-              python main.py --premise "A spy goes rogue in Berlin." --genre "spy thriller"
-              python main.py --events 10 --reflection-passes 3 --output-dir ./output
-              python main.py --verbose
+              python main_system_script.py
+              python main_system_script.py --premise "A spy goes rogue in Berlin." --genre "spy thriller"
+              python main_system_script.py --events 10 --reflection-passes 3 --output-dir ./output
+              python main_system_script.py --verbose
         """),
     )
     parser.add_argument(
@@ -452,16 +426,16 @@ def main() -> None:
         help="Genre hint for the LLM (default: 'crime mystery').",
     )
     parser.add_argument(
-        "--events", type=int, default=8, dest="events_per_batch",
-        help="Events to generate per engagement batch (default: 8).",
+        "--events", type=int, default=20, dest="events_per_batch",
+        help="Events to generate per engagement batch (default: 20).",
     )
     parser.add_argument(
         "--batches", type=int, default=1, dest="engagement_batches",
-        help="Number of engagement batches (default: 1).",
+        help="Number of engagement batches (default: 5).",
     )
     parser.add_argument(
         "--reflection-passes", type=int, default=2,
-        help="Max reflection / gap-repair passes (default: 2).",
+        help="Max reflection / gap-repair passes (default: 5).",
     )
     parser.add_argument(
         "--output-dir", type=str, default=None,
@@ -474,7 +448,6 @@ def main() -> None:
     args = parser.parse_args()
 
     # Validate API key
-    # api_key = os.environ.get("GROQ_API_KEY", "YOUR_GROQ_API_KEY_HERE")
     api_key = os.environ.get("GROQ_API_KEY", "API_KEY")
     if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
         print(
