@@ -1,6 +1,8 @@
 # Reading Model Driven Story Generation
 > **System Name:** Rambling Rhino Story Engine
+
 > **Project Template:** Reader Model Driven Story Generation
+
 > Team Rambling Rhino
 
 To install our conda environment (`rhino`) with necessary dependencies:
@@ -46,12 +48,19 @@ llm_api_wrapper.py (Groq API warpper, engagement + reflection + prose)
 environment.yml
 Graesser-Question-answering.pdf
 complexity_checking/
+
 > complexity_checker.py (QUEST coherence checker, node/arc requirements)
+
 quest_parsing/
+
 > arc_classifier.py (classifies arc types between narrative nodes)
+
 > knowledge_graph.py
+
 > narrative_ingestor.py (end-to-end text --> KG pipeline)
+
 > narrative_schema.py (node and arc data structures (ex. EventNode, GoalNode))
+
 > node_classifier.py (classifies clauses into Event/Action/Goal/State nodes)
 
 ## Engagement Modules
@@ -147,9 +156,13 @@ c()
 
 ## Example Output
 > genre: crime mystery (default)
+
 > 8 events (default)
+
 > 2 reflection passes (default)
+
 > Premise: "A small-town archivist discovers that a priceless 18th-century manuscript has been stolen from the local museum the night before its auction. She is the only one who knows what was truly hidden inside it."
+
 Output:
 ════════════════════════════════════════════════════════════
   RAMBLING RHINO: Story Generation System
