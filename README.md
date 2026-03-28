@@ -1,5 +1,5 @@
 # Reading Model Driven Story Generation
-> ***System Name:** Rambling Rhino Story Engine
+> **System Name:** Rambling Rhino Story Engine
 > **Project Template:** Reader Model Driven Story Generation
 > Team Rambling Rhino
 
