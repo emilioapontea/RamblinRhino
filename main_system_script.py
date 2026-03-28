@@ -5,16 +5,20 @@
 # Model used: llama-3.3-70b-versatile
 
 # This script is the top-level script that wires together all the system components and runs a full
-# Engagement --> Reflection --> Prose pipeline to generate a coherent short story using the QUEST reader-model framework
+# Crime Story Events --> Reflection --> Solving Story Events --> Reflection --> Prose pipeline
+# to generate a coherent short story using the QUEST reader-model framework
 
 # The architecture of the system is as follows:
 # main.py: RamblingRhinoDriver
-    # 1. run_engagement() --> LLMClient
+    # 1. run_crime_story_events() --> LLMClient
     # 2. run_reflection() --> ComplexityChecker, LLMClient (repair)
-    # 3. run_prose() --> LLMClient
+    # 3. run_solving_story_events() --> LLMClient
+    # 4. run_reflection() --> ComplexityChecker, LLMClient (repair)
+    # 5. run_prose() --> LLMClient
 
 # llm_api_wrapper.py: LLMClient
-    # generate_plot_events()
+    # generate_crime_plot_events()
+    # generate_solving_plot_events()
     # reflect_on_quest_gap()
     # generate_prose()
 
@@ -168,8 +172,10 @@ def _events_to_kg(events: list[PlotEvent], kg: KnowledgeGraph) -> None:
 
 
 class RamblingRhinoDriver:
-    # This is where the full engagement --> reflection --> prose pipeline takes place
-    # In engagement, LLMClient generates plot events
+    # This is where the full crime-story-events --> reflection --> solving-story-events
+    # --> reflection --> prose pipeline takes place.
+    # In the crime-story phase, LLMClient establishes the criminal act, motive, and fallout.
+    # In the solving-story phase, LLMClient drives the investigation and resolution.
     # In KG build, _events_to_kg() populates KnowledgeGraph
     # In reflection, for each reflection pass, ComplexityChecker finds gaps. For each gap, LLMClient reflects on the
     # QUEST gaps, inserts bridging events, rebuilds KG
@@ -197,30 +203,79 @@ class RamblingRhinoDriver:
         self.kg      = KnowledgeGraph()
         # ComplexityChecker is created after KG is built (it requires a KG instance)
         self._checker = None
+        self.crime_story_events: list[PlotEvent] = []
+        self.solving_story_events: list[PlotEvent] = []
         self.events: list[PlotEvent] = []
 
-    ## Phase 1: Engagement
-    def run_engagement(self) -> None:
-        # Generates the initial event sequence using LLM calls. Multiple batches let the story grow incrementally,
-        # with each batch conditioning on all previously-generated events.
+    def _split_stage_event_counts(self) -> tuple[int, int]:
+        crime_count = max(1, self.events_per_batch // 2)
+        solving_count = max(1, self.events_per_batch - crime_count)
+        return crime_count, solving_count
+
+    def _batched_counts(self, total_events: int) -> list[int]:
+        batches = max(1, self.engagement_batches)
+        base = total_events // batches
+        remainder = total_events % batches
+        counts = []
+        for batch_idx in range(batches):
+            counts.append(base + (1 if batch_idx < remainder else 0))
+        return [count for count in counts if count > 0]
+
+    def _sync_events(self) -> None:
+        self.events = [*self.crime_story_events, *self.solving_story_events]
+
+    ## Phase 1: Crime Story Events
+    def run_crime_story_events(self) -> None:
+        # Generates the crime-story event sequence using LLM calls. Multiple batches let the
+        # crime narrative grow incrementally, with each batch conditioning on prior crime events.
         print("\n" + "═"*60)
-        print("PHASE 1: ENGAGEMENT")
+        print("PHASE 1: CRIME STORY EVENTS")
         print("═"*60)
 
-        for batch_num in range(1, self.engagement_batches + 1):
-            print(f"\n[Engagement batch {batch_num}/{self.engagement_batches}]")
-            new_events = self.llm.generate_plot_events(
+        crime_event_count, _ = self._split_stage_event_counts()
+        batch_counts = self._batched_counts(crime_event_count)
+
+        for batch_num, batch_size in enumerate(batch_counts, start=1):
+            print(f"\n[Crime story batch {batch_num}/{len(batch_counts)}]")
+            new_events = self.llm.generate_crime_plot_events(
                 premise=         self.premise,
-                num_events=      self.events_per_batch,
-                existing_events= self.events if self.events else None,
+                num_events=      batch_size,
+                existing_events= self.crime_story_events if self.crime_story_events else None,
                 genre=           self.genre,
             )
-            self.events.extend(new_events)
+            self.crime_story_events.extend(new_events)
+            self._sync_events()
             print(f"  Generated {len(new_events)} events "
-                  f"(total: {len(self.events)})")
+                  f"(crime story total: {len(self.crime_story_events)})")
 
-        print(f"\nEngagement complete: {len(self.events)} plot events.")
-        self._print_events()
+        print(f"\nCrime story generation complete: {len(self.crime_story_events)} plot events.")
+        self._print_events(self.crime_story_events)
+
+    ## Phase 3: Solving Story Events
+    def run_solving_story_events(self) -> None:
+        # Continues from the reflected crime-story phase with investigation and resolution events.
+        print("\n" + "═"*60)
+        print("PHASE 3: SOLVING STORY EVENTS")
+        print("═"*60)
+
+        _, solving_event_count = self._split_stage_event_counts()
+        batch_counts = self._batched_counts(solving_event_count)
+
+        for batch_num, batch_size in enumerate(batch_counts, start=1):
+            print(f"\n[Solving batch {batch_num}/{len(batch_counts)}]")
+            new_events = self.llm.generate_solving_plot_events(
+                premise=self.premise,
+                existing_events=self.events,
+                num_events=batch_size,
+                genre=self.genre,
+            )
+            self.solving_story_events.extend(new_events)
+            self._sync_events()
+            print(f"  Generated {len(new_events)} events "
+                  f"(solving story total: {len(self.solving_story_events)})")
+
+        print(f"\nSolving story generation complete: {len(self.solving_story_events)} plot events.")
+        self._print_events(self.solving_story_events)
 
     ## Phase 2: KG Population
     def build_knowledge_graph(self) -> None:
@@ -231,14 +286,15 @@ class RamblingRhinoDriver:
         print(f"\nKnowledgeGraph: {self.kg}")
 
     ## Phase 3: Reflection
-    def run_reflection(self) -> None:
+    def run_reflection(self, phase_label: str) -> None:
         # Iterative gap detection and repair loop using the real ComplexityChecker.
         # ComplexityChecker(kg) is called each pass — it returns a list of feedback strings
         # describing which node/arc requirements are violated (e.g. "Not enough EVENT nodes",
         # "Contains story discontinuity"). Each feedback string becomes a gap description
         # passed to the LLM to generate bridging events, which are then appended and the KG rebuilt.
         print("\n" + "═"*60)
-        print("PHASE 2: REFLECTION")
+        phase_number = 2 if phase_label == "crime story" else 4
+        print(f"PHASE {phase_number}: REFLECTION ({phase_label})")
         print("═"*60)
 
         for pass_num in range(1, self.reflection_passes + 1):
@@ -293,7 +349,11 @@ class RamblingRhinoDriver:
                     print("    [WARNING] LLM returned no bridging events.")
                     continue
                 for bridge_ev in bridging:
-                    self.events.append(bridge_ev)
+                    if self.solving_story_events:
+                        self.solving_story_events.append(bridge_ev)
+                    else:
+                        self.crime_story_events.append(bridge_ev)
+                    self._sync_events()
                     print(f"    + Added [{bridge_ev.event_id}]: {bridge_ev.description}")
 
             # Rebuild KG after each reflection pass
@@ -301,12 +361,12 @@ class RamblingRhinoDriver:
 
         print(f"\nReflection complete: {len(self.events)} total events.")
 
-    ## Phase 4: Prose Generation
+    ## Phase 5: Prose Generation
     def run_prose(self) -> str:
         # Converts the final event list into narrative prose, with each plot
         # point clearly labeled in the output.
         print("\n" + "═"*60)
-        print("PHASE 3: PROSE GENERATION")
+        print("PHASE 5: STORY GENERATION")
         print("═"*60)
         print(f"  Generating story from {len(self.events)} plot events...")
 
@@ -339,9 +399,13 @@ class RamblingRhinoDriver:
         # Executes the full pipeline and returns a results dict.
         # Returns a dict with keys: premise, genre, events, kg_stats, prose, usage
         start_time = time.time()
-        self.run_engagement()
+        self.run_crime_story_events()
         self.build_knowledge_graph()
-        self.run_reflection()
+        self.run_reflection("crime story")
+        self.build_knowledge_graph()
+        self.run_solving_story_events()
+        self.build_knowledge_graph()
+        self.run_reflection("solving")
         prose   = self.run_prose()
         elapsed = time.time() - start_time
 
@@ -356,6 +420,28 @@ class RamblingRhinoDriver:
         result = {
             "premise":  self.premise,
             "genre":    self.genre,
+            "crime_story_events": [
+                {
+                    "event_id":    ev.event_id,
+                    "description": ev.description,
+                    "characters":  ev.characters,
+                    "goals":       ev.goals,
+                    "caused_by":   ev.caused_by,
+                    "goal_type":   ev.goal_type,
+                }
+                for ev in self.crime_story_events
+            ],
+            "solving_story_events": [
+                {
+                    "event_id":    ev.event_id,
+                    "description": ev.description,
+                    "characters":  ev.characters,
+                    "goals":       ev.goals,
+                    "caused_by":   ev.caused_by,
+                    "goal_type":   ev.goal_type,
+                }
+                for ev in self.solving_story_events
+            ],
             "events":   [
                 {
                     "event_id":    ev.event_id,
@@ -376,10 +462,10 @@ class RamblingRhinoDriver:
         return result
 
     # Helper Functions
-    def _print_events(self) -> None:
+    def _print_events(self, events: list[PlotEvent]) -> None:
         print("\nCurrent event list:")
-        total = len(self.events)
-        for i, ev in enumerate(self.events):
+        total = len(events)
+        for i, ev in enumerate(events):
             label = _label_plot_point(i, total)
             print(f"  [{ev.event_id}] ({label}) {ev.description}")
             if ev.caused_by:
@@ -388,13 +474,21 @@ class RamblingRhinoDriver:
     def _save_outputs(self, result: dict) -> None:
         # Saving the events JSON and prose text to output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        json_path  = self.output_dir / "story_events.json"
+        crime_story_events_path = self.output_dir / "crime_story_events.json"
+        solving_story_events_path = self.output_dir / "solving_story_events.json"
+        summary_path = self.output_dir / "run_summary.json"
         prose_path = self.output_dir / "story_prose.txt"
-        with open(json_path, "w", encoding="utf-8") as f:
+        with open(crime_story_events_path, "w", encoding="utf-8") as f:
+            json.dump(result["crime_story_events"], f, indent=2)
+        with open(solving_story_events_path, "w", encoding="utf-8") as f:
+            json.dump(result["solving_story_events"], f, indent=2)
+        with open(summary_path, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2)
         with open(prose_path, "w", encoding="utf-8") as f:
             f.write(result["prose"])
-        print(f"\n  Events saved to : {json_path}")
+        print(f"\n  Crime story events saved to : {crime_story_events_path}")
+        print(f"  Solving story events saved to : {solving_story_events_path}")
+        print(f"  Run summary saved to    : {summary_path}")
         print(f"  Prose saved to  : {prose_path}")
 
 
@@ -427,19 +521,19 @@ def main() -> None:
     )
     parser.add_argument(
         "--events", type=int, default=20, dest="events_per_batch",
-        help="Events to generate per engagement batch (default: 20).",
+        help="Total pre-reflection plot events across story and solving phases (default: 20).",
     )
     parser.add_argument(
         "--batches", type=int, default=1, dest="engagement_batches",
-        help="Number of engagement batches (default: 5).",
+        help="Number of generation batches to use within each event phase (default: 1).",
     )
     parser.add_argument(
         "--reflection-passes", type=int, default=2,
-        help="Max reflection / gap-repair passes (default: 5).",
+        help="Max reflection / gap-repair passes per reflection stage (default: 2).",
     )
     parser.add_argument(
         "--output-dir", type=str, default=None,
-        help="If set, saves story_events.json and story_prose.txt here.",
+        help="If set, saves crime_story_events.json, solving_story_events.json, run_summary.json, and story_prose.txt here.",
     )
     parser.add_argument(
         "--verbose", action="store_true",
@@ -462,7 +556,10 @@ def main() -> None:
     print("═"*60)
     print(f"  Premise : {textwrap.shorten(args.premise, width=55)}")
     print(f"  Genre   : {args.genre}")
-    print(f"  Events  : {args.events_per_batch} × {args.engagement_batches} batch(es)")
+    crime_count = max(1, args.events_per_batch // 2)
+    solving_count = max(1, args.events_per_batch - crime_count)
+    print(f"  Events  : {args.events_per_batch} total ({crime_count} crime + {solving_count} solving)")
+    print(f"  Batches : {args.engagement_batches} per event phase")
     print(f"  Reflect : {args.reflection_passes} pass(es)")
 
     driver = RamblingRhinoDriver(

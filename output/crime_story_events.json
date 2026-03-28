@@ -1,0 +1,242 @@
+[
+  {
+    "event_id": "E1",
+    "description": "The local museum's security system is hacked and disabled by an unknown perpetrator.",
+    "characters": [
+      "Unknown Perpetrator"
+    ],
+    "goals": [
+      "steal the manuscript"
+    ],
+    "caused_by": [],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E2",
+    "description": "A former museum employee, now a skilled thief, uses the hacked system to gain unauthorized access to the museum after hours.",
+    "characters": [
+      "Former Employee",
+      "Unknown Perpetrator"
+    ],
+    "goals": [
+      "steal the manuscript"
+    ],
+    "caused_by": [
+      "E1"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E3",
+    "description": "The thief, disguised as a janitor, enters the museum's storage room where the manuscript is kept.",
+    "characters": [
+      "Former Employee"
+    ],
+    "goals": [
+      "steal the manuscript"
+    ],
+    "caused_by": [
+      "E2"
+    ],
+    "goal_type": null
+  },
+  {
+    "event_id": "E4",
+    "description": "The thief uses a customized lockpick to open the display case containing the manuscript.",
+    "characters": [
+      "Former Employee"
+    ],
+    "goals": [
+      "steal the manuscript"
+    ],
+    "caused_by": [
+      "E3"
+    ],
+    "goal_type": null
+  },
+  {
+    "event_id": "E5",
+    "description": "The manuscript is carefully removed from the display case and replaced with a fake replica to avoid immediate detection.",
+    "characters": [
+      "Former Employee"
+    ],
+    "goals": [
+      "steal the manuscript",
+      "avoid detection"
+    ],
+    "caused_by": [
+      "E4"
+    ],
+    "goal_type": null
+  },
+  {
+    "event_id": "E6",
+    "description": "The thief escapes the museum undetected, leaving behind no evidence of the theft.",
+    "characters": [
+      "Former Employee"
+    ],
+    "goals": [
+      "steal the manuscript",
+      "avoid detection"
+    ],
+    "caused_by": [
+      "E5"
+    ],
+    "goal_type": "resolve"
+  },
+  {
+    "event_id": "E7",
+    "description": "The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.",
+    "characters": [
+      "Clara",
+      "Former Employee"
+    ],
+    "goals": [
+      "discover what happened"
+    ],
+    "caused_by": [
+      "E6"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E8",
+    "description": "Clara realizes that the stolen manuscript contained a valuable, hidden historical document that only she knew about.",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "recover the manuscript",
+      "protect the hidden document"
+    ],
+    "caused_by": [
+      "E7"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E9",
+    "description": "The former employee, now in possession of the manuscript, attempts to contact a black market buyer to sell the valuable item.",
+    "characters": [
+      "Former Employee",
+      "Black Market Buyer"
+    ],
+    "goals": [
+      "sell the manuscript"
+    ],
+    "caused_by": [
+      "E6"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E10",
+    "description": "Clara starts investigating the theft, following a lead that the former employee might be involved, obstructing her goal to recover the manuscript.",
+    "characters": [
+      "Clara",
+      "Former Employee"
+    ],
+    "goals": [
+      "recover the manuscript"
+    ],
+    "caused_by": [
+      "E7",
+      "E8"
+    ],
+    "goal_type": "obstruct"
+  },
+  {
+    "event_id": "E_b1",
+    "description": "Clara interviews other former museum employees to gather more information about the theft",
+    "characters": [
+      "Clara",
+      "former museum employees"
+    ],
+    "goals": [
+      "recover the manuscript"
+    ],
+    "caused_by": [
+      "E10"
+    ],
+    "goal_type": "investigation"
+  },
+  {
+    "event_id": "E_b2",
+    "description": "The former employee receives an offer from the black market buyer to meet in person to finalize the sale",
+    "characters": [
+      "former employee",
+      "black market buyer"
+    ],
+    "goals": [
+      "sell the manuscript",
+      "recover the manuscript"
+    ],
+    "caused_by": [
+      "E9"
+    ],
+    "goal_type": "transaction"
+  },
+  {
+    "event_id": "E_b3",
+    "description": "The former employee researches the black market buyer's identity and reputation to ensure a safe transaction",
+    "characters": [
+      "former employee",
+      "black market buyer"
+    ],
+    "goals": [
+      "sell manuscript",
+      "avoid detection"
+    ],
+    "caused_by": [
+      "E_b2"
+    ],
+    "goal_type": "obstructing"
+  },
+  {
+    "event_id": "E_b4",
+    "description": "Clara discovers a suspicious transaction record related to the former employee's bank account",
+    "characters": [
+      "Clara",
+      "former employee"
+    ],
+    "goals": [
+      "recover manuscript",
+      "uncover thief's identity"
+    ],
+    "caused_by": [
+      "E_b1"
+    ],
+    "goal_type": "achieving"
+  },
+  {
+    "event_id": "E_b5",
+    "description": "Clara obtains a search warrant to investigate the former employee's residence",
+    "characters": [
+      "Clara",
+      "former employee"
+    ],
+    "goals": [
+      "recover the manuscript"
+    ],
+    "caused_by": [
+      "E_b4"
+    ],
+    "goal_type": "obstructing"
+  },
+  {
+    "event_id": "E_b6",
+    "description": "The former employee becomes aware of Clara's investigation and prepares to leave the country",
+    "characters": [
+      "former employee",
+      "Clara"
+    ],
+    "goals": [
+      "sell the manuscript",
+      "avoid arrest"
+    ],
+    "caused_by": [
+      "E_b4"
+    ],
+    "goal_type": "obstructing"
+  }
+]

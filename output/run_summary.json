@@ -1,0 +1,499 @@
+{
+  "premise": "A small-town archivist discovers that a priceless 18th-century manuscript has been stolen from the local museum the night before its auction. She is the only one who knows what was truly hidden inside it.",
+  "genre": "crime mystery",
+  "crime_story_events": [
+    {
+      "event_id": "E1",
+      "description": "The local museum's security system is hacked and disabled by an unknown perpetrator.",
+      "characters": [
+        "Unknown Perpetrator"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E2",
+      "description": "A former museum employee, now a skilled thief, uses the hacked system to gain unauthorized access to the museum after hours.",
+      "characters": [
+        "Former Employee",
+        "Unknown Perpetrator"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [
+        "E1"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E3",
+      "description": "The thief, disguised as a janitor, enters the museum's storage room where the manuscript is kept.",
+      "characters": [
+        "Former Employee"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [
+        "E2"
+      ],
+      "goal_type": null
+    },
+    {
+      "event_id": "E4",
+      "description": "The thief uses a customized lockpick to open the display case containing the manuscript.",
+      "characters": [
+        "Former Employee"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [
+        "E3"
+      ],
+      "goal_type": null
+    },
+    {
+      "event_id": "E5",
+      "description": "The manuscript is carefully removed from the display case and replaced with a fake replica to avoid immediate detection.",
+      "characters": [
+        "Former Employee"
+      ],
+      "goals": [
+        "steal the manuscript",
+        "avoid detection"
+      ],
+      "caused_by": [
+        "E4"
+      ],
+      "goal_type": null
+    },
+    {
+      "event_id": "E6",
+      "description": "The thief escapes the museum undetected, leaving behind no evidence of the theft.",
+      "characters": [
+        "Former Employee"
+      ],
+      "goals": [
+        "steal the manuscript",
+        "avoid detection"
+      ],
+      "caused_by": [
+        "E5"
+      ],
+      "goal_type": "resolve"
+    },
+    {
+      "event_id": "E7",
+      "description": "The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.",
+      "characters": [
+        "Clara",
+        "Former Employee"
+      ],
+      "goals": [
+        "discover what happened"
+      ],
+      "caused_by": [
+        "E6"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E8",
+      "description": "Clara realizes that the stolen manuscript contained a valuable, hidden historical document that only she knew about.",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "recover the manuscript",
+        "protect the hidden document"
+      ],
+      "caused_by": [
+        "E7"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E9",
+      "description": "The former employee, now in possession of the manuscript, attempts to contact a black market buyer to sell the valuable item.",
+      "characters": [
+        "Former Employee",
+        "Black Market Buyer"
+      ],
+      "goals": [
+        "sell the manuscript"
+      ],
+      "caused_by": [
+        "E6"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E10",
+      "description": "Clara starts investigating the theft, following a lead that the former employee might be involved, obstructing her goal to recover the manuscript.",
+      "characters": [
+        "Clara",
+        "Former Employee"
+      ],
+      "goals": [
+        "recover the manuscript"
+      ],
+      "caused_by": [
+        "E7",
+        "E8"
+      ],
+      "goal_type": "obstruct"
+    },
+    {
+      "event_id": "E_b1",
+      "description": "Clara interviews other former museum employees to gather more information about the theft",
+      "characters": [
+        "Clara",
+        "former museum employees"
+      ],
+      "goals": [
+        "recover the manuscript"
+      ],
+      "caused_by": [
+        "E10"
+      ],
+      "goal_type": "investigation"
+    },
+    {
+      "event_id": "E_b2",
+      "description": "The former employee receives an offer from the black market buyer to meet in person to finalize the sale",
+      "characters": [
+        "former employee",
+        "black market buyer"
+      ],
+      "goals": [
+        "sell the manuscript",
+        "recover the manuscript"
+      ],
+      "caused_by": [
+        "E9"
+      ],
+      "goal_type": "transaction"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "The former employee researches the black market buyer's identity and reputation to ensure a safe transaction",
+      "characters": [
+        "former employee",
+        "black market buyer"
+      ],
+      "goals": [
+        "sell manuscript",
+        "avoid detection"
+      ],
+      "caused_by": [
+        "E_b2"
+      ],
+      "goal_type": "obstructing"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "Clara discovers a suspicious transaction record related to the former employee's bank account",
+      "characters": [
+        "Clara",
+        "former employee"
+      ],
+      "goals": [
+        "recover manuscript",
+        "uncover thief's identity"
+      ],
+      "caused_by": [
+        "E_b1"
+      ],
+      "goal_type": "achieving"
+    },
+    {
+      "event_id": "E_b5",
+      "description": "Clara obtains a search warrant to investigate the former employee's residence",
+      "characters": [
+        "Clara",
+        "former employee"
+      ],
+      "goals": [
+        "recover the manuscript"
+      ],
+      "caused_by": [
+        "E_b4"
+      ],
+      "goal_type": "obstructing"
+    },
+    {
+      "event_id": "E_b6",
+      "description": "The former employee becomes aware of Clara's investigation and prepares to leave the country",
+      "characters": [
+        "former employee",
+        "Clara"
+      ],
+      "goals": [
+        "sell the manuscript",
+        "avoid arrest"
+      ],
+      "caused_by": [
+        "E_b4"
+      ],
+      "goal_type": "obstructing"
+    }
+  ],
+  "solving_story_events": [],
+  "events": [
+    {
+      "event_id": "E1",
+      "description": "The local museum's security system is hacked and disabled by an unknown perpetrator.",
+      "characters": [
+        "Unknown Perpetrator"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E2",
+      "description": "A former museum employee, now a skilled thief, uses the hacked system to gain unauthorized access to the museum after hours.",
+      "characters": [
+        "Former Employee",
+        "Unknown Perpetrator"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [
+        "E1"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E3",
+      "description": "The thief, disguised as a janitor, enters the museum's storage room where the manuscript is kept.",
+      "characters": [
+        "Former Employee"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [
+        "E2"
+      ],
+      "goal_type": null
+    },
+    {
+      "event_id": "E4",
+      "description": "The thief uses a customized lockpick to open the display case containing the manuscript.",
+      "characters": [
+        "Former Employee"
+      ],
+      "goals": [
+        "steal the manuscript"
+      ],
+      "caused_by": [
+        "E3"
+      ],
+      "goal_type": null
+    },
+    {
+      "event_id": "E5",
+      "description": "The manuscript is carefully removed from the display case and replaced with a fake replica to avoid immediate detection.",
+      "characters": [
+        "Former Employee"
+      ],
+      "goals": [
+        "steal the manuscript",
+        "avoid detection"
+      ],
+      "caused_by": [
+        "E4"
+      ],
+      "goal_type": null
+    },
+    {
+      "event_id": "E6",
+      "description": "The thief escapes the museum undetected, leaving behind no evidence of the theft.",
+      "characters": [
+        "Former Employee"
+      ],
+      "goals": [
+        "steal the manuscript",
+        "avoid detection"
+      ],
+      "caused_by": [
+        "E5"
+      ],
+      "goal_type": "resolve"
+    },
+    {
+      "event_id": "E7",
+      "description": "The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.",
+      "characters": [
+        "Clara",
+        "Former Employee"
+      ],
+      "goals": [
+        "discover what happened"
+      ],
+      "caused_by": [
+        "E6"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E8",
+      "description": "Clara realizes that the stolen manuscript contained a valuable, hidden historical document that only she knew about.",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "recover the manuscript",
+        "protect the hidden document"
+      ],
+      "caused_by": [
+        "E7"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E9",
+      "description": "The former employee, now in possession of the manuscript, attempts to contact a black market buyer to sell the valuable item.",
+      "characters": [
+        "Former Employee",
+        "Black Market Buyer"
+      ],
+      "goals": [
+        "sell the manuscript"
+      ],
+      "caused_by": [
+        "E6"
+      ],
+      "goal_type": "initiate"
+    },
+    {
+      "event_id": "E10",
+      "description": "Clara starts investigating the theft, following a lead that the former employee might be involved, obstructing her goal to recover the manuscript.",
+      "characters": [
+        "Clara",
+        "Former Employee"
+      ],
+      "goals": [
+        "recover the manuscript"
+      ],
+      "caused_by": [
+        "E7",
+        "E8"
+      ],
+      "goal_type": "obstruct"
+    },
+    {
+      "event_id": "E_b1",
+      "description": "Clara interviews other former museum employees to gather more information about the theft",
+      "characters": [
+        "Clara",
+        "former museum employees"
+      ],
+      "goals": [
+        "recover the manuscript"
+      ],
+      "caused_by": [
+        "E10"
+      ],
+      "goal_type": "investigation"
+    },
+    {
+      "event_id": "E_b2",
+      "description": "The former employee receives an offer from the black market buyer to meet in person to finalize the sale",
+      "characters": [
+        "former employee",
+        "black market buyer"
+      ],
+      "goals": [
+        "sell the manuscript",
+        "recover the manuscript"
+      ],
+      "caused_by": [
+        "E9"
+      ],
+      "goal_type": "transaction"
+    },
+    {
+      "event_id": "E_b3",
+      "description": "The former employee researches the black market buyer's identity and reputation to ensure a safe transaction",
+      "characters": [
+        "former employee",
+        "black market buyer"
+      ],
+      "goals": [
+        "sell manuscript",
+        "avoid detection"
+      ],
+      "caused_by": [
+        "E_b2"
+      ],
+      "goal_type": "obstructing"
+    },
+    {
+      "event_id": "E_b4",
+      "description": "Clara discovers a suspicious transaction record related to the former employee's bank account",
+      "characters": [
+        "Clara",
+        "former employee"
+      ],
+      "goals": [
+        "recover manuscript",
+        "uncover thief's identity"
+      ],
+      "caused_by": [
+        "E_b1"
+      ],
+      "goal_type": "achieving"
+    },
+    {
+      "event_id": "E_b5",
+      "description": "Clara obtains a search warrant to investigate the former employee's residence",
+      "characters": [
+        "Clara",
+        "former employee"
+      ],
+      "goals": [
+        "recover the manuscript"
+      ],
+      "caused_by": [
+        "E_b4"
+      ],
+      "goal_type": "obstructing"
+    },
+    {
+      "event_id": "E_b6",
+      "description": "The former employee becomes aware of Clara's investigation and prepares to leave the country",
+      "characters": [
+        "former employee",
+        "Clara"
+      ],
+      "goals": [
+        "sell the manuscript",
+        "avoid arrest"
+      ],
+      "caused_by": [
+        "E_b4"
+      ],
+      "goal_type": "obstructing"
+    }
+  ],
+  "kg_stats": {
+    "nodes": 101,
+    "edges": 157,
+    "edges_by_source": {
+      "domain": 65,
+      "text": 92
+    }
+  },
+  "prose": "--- Plot Point 1: The local museum's security system is hacked and disabled by an unknown perpetrator. ---\nThe night was calm, with only the occasional passing car breaking the silence outside the museum. Inside, the security system hummed along, a steady heartbeat that ensured the safety of the priceless artifacts on display. But in the depths of the system, a subtle invasion was taking place. A hacker, skilled and patient, had been working for weeks to bypass the museum's defenses. The final firewall fell, and the system went dark, leaving the museum vulnerable to intrusion. The hacker vanished as suddenly as they appeared, leaving behind only the faintest whisper of their presence.\n\nThe museum's security team, unaware of the breach, continued their rounds, checking doors and cameras. But the system's failure had already set in motion a chain of events that would change the course of the museum's history.\n\nThe darkness outside seemed to press in, as if it too were waiting for the next move. The museum, once a fortress of knowledge and beauty, now stood exposed, its treasures at risk.\n\n--- Plot Point 2: A former museum employee, now a skilled thief, uses the hacked system to gain unauthorized access to the museum after hours. ---\nAs the night wore on, a figure emerged from the shadows. Dressed in a janitor's uniform, the former employee moved with a confident air, as if they still belonged within the museum's walls. They had been watching, waiting for the perfect moment to strike. With the security system down, they knew they had a small window of opportunity to get in and out undetected. The former employee's eyes gleamed with a mix of excitement and nerves as they slipped inside, the darkness swallowing them whole.\n\nTheir footsteps echoed down the deserted corridors, the only sound in a building that was normally alive with the murmur of visitors. The thief moved with a purpose, their destination clear in their mind. They had a score to settle, and a prize to claim.\n\nThe museum's grandeur seemed to shrink, its majesty diminished by the knowledge that a thief walked its halls. The former employee's presence was a stain, a blight on the institution's good name.\n\n--- Plot Point 3: The thief, disguised as a janitor, enters the museum's storage room where the manuscript is kept. ---\nThe storage room was a labyrinth of shelves and cabinets, a treasure trove of artifacts waiting to be exhibited. The thief navigated the narrow aisles with ease, their eyes scanning the labels and tags that identified each item. They knew exactly what they were looking for \u2013 a rare manuscript, one that held a secret value beyond its historical significance. The air was thick with dust, and the smell of old paper filled their nostrils as they homed in on their target.\n\nThe manuscript was stored in a special display case, one that was designed to preserve the delicate pages. The thief's heart quickened as they reached out to touch the case, their fingers tracing the intricate locking mechanism. This was it, the moment they had been waiting for.\n\nThe storage room seemed to hold its breath, the shadows cast by the flickering fluorescent lights growing longer and darker. The thief's presence was a disruption, a ripple in the calm waters of the museum's collections.\n\n--- Plot Point 4: The thief uses a customized lockpick to open the display case containing the manuscript. ---\nThe lockpick glinted in the dim light, a slender tool that seemed almost delicate. The thief's hands moved with a practiced ease, the pick dancing across the lock's surface. The mechanism clicked, the sound loud in the stillness, and the case swung open. The thief's eyes gleamed with triumph as they reached inside, their fingers closing around the manuscript.\n\nThe pages rustled softly as they lifted it out, the sound a gentle whisper in the silence. The thief's heart swelled with excitement, their prize within their grasp. They knew the value of what they held, the secrets that lay hidden within the manuscript's yellowed pages.\n\nThe display case stood open, a gaping mouth that seemed to cry out in protest. The thief's actions were a desecration, a violation of the trust that the museum had placed in them.\n\n--- Plot Point 5: The manuscript is carefully removed from the display case and replaced with a fake replica to avoid immediate detection. ---\nThe thief's hands moved with a reverence, as if they were handling a fragile flower. They lifted the manuscript out of the case, the pages fluttering softly as they turned it over. A fake replica, crafted with precision and care, waited to take its place. The thief exchanged the two, the replica sliding smoothly into the case. The manuscript, now free, was tucked into a special pouch, one that would protect it from the outside world.\n\nThe display case was closed, the lock reengaged, and the thief stepped back to admire their handiwork. The replica looked almost indistinguishable from the real thing, a clever fake that would deceive even the most practiced eye. The thief's plan was to delay discovery, to give themselves time to sell the manuscript and disappear.\n\nThe storage room seemed to settle back into its usual calm, the disturbance caused by the thief's presence slowly fading away. But the manuscript's absence would eventually be discovered, and the consequences of the theft would be severe.\n\n--- Plot Point 6: The thief escapes the museum undetected, leaving behind no evidence of the theft. ---\nThe thief moved swiftly, their footsteps echoing down the corridors as they made their way back to the entrance. They paused, listening, as they reached the door, their ears straining to detect any sound that might indicate they had been discovered. The silence was absolute, the only noise the distant hum of the city. The thief smiled, a thrill of excitement coursing through their veins, as they slipped out into the night.\n\nThe darkness swallowed them whole, the museum's walls receding into the distance as they disappeared into the shadows. The thief knew they had pulled off the impossible, that they had stolen a treasure from under the noses of the museum's staff. The manuscript, now in their possession, was a ticket to a new life, one that was free from the constraints of their old existence.\n\nThe museum stood quiet, its secrets locked within its walls. But the thief's departure had set in motion a chain of events that would soon disrupt the calm, and bring the museum's staff scrambling to respond.\n\n--- Plot Point 7: The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft. ---\nClara's eyes widened as she pushed open the door to the storage room. Something was off, a nagging sense of unease that settled in the pit of her stomach. She moved swiftly, her heels clicking on the floor, as she made her way to the display case. The lock was intact, the case closed, but Clara's heart sank as she reached out to touch it. The manuscript was gone, replaced by a clever fake that might have deceived anyone else.\n\nClara's mind reeled as she stared at the replica, her thoughts racing to comprehend the implications of the theft. The manuscript was more than just a valuable artifact \u2013 it was a key to understanding a lost chapter in history. Its absence was a tragedy, one that would have far-reaching consequences.\n\nThe storage room seemed to grow colder, the shadows cast by the fluorescent lights deepening into dark wells of despair. Clara's discovery had unleashed a storm, one that would soon engulf the museum and its staff.\n\n--- Plot Point 8: Clara realizes that the stolen manuscript contained a valuable, hidden historical document that only she knew about. ---\nClara's eyes seemed to bore into the replica, as if she could will the real manuscript to reappear. She knew its secrets, the hidden document that lay concealed within its pages. The thief might have stolen the manuscript, but they had no idea what they truly possessed. Clara's mind was racing, her thoughts a jumble of fear and anxiety. She had to get the manuscript back, to prevent the document from falling into the wrong hands.\n\nThe storage room seemed to shrink, the walls closing in on Clara as she struggled to comprehend the magnitude of the theft. She was the only one who knew the manuscript's true value, the only one who could prevent a catastrophe. The weight of responsibility settled upon her shoulders, a crushing burden that threatened to overwhelm her.\n\nThe museum's calm was shattered, the peace broken by the theft. Clara's discovery had set in motion a chain of events that would soon sweep her up in a maelstrom of intrigue and deception.\n\n--- Plot Point 9: The former employee, now in possession of the manuscript, attempts to contact a black market buyer to sell the valuable item. ---\nThe former employee's fingers flew across the keyboard, their eyes scanning the dark web for a buyer. They knew the risks, the dangers of dealing with the black market, but they were willing to take the chance. The manuscript was too valuable, its secrets too great, to be sold to just anyone. They needed a buyer who would appreciate its true worth, one who would pay top dollar for the privilege of owning it.\n\nThe screen glowed with an otherworldly light, the former employee's face illuminated by the soft blue glow. They were a ghost, a phantom, invisible and unknown in the digital realm. But they were about to make a mistake, one that would soon put them in the crosshairs of the law.\n\nThe darkness outside seemed to press in, the shadows deepening into dark pools of menace. The former employee's actions had set in motion a chain of events that would soon put them in grave danger.\n\n--- Plot Point 10: Clara starts investigating the theft, following a lead that the former employee might be involved, obstructing her goal to recover the manuscript. ---\nClara's eyes narrowed as she stared at the file on her desk. The former employee's name leapt out at her, a suspect who had been on her radar from the moment she discovered the theft. She knew their history, their skills, and their motives. The former employee had a grudge against the museum, a score to settle. Clara's gut told her that they were involved, that they were the key to recovering the manuscript.\n\nShe reached for the phone, her fingers dialing a number that would set in motion a chain of events. The investigation was about to begin, and Clara was ready to follow every lead, to leave no stone unturned. The former employee might think they had gotten away with the perfect crime, but Clara was determined to prove them wrong.\n\nThe museum's corridors seemed to stretch out before her, a labyrinth of secrets and lies. Clara was about to navigate its twists and turns, to uncover the truth behind the theft. The former employee might have thought they were safe, but Clara was coming for them.\n\n--- Plot Point 11: Clara interviews other former museum employees to gather more information about the theft ---\nClara's eyes locked onto the face across from her, a former employee who had left the museum under a cloud. She knew the rumors, the whispers of discontent and disillusionment. The former employee's eyes seemed to cloud, their expression wary, as Clara asked her questions. What did they know about the theft? Had they seen or heard anything suspicious?\n\nThe room was quiet, the only sound the soft hum of the air conditioning. Clara's pen scratched across her notepad, recording every word, every nuance. She was building a picture, a portrait of the thief and their motives. The former employee's words were guarded, their tone cautious, but Clara detected a hint of curiosity, a spark of interest.\n\nThe museum's staff was a complex web of relationships and alliances. Clara was about to untangle the threads, to follow the connections that would lead her to the thief. The former employee's words were just the beginning, a starting point for a journey that would take her deep into the heart of the museum.\n\n--- Plot Point 12: The former employee receives an offer from the black market buyer to meet in person to finalize the sale ---\nThe former employee's eyes gleamed with excitement as they stared at the screen. The black market buyer had made contact, their offer too good to refuse. The meeting was set, a time and place agreed upon. The former employee's heart was racing, their mind a whirlwind of anticipation and fear. They knew the risks, the dangers of dealing with the black market, but they were willing to take the chance.\n\nThe room seemed to shrink, the walls closing in on the former employee as they contemplated the meeting. They were about to take a leap of faith, to trust a stranger with their fate. The manuscript was the key, the prize that would set them free. But at what cost?\n\nThe darkness outside seemed to press in, the shadows deepening into dark pools of menace. The former employee's actions had set in motion a chain of events that would soon put them in grave danger. They were about to dance with the devil, to make a deal that would change their life forever.\n\n--- Plot Point 13: The former employee researches the black market buyer's identity and reputation to ensure a safe transaction ---\nThe former employee's fingers flew across the keyboard, their eyes scanning the dark web for information. They knew the risks, the dangers of dealing with a stranger, and they wanted to be prepared. The black market buyer's identity was a mystery, a ghostly presence that haunted the digital realm. But the former employee was determined to uncover their true nature, to learn their reputation and their motives.\n\nThe screen glowed with an otherworldly light, the former employee's face illuminated by the soft blue glow. They were a detective, a sleuth, following a trail of digital breadcrumbs that would lead them to the truth. The black market buyer's reputation was murky, their dealings shrouded in secrecy. But the former employee was willing to take the chance, to trust their instincts and their research.\n\nThe room seemed to grow quieter, the only sound the soft hum of the computer. The former employee's eyes were locked onto the screen, their mind a whirlwind of thoughts and fears. They were about to make a decision, one that would change their life forever.\n\n--- Plot Point 14: Clara discovers a suspicious transaction record related to the former employee's bank account ---\nClara's eyes widened as she stared at the screen. The transaction record was a smoking gun, a clue that pointed directly to the former employee's involvement. The amount was large, the recipient a shell company that seemed to exist only on paper. Clara's mind was racing, her thoughts a jumble of excitement and fear. She had found the break she needed, the thread that would unravel the mystery of the theft.\n\nThe room seemed to shrink, the walls closing in on Clara as she contemplated the implications. The former employee was in deep, their actions a desperate attempt to cover their tracks. But Clara was hot on their heels, her investigation gaining momentum. The former employee might think they were safe, but Clara was about to blow their cover.\n\nThe museum's corridors seemed to stretch out before her, a labyrinth of secrets and lies. Clara was about to navigate its twists and turns, to uncover the truth behind the theft. The former employee might have thought they had gotten away with the perfect crime, but Clara was determined to prove them wrong.\n\n--- Plot Point 15: Clara obtains a search warrant to investigate the former employee's residence ---\nClara's eyes locked onto the judge's face, her expression a mask of determination. The search warrant was granted, the judge's signature a seal of approval on Clara's investigation. She knew what she was looking for, the evidence that would prove the former employee's guilt. The manuscript was the key, the prize that would unlock the mystery of the theft.\n\nThe courthouse seemed to fade into the background, the only sound the rustle of papers and the murmur of voices. Clara's mind was a whirlwind of thoughts and fears, her heart racing with anticipation. She was about to take a major step, one that would bring her closer to the truth. The former employee's residence was a treasure trove of secrets, a place where Clara would find the evidence she needed.\n\nThe darkness outside seemed to press in, the shadows deepening into dark pools of menace. Clara was about to enter the former employee's lair, to confront the thief and recover the stolen manuscript.\n\n--- Plot Point 16: The former employee becomes aware of Clara's investigation and prepares to leave the country ---\nThe former employee's eyes widened as they stared at the news report. Clara's investigation was all over the headlines, the search warrant a clear indication that the net was closing in. The former employee's heart sank, their mind a whirlwind of fear and panic. They knew they had to act fast, to leave the country before Clara could catch up with them. The manuscript was still in their possession, the prize that would set them free.\n\nThe room seemed to shrink, the walls closing in on the former employee as they contemplated their fate. They were about to make a desperate bid for freedom, to escape the law and start anew. The manuscript was the key, the prize that would unlock a new life. But Clara was hot on their heels, her investigation gaining momentum. The former employee might have thought they had gotten away with the perfect crime, but Clara was determined to prove them wrong.\n\nAs the former employee made their final preparations to leave the country, Clara closed in, her team surrounding the residence. The former employee was caught, the manuscript recovered, and justice was served. Clara's determination and perseverance had paid off, and the museum's treasure was safe once again. The former employee's plan had been foiled, and they would face the consequences of their actions. The case was closed, and the museum could finally rest easy, its secrets and treasures secure.",
+  "usage": "TokenUsage(input=3,827, output=5,770, cost=$0.00 [Groq free tier])"
+}

@@ -38,14 +38,18 @@ Run 'python main_system_script.py --premise "Your premise goes here" --genre "Yo
 ### With more events or reflection passes
 Run ''python main_system_script.py --events m --reflection-passes n', replacing m and n with numbers
 ### Saving output to files
-Run 'python main_system_script.py --output-dir ./output', which saves 2 files to the output directory: story_events.json (all plot events with QUEST metadata), and story_prose.txt (the final generated story)
+Run 'python main_system_script.py --output-dir ./output', which saves:
+- crime_story_events.json (crime-story plot events with QUEST metadata)
+- solving_story_events.json (solving-story plot events with QUEST metadata)
+- run_summary.json (full combined run data)
+- story_prose.txt (the final generated story)
 ### Verbose mode (which prints the raw LLM responses)
 Run 'python main_system_script.py --verbose'
 
 ## Repository Structure
 main_system_script.py (the top-level driver)
 
-llm_api_wrapper.py (Groq API warpper, engagement + reflection + prose)
+llm_api_wrapper.py (Groq API wrapper, crime story events + solving story events + reflection + prose)
 
 environment.yml
 
@@ -157,6 +161,14 @@ c = ComplexityChecker(kg, node_reqs={NodeType.EVENT : (10, -1)})
 # Call the ComplexityChecker to get feedback (list of strings)
 c()
 ```
+
+## Example Pipeline
+The main driver now runs this sequence:
+1. Story events
+2. Reflection
+3. Solving story events
+4. Reflection
+5. Story generation
 
 ## Example Output
 > genre: crime mystery (default)
