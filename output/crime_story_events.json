@@ -1,9 +1,10 @@
 [
   {
     "event_id": "E1",
-    "description": "The night before the auction, a skilled thief, known only as 'The Fox', infiltrates the local museum through a ventilation shaft.",
+    "description": "The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours.",
     "characters": [
-      "The Fox"
+      "The Thief",
+      "Museum Staff"
     ],
     "goals": [
       "steal the manuscript"
@@ -13,9 +14,9 @@
   },
   {
     "event_id": "E2",
-    "description": "The Fox disables the security cameras and alarms in the exhibit hall using a customized jamming device.",
+    "description": "The thief uses a custom-made lockpick to bypass the display case's security lock.",
     "characters": [
-      "The Fox"
+      "The Thief"
     ],
     "goals": [
       "steal the manuscript"
@@ -27,12 +28,12 @@
   },
   {
     "event_id": "E3",
-    "description": "The Fox smashes the display case and removes the 18th-century manuscript, replacing it with a convincing fake.",
+    "description": "The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment.",
     "characters": [
-      "The Fox"
+      "The Thief"
     ],
     "goals": [
-      "steal the manuscript"
+      "discover the manuscript's secrets"
     ],
     "caused_by": [
       "E2"
@@ -41,40 +42,42 @@
   },
   {
     "event_id": "E4",
-    "description": "The Fox escapes the museum through the same ventilation shaft, leaving behind no signs of forced entry or exit.",
+    "description": "A small, valuable item is found hidden within the manuscript, which was the true target of the theft.",
     "characters": [
-      "The Fox"
+      "The Thief"
     ],
     "goals": [
-      "steal the manuscript"
+      "sell the valuable item"
     ],
     "caused_by": [
       "E3"
     ],
-    "goal_type": "resolve"
+    "goal_type": "initiate"
   },
   {
     "event_id": "E5",
-    "description": "The next morning, the archivist, Clara, arrives at the museum and discovers the broken display case and the missing manuscript.",
+    "description": "The thief escapes the museum without triggering any alarms, using a pre-planned route.",
     "characters": [
-      "Clara"
+      "The Thief"
     ],
     "goals": [
-      "discover what happened"
+      "avoid detection"
     ],
     "caused_by": [
       "E4"
     ],
-    "goal_type": "initiate"
+    "goal_type": "obstruct"
   },
   {
     "event_id": "E6",
-    "description": "Clara realizes that the manuscript was not just any valuable item, but contained a hidden code that could change the course of historical research.",
+    "description": "The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.",
     "characters": [
-      "Clara"
+      "Clara",
+      "The Thief"
     ],
     "goals": [
-      "recover the manuscript"
+      "recover the manuscript",
+      "discover the thief's identity"
     ],
     "caused_by": [
       "E5"
@@ -82,29 +85,28 @@
     "goal_type": "initiate"
   },
   {
-    "event_id": "E7",
-    "description": "The Fox contacts a wealthy collector, known as 'The Patron', to arrange a meeting to sell the stolen manuscript.",
+    "event_id": "->E7",
+    "description": "Clara realizes that the thief must have had inside help to bypass the museum's security system.",
     "characters": [
-      "The Fox",
-      "The Patron"
+      "Clara"
     ],
     "goals": [
-      "sell the manuscript"
+      "identify the insider"
     ],
     "caused_by": [
-      "E4"
+      "E6"
     ],
     "goal_type": "initiate"
   },
   {
     "event_id": "E8",
-    "description": "The Patron sends a representative to authenticate the manuscript and verify its hidden code, before agreeing to the sale.",
+    "description": "Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft.",
     "characters": [
-      "The Fox",
-      "The Patron's representative"
+      "Clara",
+      "Museum Staff"
     ],
     "goals": [
-      "sell the manuscript"
+      "identify the insider"
     ],
     "caused_by": [
       "E7"
@@ -113,89 +115,58 @@
   },
   {
     "event_id": "E9",
-    "description": "The Fox becomes suspicious of The Patron's true intentions and decides to investigate The Patron's background, fearing a double-cross.",
+    "description": "The thief, now in possession of the valuable item, contacts a potential buyer on the black market.",
     "characters": [
-      "The Fox"
+      "The Thief",
+      "The Buyer"
     ],
     "goals": [
-      "ensure a safe sale"
+      "sell the valuable item"
     ],
     "caused_by": [
+      "E5"
+    ],
+    "goal_type": "obstruct"
+  },
+  {
+    "event_id": "E10",
+    "description": "Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript.",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "track down the thief",
+      "recover the manuscript"
+    ],
+    "caused_by": [
+      "E6",
       "E8"
     ],
     "goal_type": "initiate"
   },
   {
-    "event_id": "E10",
-    "description": "Clara starts to suspect that the theft is more than just a simple crime, and that the perpetrator may be trying to hide something much bigger, initiating her own investigation.",
+    "event_id": "E_b1",
+    "description": "Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff",
     "characters": [
       "Clara"
     ],
     "goals": [
-      "uncover the truth"
-    ],
-    "caused_by": [
-      "E6"
-    ],
-    "goal_type": "initiate"
-  },
-  {
-    "event_id": "E_b1",
-    "description": "Clara discovers a cryptic message on the museum's website that hints at The Fox's true identity",
-    "characters": [
-      "Clara",
-      "The Fox"
-    ],
-    "goals": [
-      "uncover the truth",
-      "remain anonymous"
+      "uncover the thief's identity"
     ],
     "caused_by": [
       "E10"
     ],
-    "goal_type": "investigative"
-  },
-  {
-    "event_id": "E_b2",
-    "description": "The Fox breaks into The Patron's mansion to gather evidence of their suspected double-cross",
-    "characters": [
-      "The Fox",
-      "The Patron"
-    ],
-    "goals": [
-      "verify The Patron's intentions",
-      "protect oneself"
-    ],
-    "caused_by": [
-      "E9"
-    ],
-    "goal_type": "precautionary"
-  },
-  {
-    "event_id": "E_b3",
-    "description": "The Fox discovers a hidden safe in The Patron's mansion containing documents revealing a network of illicit collectors",
-    "characters": [
-      "The Fox",
-      "The Patron"
-    ],
-    "goals": [
-      "uncover The Patron's true intentions"
-    ],
-    "caused_by": [
-      "E_b2"
-    ],
     "goal_type": "investigation"
   },
   {
-    "event_id": "E_b4",
-    "description": "Clara tracks down a former associate of The Fox, who provides her with a lead on The Fox's possible whereabouts",
+    "event_id": "E_b2",
+    "description": "Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft",
     "characters": [
       "Clara",
-      "The Fox's associate"
+      "museum staff"
     ],
     "goals": [
-      "catch The Fox",
-      "recover the stolen manuscript"
+      "identify the accomplice"
     ],
     "caused_by": [
       "E_b1"
@@ -203,33 +174,35 @@
     "goal_type": "investigation"
   },
   {
-    "event_id": "E_b5",
-    "description": "Clara follows the lead to an abandoned warehouse on the outskirts of town",
+    "event_id": "E_b3",
+    "description": "Clara identifies a discrepancy in the staff member's alibi",
     "characters": [
-      "Clara"
+      "Clara",
+      "museum staff member"
     ],
     "goals": [
-      "Track down The Fox"
+      "investigate theft",
+      "uncover accomplice"
     ],
     "caused_by": [
-      "E_b4"
+      "E_b2"
     ],
-    "goal_type": "Investigation"
+    "goal_type": "investigative"
   },
   {
-    "event_id": "E_b6",
-    "description": "The Fox sets a trap for Clara at the warehouse, anticipating her arrival",
+    "event_id": "E_b4",
+    "description": "Clara obtains security footage of the staff member's suspicious activity",
     "characters": [
-      "The Fox",
-      "Clara"
+      "Clara",
+      "security team"
     ],
     "goals": [
-      "Protect identity",
-      "Capture Clara"
+      "gather evidence",
+      "build case against accomplice"
     ],
     "caused_by": [
-      "E_b4"
+      "E_b3"
     ],
-    "goal_type": "Confrontation"
+    "goal_type": "evidential"
   }
 ]
