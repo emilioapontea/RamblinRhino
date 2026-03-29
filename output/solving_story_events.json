@@ -1,0 +1,152 @@
+[
+  {
+    "event_id": "E11",
+    "description": "Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft.",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "identify a suspect"
+    ],
+    "caused_by": [
+      "E_b4"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E12",
+    "description": "Clara interviews the staff member, who provides an alibi that Clara suspects is false.",
+    "characters": [
+      "Clara",
+      "staff member"
+    ],
+    "goals": [
+      "verify the staff member's alibi"
+    ],
+    "caused_by": [
+      "E11"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E13",
+    "description": "Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency.",
+    "characters": [
+      "Clara",
+      "staff member"
+    ],
+    "goals": [
+      "confront the suspect"
+    ],
+    "caused_by": [
+      "E12"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E14",
+    "description": "The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind.",
+    "characters": [
+      "Clara",
+      "staff member"
+    ],
+    "goals": [
+      "uncover the mastermind's identity"
+    ],
+    "caused_by": [
+      "E13"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E15",
+    "description": "Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer.",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "track down the black market dealer"
+    ],
+    "caused_by": [
+      "E14"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E16",
+    "description": "Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript.",
+    "characters": [
+      "Clara",
+      "police"
+    ],
+    "goals": [
+      "recover the stolen manuscript"
+    ],
+    "caused_by": [
+      "E15"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E17",
+    "description": "The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person.",
+    "characters": [
+      "Clara",
+      "police",
+      "black market dealer"
+    ],
+    "goals": [
+      "recover the stolen manuscript"
+    ],
+    "caused_by": [
+      "E16"
+    ],
+    "goal_type": "obstruct"
+  },
+  {
+    "event_id": "E18",
+    "description": "The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity.",
+    "characters": [
+      "Clara",
+      "police",
+      "black market dealer"
+    ],
+    "goals": [
+      "recover the stolen manuscript"
+    ],
+    "caused_by": [
+      "E17"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E19",
+    "description": "Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity.",
+    "characters": [
+      "Clara",
+      "police",
+      "private collector"
+    ],
+    "goals": [
+      "recover the stolen manuscript"
+    ],
+    "caused_by": [
+      "E18"
+    ],
+    "goal_type": "resolve"
+  },
+  {
+    "event_id": "E20",
+    "description": "The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact.",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "solve the case"
+    ],
+    "caused_by": [
+      "E19"
+    ],
+    "goal_type": "resolve"
+  }
+]

@@ -86,7 +86,7 @@ class LLMClient:
         })
 
     ## Engagement Phase
-    def generate_plot_events(
+    def generate_crime_plot_events(
         self,
         premise: str,
         num_events: int = 8,
@@ -96,10 +96,37 @@ class LLMClient:
         user_prompt = _build_engagement_prompt(
             premise, num_events, existing_events, genre
         )
-        raw = self._complete(_ENGAGEMENT_SYSTEM_PROMPT, user_prompt)
-        events = _parse_plot_events(raw)
+        events, raw = self._complete_events_with_repair(
+            system=_ENGAGEMENT_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            label="crime-story call",
+        )
         if self.verbose or len(events) == 0:
-            print(f"[LLMClient] parsed {len(events)} events from engagement call")
+            print(f"[LLMClient] parsed {len(events)} events from crime-story call")
+            if len(events) == 0:
+                print(f"[LLMClient] raw response (first 500 chars):\n{raw[:500]}")
+        return events
+
+    def generate_solving_plot_events(
+        self,
+        premise: str,
+        existing_events: list[PlotEvent],
+        num_events: int = 8,
+        genre: str = "crime mystery",
+    ) -> list[PlotEvent]:
+        user_prompt = _build_solving_prompt(
+            premise=premise,
+            num_events=num_events,
+            existing_events=existing_events,
+            genre=genre,
+        )
+        events, raw = self._complete_events_with_repair(
+            system=_ENGAGEMENT_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            label="solving call",
+        )
+        if self.verbose or len(events) == 0:
+            print(f"[LLMClient] parsed {len(events)} events from solving call")
             if len(events) == 0:
                 print(f"[LLMClient] raw response (first 500 chars):\n{raw[:500]}")
         return events
@@ -114,8 +141,12 @@ class LLMClient:
         user_prompt = _build_reflection_prompt(
             gap_description, story_so_far, insert_after_event_id
         )
-        raw = self._complete(_REFLECTION_SYSTEM_PROMPT, user_prompt)
-        return _parse_plot_events(raw)
+        events, _ = self._complete_events_with_repair(
+            system=_REFLECTION_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            label="reflection call",
+        )
+        return events
 
     ## Prose Generation, produces a long, plot-point-labeled story
     def generate_prose(
@@ -239,6 +270,36 @@ class LLMClient:
                 time.sleep(self.request_delay)
         raise RuntimeError(f"[LLMClient] All {retries} attempts failed.")
 
+    def _complete_events_with_repair(
+        self,
+        system: str,
+        user_prompt: str,
+        label: str,
+        parse_retries: int = 2,
+    ) -> tuple[list[PlotEvent], str]:
+        raw = self._complete(system, user_prompt)
+        events = _parse_plot_events(raw)
+        if events:
+            return events, raw
+
+        repair_prompt = (
+            user_prompt
+            + "\n\nYour previous response was not valid JSON."
+            + "\nReturn ONLY a valid JSON array."
+            + "\nEvery string value must be wrapped in double quotes."
+            + "\nDo not include markdown, comments, or explanation."
+            + "\nDo not leave any trailing commas."
+        )
+
+        for attempt in range(1, parse_retries + 1):
+            print(f"[LLMClient] Retrying {label} with stricter JSON formatting (attempt {attempt}/{parse_retries})")
+            raw = self._complete(system, repair_prompt)
+            events = _parse_plot_events(raw)
+            if events:
+                return events, raw
+
+        return [], raw
+
 
 ## Prompt Templates
 _ENGAGEMENT_SYSTEM_PROMPT = """\
@@ -269,21 +330,27 @@ def _build_engagement_prompt(
     context = ""
     if existing_events:
         last_id = existing_events[-1].event_id
-        context = f"Events generated so far (last event_id was {last_id}):\n"
+        context = f"Crime-story events generated so far (last event_id was {last_id}):\n"
         for ev in existing_events:
             context += f"  [{ev.event_id}] {ev.description}\n"
-        context += "\nContinue the story from the last event above.\n"
+        context += "\nContinue the crime story from the last event above.\n"
 
     return f"""\
 Genre: {genre}
 Premise: {premise}
 {context}
-Generate exactly {num_events} new plot events.
+Generate exactly {num_events} new CRIME STORY plot events.
+
+The crime story should focus on:
+- the crime itself
+- How the crime is committed by the perpetrator(s).
+- The detail of the act and the method used.
 
 Rules:
 - One sentence per event, abstract plot level only
 - Chronologically ordered and causally plausible
-- Identify characters involved
+- Prioritize the concealement and the perpetrators motives
+- Identify perpetrator characters involved
 - Note any story goals this event initiates, resolves, or obstructs
 - List which prior event_id(s) causally enable this event
 
@@ -295,7 +362,7 @@ Your response must be ONLY a JSON array. Each element must have exactly these fi
   "caused_by": list of event_id strings that enable this event ([] for the first event)
   "goal_type": "initiate" or "resolve" or "obstruct" or null
 
-Example of correct output format:
+Example of correct output format, note only the output format and not the actual text in description:
 [
   {{
     "event_id": "E1",
@@ -315,7 +382,7 @@ Example of correct output format:
   }}
 ]
 
-Now generate exactly {num_events} events in that format:"""
+Now generate exactly {num_events} crime-story events in that format:"""
 
 
 def _build_reflection_prompt(
@@ -348,6 +415,70 @@ Your response must be ONLY a JSON array using the same schema:
   "caused_by", "goal_type"
 
 Output only the JSON array, nothing else:"""
+
+
+def _build_solving_prompt(
+    premise: str,
+    num_events: int,
+    existing_events: list[PlotEvent],
+    genre: str,
+) -> str:
+    context = "Crime-story events generated so far:\n"
+    for ev in existing_events:
+        context += f"  [{ev.event_id}] {ev.description}\n"
+
+    return f"""\
+Genre: {genre}
+Premise: {premise}
+{context}
+
+Generate exactly {num_events} new SOLVING STORY plot events.
+These events should continue directly from the existing crime-story events and focus on:
+- the investigation
+- the intellectual pursuit of justice
+- the methodical breakdown of evidence by detectives, investigators, or law enforcement
+- deduction, interviews, evidence analysis, confrontation, revelation, and case resolution
+
+Rules:
+- One sentence per event, abstract plot level only
+- Chronologically ordered and causally plausible
+- Continue from the last existing event above
+- Prioritize clues, evidence, inference, suspects, procedure, proof, and justice
+- Identify characters involved
+- Note any story goals this event initiates, resolves, or obstructs
+- List which prior event_id(s) causally enable this event
+- Every string value must be enclosed in double quotes
+- Output valid JSON only
+
+Your response must be ONLY a JSON array. Each element must have exactly these fields:
+  "event_id": string (continue numbering from the existing events)
+  "description": one-sentence abstract event
+  "characters": list of character name strings
+  "goals": list of short goal-phrase strings
+  "caused_by": list of event_id strings that enable this event
+  "goal_type": "initiate" or "resolve" or "obstruct" or null
+
+Example:
+[
+  {{
+    "event_id": "E11",
+    "description": "Detective Mora compares the museum security logs with witness timelines and identifies a gap matching the theft window.",
+    "characters": ["Detective Mora", "Clara"],
+    "goals": ["identify the thief's entry route"],
+    "caused_by": ["E10"],
+    "goal_type": "initiate"
+  }},
+  {{
+    "event_id": "E12",
+    "description": "Clara shows Detective Mora the manuscript's hidden-compartment notes, giving the investigation a motive tied to the map's secret.",
+    "characters": ["Clara", "Detective Mora"],
+    "goals": ["explain the theft motive"],
+    "caused_by": ["E11"],
+    "goal_type": "initiate"
+  }}
+]
+
+Now generate exactly {num_events} solving-phase events in that format:"""
 
 
 ## The JSON Parser

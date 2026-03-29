@@ -31,6 +31,10 @@ Our system uses the free tier of the Groq API. To get a Groq API key:
 4. In llm_api_wrapper.py, replace API_KEY_HERE with your API key, so that it reads:
 > python GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "gsk_YOUR_KEY_HERE
 
+or in terminal enter:
+```bash
+export GROQ_API_KEY="YOUR_GROQ_API_KEY"
+```
 ## How to Run the System
 Run 'python main_system_script.py' in the terminal.
 ### With a custom premise and genre:
@@ -167,699 +171,688 @@ c()
 
 > Premise: "A small-town archivist discovers that a priceless 18th-century manuscript has been stolen from the local museum the night before its auction. She is the only one who knows what was truly hidden inside it."
 
+python main_system_script.py --output-dir ./output
+
 ════════════════════════════════════════════════════════════
   RAMBLING RHINO: Story Generation System
   Team Rambling Rhino | Reader-Model-Driven Generation
 ════════════════════════════════════════════════════════════
   Premise : A small-town archivist discovers that a priceless [...]
   Genre   : crime mystery
-  Events  : 20 × 1 batch(es)
+  Events  : 20 total (10 crime + 10 solving)
+  Batches : 1 per event phase
   Reflect : 2 pass(es)
 
 ════════════════════════════════════════════════════════════
-PHASE 1: ENGAGEMENT
+PHASE 1: CRIME STORY EVENTS
 ════════════════════════════════════════════════════════════
 
-[Engagement batch 1/1]
-  Generated 20 events (total: 20)
+[Crime story batch 1/1]
+  Generated 10 events (crime story total: 10)
 
-Engagement complete: 20 plot events.
+Crime story generation complete: 10 plot events.
 
 Current event list:
-  [E1] (SETUP) The archivist arrives at the museum and finds the display case shattered.
-  [E2] (INCITING INCIDENT) Clara realizes the priceless manuscript is missing.
+  [E1] (SETUP) The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours.
+  [E2] (INCITING INCIDENT) The thief uses a custom-made lockpick to bypass the display case's security lock.
            caused_by: ['E1']
-  [E3] (RISING ACTION) Clara informs the museum director about the theft.
+  [E3] (RISING ACTION) The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment.
            caused_by: ['E2']
-  [E4] (RISING ACTION) The police are called to the museum to investigate the crime scene.
+  [E4] (RISING ACTION) A small, valuable item is found hidden within the manuscript, which was the true target of the theft.
            caused_by: ['E3']
-  [E5] (RISING ACTION) Clara remembers that she was the last person to handle the manuscript the previous day.        
+  [E5] (MIDPOINT) The thief escapes the museum without triggering any alarms, using a pre-planned route.
            caused_by: ['E4']
-  [E6] (RISING ACTION) Clara reveals to the police that the manuscript had hidden notes and codes.
+  [E6] (MIDPOINT) The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.
            caused_by: ['E5']
-  [E7] (RISING ACTION) The police officer asks Clara to explain the significance of the hidden notes.
+  [->E7] (MIDPOINT) Clara realizes that the thief must have had inside help to bypass the museum's security system.
            caused_by: ['E6']
-  [E8] (RISING ACTION) Clara hesitates to share the full extent of her knowledge about the manuscript.
+  [E8] (COMPLICATIONS) Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft.
            caused_by: ['E7']
-  [E9] (MIDPOINT) The police officer suspects that Clara might be hiding something.
-           caused_by: ['E8']
-  [E10] (MIDPOINT) Clara decides to search the museum's archives for any clues about the theft.
-           caused_by: ['E9']
-  [E11] (MIDPOINT) Clara discovers a cryptic message in an old museum logbook.
-           caused_by: ['E10']
-  [E12] (MIDPOINT) The cryptic message leads Clara to a hidden room in the museum's basement.
-           caused_by: ['E11']
-  [E13] (MIDPOINT) In the hidden room, Clara finds a set of old letters and documents related to the manuscript.      
-           caused_by: ['E12']
-  [E14] (MIDPOINT) The documents reveal a centuries-old conspiracy surrounding the manuscript.
-           caused_by: ['E13']
-  [E15] (COMPLICATIONS) Clara realizes that she is in danger due to her knowledge about the manuscript.
-           caused_by: ['E14']
-  [E16] (COMPLICATIONS) Clara decides to confide in the museum director about her findings.
-           caused_by: ['E15']
-  [E17] (COMPLICATIONS) The museum director reveals that he has been receiving threatening messages about the manuscript.
-           caused_by: ['E16']
-  [E18] (COMPLICATIONS) Clara and the museum director agree to work together to uncover the truth.
-           caused_by: ['E17']
-  [E19] (CLIMAX) The police officer returns to the museum with a surprising lead about the thief's identity.
-           caused_by: ['E18']
-  [E20] (RESOLUTION) Clara, the museum director, and the police officer devise a plan to catch the thief and recover the manuscript.
-           caused_by: ['E19']
+  [E9] (CLIMAX) The thief, now in possession of the valuable item, contacts a potential buyer on the black market.
+           caused_by: ['E5']
+  [E10] (RESOLUTION) Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript.
+           caused_by: ['E6', 'E8']
 
-KnowledgeGraph: KnowledgeGraph(nodes=119, edges=179, by_source={'domain': 70, 'text': 109})
+KnowledgeGraph: KnowledgeGraph(nodes=64, edges=87, by_source={'domain': 36, 'text': 51})
 
 ════════════════════════════════════════════════════════════
-PHASE 2: REFLECTION
+PHASE 2: REFLECTION (crime story)
+════════════════════════════════════════════════════════════
+
+[Reflection pass 1/2]
+  ComplexityChecker found 1 issue(s):
+    - Story has only 10 plot events — aim for at least 15 for a full narrative.
+
+  Repairing: Story has only 10 plot events — aim for at least 15 for a full narrative.
+    + Added [E_b1]: Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff
+    + Added [E_b2]: Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft
+
+KnowledgeGraph: KnowledgeGraph(nodes=73, edges=102, by_source={'domain': 43, 'text': 59})
+
+[Reflection pass 2/2]
+  ComplexityChecker found 1 issue(s):
+    - Story has only 12 plot events — aim for at least 15 for a full narrative.
+
+  Repairing: Story has only 12 plot events — aim for at least 15 for a full narrative.
+    + Added [E_b3]: Clara identifies a discrepancy in the staff member's alibi
+    + Added [E_b4]: Clara obtains security footage of the staff member's suspicious activity
+
+KnowledgeGraph: KnowledgeGraph(nodes=87, edges=120, by_source={'domain': 53, 'text': 67})
+
+Reflection complete: 14 total events.
+
+KnowledgeGraph: KnowledgeGraph(nodes=87, edges=120, by_source={'domain': 53, 'text': 67})
+
+════════════════════════════════════════════════════════════
+PHASE 3: SOLVING STORY EVENTS
+════════════════════════════════════════════════════════════
+
+[Solving batch 1/1]
+  Generated 10 events (solving story total: 10)
+
+Solving story generation complete: 10 plot events.
+
+Current event list:
+  [E11] (SETUP) Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft.
+           caused_by: ['E_b4']
+  [E12] (INCITING INCIDENT) Clara interviews the staff member, who provides an alibi that Clara suspects is false.
+           caused_by: ['E11']
+  [E13] (RISING ACTION) Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency.
+           caused_by: ['E12']
+  [E14] (RISING ACTION) The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind.
+           caused_by: ['E13']
+  [E15] (MIDPOINT) Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer.
+           caused_by: ['E14']
+  [E16] (MIDPOINT) Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript.
+           caused_by: ['E15']
+  [E17] (MIDPOINT) The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person.
+           caused_by: ['E16']
+  [E18] (COMPLICATIONS) The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity.
+           caused_by: ['E17']
+  [E19] (CLIMAX) Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity.
+           caused_by: ['E18']
+  [E20] (RESOLUTION) The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact.
+           caused_by: ['E19']
+
+KnowledgeGraph: KnowledgeGraph(nodes=137, edges=202, by_source={'domain': 93, 'text': 109})
+
+════════════════════════════════════════════════════════════
+PHASE 4: REFLECTION (solving)
 ════════════════════════════════════════════════════════════
 
 [Reflection pass 1/2]
   ComplexityChecker: all requirements satisfied — story is QUEST-coherent.
 
-Reflection complete: 20 total events.
+Reflection complete: 24 total events.
 
 ════════════════════════════════════════════════════════════
-PHASE 3: PROSE GENERATION
+PHASE 5: STORY GENERATION
 ════════════════════════════════════════════════════════════
-  Generating story from 20 plot events...
+  Generating story from 24 plot events...
 
 ════════════════════════════════════════════════════════════
 GENERATED STORY
 ════════════════════════════════════════════════════════════
 
 ────────────────────────────────────────────────────────────
---- Plot Point 1: The archivist arrives at the museum and finds the display case shattered. ---
+--- Plot Point 1: The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours. ---
 ────────────────────────────────────────────────────────────
-The morning sunlight streaming through the museum's grand entrance
-highlighted the shattered remains of the display case. Emma, the
-archivist, stood frozen, her eyes fixed on the devastation before her.
-She had been the first to arrive at the museum that day, and the eerie
-silence was only broken by the sound of her own ragged breathing. The
-display case had been a sturdy, state-of-the-art model, designed to
-protect the priceless artifacts within. Now, it lay in pieces, its
-fragments scattered across the floor like a puzzle waiting to be solved.
-Emma's mind racing, she wondered what could have caused such
-destruction.
+The night before the auction, the museum was quiet, the only sound being
+the soft hum of the security systems. A figure, dressed in a janitor's
+uniform, slipped through the shadows, avoiding the few security cameras
+that were still active. The thief, known only by their alias, "The Fox,"
+had been planning this heist for months, studying the museum's security
+protocols and waiting for the perfect moment to strike. With a confident
+smile, The Fox made their way to the display case, their eyes fixed on
+the prized manuscript that lay within.
 
-As she approached the display case, Emma noticed that the area around it
-was undisturbed, with no signs of forced entry or struggle. It was as if
-the perpetrator had been someone with access to the museum, someone who
-had carefully planned and executed the theft. Emma's thoughts turned to
-the manuscript that had been on display, a rare and valuable historical
-document. She knew that the manuscript was not only a significant
-artifact but also a treasure that could be worth a fortune on the black
-market.
+The museum's staff had long since gone home, leaving The Fox to work
+uninterrupted. The janitor's uniform was a clever disguise, allowing The
+Fox to blend in with the museum's maintenance crew. As they worked, The
+Fox's mind was focused on the task at hand, their movements swift and
+precise.
 
-The museum's security team was already on its way to assess the
-situation, but Emma couldn't shake off the feeling that something was
-off. She decided to inform the museum staff and start an investigation
-into the theft. Emma's first priority was to secure the area and prevent
-any further damage. She carefully made her way around the broken glass
-and debris, taking note of any potential clues that might have been left
-behind.
+The darkness of the museum seemed to swallow The Fox whole, but they
+moved with ease, their senses heightened. The air was thick with the
+scent of old books and dust, a familiar smell that The Fox had grown to
+love. With each step, The Fox drew closer to their goal, their heart
+beating with anticipation.
 
-As she waited for the security team to arrive, Emma couldn't help but
-think about the potential consequences of the theft. The manuscript was
-not only a valuable artifact but also a significant part of the museum's
-collection. Its loss would be felt by the entire museum community, and
-Emma felt a sense of responsibility to ensure that it was recovered.
+The display case loomed before them, its glass surface glinting in the
+dim light. The Fox's eyes locked onto the manuscript, their prize, and
+with a steady hand, they set to work.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 2: Clara realizes the priceless manuscript is missing. ---
+--- Plot Point 2: The thief uses a custom-made lockpick to bypass the display case's security lock. ---
 ────────────────────────────────────────────────────────────
-Clara, the museum's curator, was the first to arrive at the scene,
-followed closely by the security team. Emma briefed her on the
-situation, and Clara's eyes widened as she took in the extent of the
-damage. She rushed to the display case, her heart sinking as she
-realized that the manuscript was indeed missing. The manuscript, a rare
-and historic document, was one of the museum's most prized possessions.
-Clara felt a wave of panic wash over her as she thought about the
-implications of the theft.
+The Fox pulled out a custom-made lockpick, its slender shape glinting in
+the dim light. With a deft touch, The Fox inserted the lockpick into the
+display case's security lock, feeling for the subtle clicks that would
+signal the lock's release. The mechanism was complex, but The Fox had
+spent months studying its intricacies, practicing the delicate dance of
+lockpicking until it became second nature.
 
-Clara's mind racing, she began to think about the last time she had seen
-the manuscript. She had been working late the previous day, preparing
-for an upcoming exhibit, and had stopped by the display case to make
-sure everything was in order. The manuscript had been there, safely
-nestled in its case, and Clara had locked the display case herself
-before leaving for the day. She was certain that she had followed the
-standard security protocols, but now the manuscript was gone.
+As the lock disengaged, The Fox felt a thrill of excitement. The display
+case's security system was state-of-the-art, but The Fox had anticipated
+this, designing the lockpick specifically to bypass its safeguards. With
+a soft click, the lock released, and The Fox swung the case open,
+revealing the manuscript in all its glory.
 
-As the security team began to assess the situation, Clara couldn't help
-but think about the potential suspects. She knew that the museum had a
-number of employees and volunteers who had access to the display case,
-but she couldn't imagine any of them being capable of such a crime.
-Clara decided to inform the museum director about the theft and start an
-investigation into the disappearance of the manuscript.
-
-The museum's security team was well-equipped to handle the situation,
-but Clara knew that they would need to involve the police to ensure that
-the manuscript was recovered. She made a mental note to contact the
-police department and report the theft as soon as possible. Clara's
-primary concern was the safe return of the manuscript, and she was
-willing to do whatever it took to make that happen.
+The Fox's eyes feasted on the manuscript's yellowed pages, the intricate
+script a testament to the craftsmanship of a bygone era. For a moment,
+The Fox forgot about the theft, lost in the beauty of the artifact. But
+the moment passed, and with a swift motion, The Fox reached in and
+claimed the manuscript as their own.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 3: Clara informs the museum director about the theft. ---
+--- Plot Point 3: The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment. ---
 ────────────────────────────────────────────────────────────
-Clara quickly made her way to the museum director's office, her heart
-heavy with the news. She found the director, Mr. Jenkins, sitting at his
-desk, sipping a cup of coffee. Clara took a deep breath and broke the
-news, trying to remain calm and composed. Mr. Jenkins's expression
-changed from calm to shocked as Clara explained the situation. He
-listened intently, his eyes widening as he realized the significance of
-the theft.
+With the manuscript in hand, The Fox carefully opened the display case,
+revealing a hidden compartment that lay beneath. The compartment was
+small, barely large enough to hold a few sheets of paper, but The Fox
+knew that it was here that the true treasure lay. As they reached in,
+their fingers closed around a small, valuable item that had been hidden
+within the manuscript.
 
-Mr. Jenkins immediately sprang into action, calling the museum's
-security team to assemble an emergency meeting. He instructed Clara to
-inform the police about the theft and to request their assistance in
-recovering the manuscript. Clara nodded, relieved that the director was
-taking the situation seriously. As she left the director's office, Clara
-couldn't help but feel a sense of unease. The theft of the manuscript
-was not only a crime but also a personal betrayal.
+The item was a tiny, leather-bound book, adorned with strange symbols
+and markings. The Fox's eyes widened as they realized the significance
+of their find. This was no ordinary book, but a rare and valuable
+artifact that would fetch a handsome price on the black market.
 
-The museum's staff was in an uproar, with everyone trying to make sense
-of the situation. Clara knew that she had to remain focused and work
-with the police to recover the manuscript. She decided to start by
-reviewing the museum's security footage and interviewing the staff
-members who had been on duty the previous day. Clara was determined to
-get to the bottom of the theft and to bring the perpetrator to justice.
-
-As the investigation began, Clara couldn't help but think about the
-potential consequences of the theft. The manuscript was not only a
-valuable artifact but also a significant part of the museum's
-collection. Its loss would be felt by the entire museum community, and
-Clara felt a sense of responsibility to ensure that it was recovered.
-She was determined to work tirelessly to solve the case and to bring the
-manuscript back to its rightful home.
+The Fox's heart racing with excitement, they carefully placed the
+manuscript and the leather-bound book into a specially designed bag,
+taking care not to damage either artifact. As they sealed the bag, The
+Fox felt a sense of pride and accomplishment, knowing that they had
+pulled off the impossible.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 4: The police are called to the museum to investigate the crime scene. ---
+--- Plot Point 4: A small, valuable item is found hidden within the manuscript, which was the true target of the theft. ---
 ────────────────────────────────────────────────────────────
-The police arrived at the museum, and Clara met with the lead
-investigator, Detective James. She explained the situation, and
-Detective James listened intently, taking notes and asking questions.
-The detective was a seasoned professional, with years of experience in
-solving crimes. Clara felt a sense of relief knowing that the police
-were involved and that they would do everything in their power to
-recover the manuscript.
+The leather-bound book was the true target of the theft, a rare and
+valuable artifact that The Fox had been hired to steal. The manuscript,
+while valuable in its own right, was merely a distraction, a way to
+throw the museum's security team off The Fox's trail. As The Fox held
+the book, they felt a sense of satisfaction, knowing that they had
+completed their mission.
 
-Detective James began by surveying the crime scene, taking in the
-details of the shattered display case and the surrounding area. He asked
-Clara and the museum staff questions about the security protocols and
-the last time the manuscript had been seen. As the investigation
-continued, Clara couldn't help but feel a sense of unease. The theft of
-the manuscript was not only a crime but also a personal betrayal.
+The book was small, but its significance was immense. It was said to
+contain secrets and knowledge that had been lost for centuries, and The
+Fox knew that it would fetch a handsome price on the black market. With
+the book safely in hand, The Fox made their way back through the museum,
+avoiding the security cameras and alarms with ease.
 
-The police team worked efficiently, collecting evidence and interviewing
-witnesses. Clara watched as they carefully examined the display case and
-the surrounding area, looking for any clues that might have been left
-behind. She knew that the police had a difficult task ahead of them, but
-she was confident that they would do everything in their power to solve
-the case.
-
-As the investigation continued, Clara decided to start by reviewing the
-museum's security footage and interviewing the staff members who had
-been on duty the previous day. She worked closely with Detective James,
-providing him with any information that might be relevant to the case.
-Clara was determined to get to the bottom of the theft and to bring the
-perpetrator to justice.
+As they reached the exit, The Fox felt a sense of relief wash over them.
+The heist had been a success, and they had escaped undetected. But The
+Fox knew that the real challenge lay ahead, selling the book on the
+black market without getting caught.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 5: Clara remembers that she was the last person to handle the manuscript the previous day. ---
+--- Plot Point 5: The thief escapes the museum without triggering any alarms, using a pre-planned route. ---
 ────────────────────────────────────────────────────────────
-As Clara worked with Detective James, she suddenly remembered that she
-had been the last person to handle the manuscript the previous day. She
-had been working late, preparing for an upcoming exhibit, and had
-stopped by the display case to make sure everything was in order. Clara
-felt a wave of panic wash over her as she realized that she might have
-been the last person to see the manuscript before it was stolen.
+The Fox made their way back through the museum, using a pre-planned
+route to avoid the security cameras and alarms. They moved swiftly and
+silently, their senses on high alert as they navigated the dark and
+deserted halls. The Fox had spent months studying the museum's layout,
+planning the perfect escape route, and now they put that knowledge to
+use.
 
-Clara's mind racing, she tried to remember every detail of her actions
-the previous day. She had locked the display case herself, but she
-couldn't shake off the feeling that she might have forgotten something.
-Detective James noticed Clara's distress and asked her to explain. Clara
-took a deep breath and recounted her actions, trying to remember every
-detail.
+As they reached the exit, The Fox felt a sense of relief wash over them.
+They had pulled off the impossible, stealing the manuscript and the
+valuable item without triggering a single alarm. The Fox slipped out
+into the night, disappearing into the shadows as they made their way
+back to their safe house.
 
-As Clara spoke, Detective James listened intently, his eyes narrowing as
-he considered the information. He asked Clara to walk him through her
-actions, step by step, and Clara complied, trying to remember every
-detail. The detective's questions were thorough, and Clara felt a sense
-of relief knowing that he was taking her statement seriously.
-
-Clara's recollection of the previous day's events was crucial to the
-investigation. She knew that she had to be careful and accurate, as any
-mistake could compromise the case. Detective James's questions were
-designed to clarify the events surrounding the theft, and Clara did her
-best to provide him with the information he needed.
+The city was alive and bustling, but The Fox moved through it unnoticed,
+a ghostly figure in the darkness. They knew that the museum's security
+team would be on high alert, searching for any sign of the thief, but
+The Fox was confident that they had covered their tracks. With the
+manuscript and the valuable item safely in hand, The Fox disappeared
+into the night, ready to sell their prize on the black market.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 6: Clara reveals to the police that the manuscript had hidden notes and codes. ---
+--- Plot Point 6: The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft. ---
 ────────────────────────────────────────────────────────────
-As Clara continued to work with Detective James, she revealed that the
-manuscript had hidden notes and codes. The manuscript was a rare and
-historic document, and Clara had spent countless hours studying it. She
-had discovered that the manuscript contained hidden messages and codes,
-which were not immediately apparent to the casual observer.
+Clara arrived at the museum the next morning, eager to begin preparing
+for the auction. As she made her way to the display case, she noticed
+that something was off. The case was open, and the manuscript was gone.
+Clara's heart sank as she realized that the museum had been robbed.
 
-Detective James's eyes lit up with interest as Clara explained the
-significance of the hidden notes and codes. He asked her to elaborate,
-and Clara spent the next hour explaining the intricate details of the
-manuscript. The detective listened intently, his mind racing with the
-implications of the hidden messages.
+She quickly called the security team, reporting the theft and asking
+them to review the security footage. As she waited for the team to
+arrive, Clara couldn't help but feel a sense of responsibility for the
+theft. She had been in charge of preparing the manuscript for the
+auction, and now it was gone.
 
-The hidden notes and codes were a significant aspect of the manuscript,
-and Clara knew that they could hold the key to solving the case. She
-explained that the codes were complex and required a deep understanding
-of the manuscript's context. Detective James was fascinated by the
-complexity of the codes and asked Clara to provide him with more
-information.
-
-As Clara delved deeper into the world of the manuscript, she began to
-realize the significance of the hidden notes and codes. The codes were
-not only a product of the manuscript's creator but also a window into
-the past. Clara's knowledge of the manuscript and its secrets was
-crucial to the investigation, and she was determined to use her
-expertise to help solve the case.
+The security team arrived, and together they reviewed the footage,
+searching for any sign of the thief. But The Fox had been careful,
+avoiding the cameras and alarms with ease. Clara knew that she had a
+long day ahead of her, working to track down the thief and recover the
+stolen manuscript.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 7: The police officer asks Clara to explain the significance of the hidden notes. ---
+--- Plot Point 7: Clara realizes that the thief must have had inside help to bypass the museum's security system. ---
 ────────────────────────────────────────────────────────────
-Detective James asked Clara to explain the significance of the hidden
-notes and codes. Clara took a deep breath and began to explain the
-context of the manuscript and the significance of the codes. She told
-Detective James that the manuscript was a rare and historic document,
-written by a prominent historian in the 16th century. The historian had
-included the hidden notes and codes as a way of conveying secret
-information to his contemporaries.
+As Clara reviewed the security footage, she realized that the thief must
+have had inside help to bypass the museum's security system. The Fox had
+moved with ease, avoiding the cameras and alarms as if they had a
+detailed knowledge of the museum's layout. Clara's eyes narrowed as she
+thought about the possibilities.
 
-The codes, Clara explained, were a complex system of symbols and ciphers
-that required a deep understanding of the manuscript's context. She had
-spent countless hours studying the manuscript and had begun to decipher
-the codes. Clara's explanation was detailed and thorough, and Detective
-James listened intently, his eyes narrowing as he considered the
-information.
+She knew that the museum's security system was state-of-the-art, and it
+would have been impossible for The Fox to breach it without help. Clara
+began to think about the museum's staff, wondering if anyone could have
+been involved in the theft. She made a mental note to interview the
+staff members, looking for anyone who might have been acting
+suspiciously.
 
-As Clara spoke, Detective James asked questions, seeking to clarify the
-significance of the hidden notes and codes. He was fascinated by the
-complexity of the codes and the secrets they held. Clara's knowledge of
-the manuscript and its secrets was impressive, and Detective James was
-grateful for her expertise.
-
-The conversation between Clara and Detective James was intense and
-focused. They were both determined to solve the case, and they knew that
-the hidden notes and codes held the key. As they worked together, Clara
-felt a sense of relief knowing that she was not alone in her quest to
-recover the manuscript.
+The more Clara thought about it, the more she became convinced that The
+Fox had had inside help. The question was, who had helped them, and how
+had they managed to keep it a secret? Clara was determined to find out,
+and she began to make a list of suspects, starting with the museum's
+staff members.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 8: Clara hesitates to share the full extent of her knowledge about the manuscript. ---
+--- Plot Point 8: Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft. ---
 ────────────────────────────────────────────────────────────
-As Clara continued to explain the significance of the hidden notes and
-codes, she hesitated to share the full extent of her knowledge. She had
-spent years studying the manuscript, and she had uncovered some secrets
-that she was not sure she was ready to share. Detective James noticed
-Clara's hesitation and asked her to explain.
+Clara began to investigate the museum staff, looking for anyone who may
+have been involved in the theft. She started by interviewing the staff
+members, asking them about their whereabouts the night before. As she
+spoke to each person, Clara watched their body language, looking for any
+sign of nervousness or deception.
 
-Clara took a deep breath and explained that she had discovered some
-information that could be sensitive. She was not sure if she was ready
-to share it with Detective James, and she asked him to assure her that
-the information would be kept confidential. Detective James nodded, his
-expression serious, and Clara began to explain.
+The staff members seemed shaken by the theft, but Clara noticed that one
+of them, a quiet and reserved woman named Sarah, seemed particularly
+nervous. Clara made a mental note to speak to Sarah again, to ask her
+more questions about her whereabouts the night before.
 
-The information Clara shared was significant, and Detective James
-listened intently. He asked questions, seeking to clarify the details,
-and Clara provided him with the information he needed. As they worked
-together, Clara felt a sense of trust growing between them. She knew
-that she could rely on Detective James to keep her confidence.
-
-Clara's hesitation to share her knowledge was understandable. She had
-spent years studying the manuscript, and she had uncovered secrets that
-were not meant to be shared. However, she knew that she had to trust
-Detective James if she wanted to recover the manuscript. She took a deep
-breath and shared her knowledge, hoping that it would lead to a
-breakthrough in the case.
+As the day wore on, Clara continued to investigate, searching for any
+clues that might lead her to The Fox. She reviewed the security footage
+again, looking for any sign of the thief or their accomplice. Clara was
+determined to solve the case, and she was willing to do whatever it took
+to recover the stolen manuscript.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 9: The police officer suspects that Clara might be hiding something. ---
+--- Plot Point 9: The thief, now in possession of the valuable item, contacts a potential buyer on the black market. ---
 ────────────────────────────────────────────────────────────
-As Clara finished explaining the significance of the hidden notes and
-codes, Detective James looked at her with a piercing gaze. He suspected
-that Clara might be hiding something, and he asked her to assure him
-that she was telling him everything. Clara felt a wave of unease wash
-over her as she realized that Detective James did not entirely trust
-her.
+The Fox, now in possession of the valuable item, contacted a potential
+buyer on the black market. The buyer, a wealthy collector, was known for
+his love of rare and valuable artifacts, and The Fox knew that he would
+be interested in the leather-bound book. The Fox sent the collector a
+message, describing the book and its contents, and asking for a meeting
+to discuss the sale.
 
-Detective James's suspicions were understandable. Clara had hesitated to
-share her knowledge, and he had noticed that she seemed to be holding
-back. He asked her to explain, and Clara took a deep breath, trying to
-reassure him. She told him that she was committed to recovering the
-manuscript and that she would do everything in her power to help him
-solve the case.
+The collector was intrigued, and he agreed to meet with The Fox. They
+arranged to meet at a secure location, a warehouse on the outskirts of
+the city. The Fox was cautious, knowing that the collector could be a
+trap, but they were also confident in their ability to negotiate a good
+price.
 
-The conversation between Clara and Detective James was tense, with an
-undercurrent of suspicion. Clara knew that she had to be careful and
-transparent if she wanted to regain Detective James's trust. She took a
-deep breath and explained that she had been studying the manuscript for
-years and that she had uncovered some secrets that she was not sure she
-was ready to share.
-
-As they worked together, Clara felt a sense of unease growing between
-them. She knew that she had to be careful and transparent if she wanted
-to recover the manuscript. Detective James's suspicions were a reminder
-that she had to be vigilant and that she could not afford to make any
-mistakes.
+As The Fox waited for the meeting, they couldn't help but feel a sense
+of excitement. They had pulled off the impossible, stealing the
+manuscript and the valuable item, and now they were about to sell it to
+the highest bidder. The Fox knew that they would have to be careful, but
+they were confident in their ability to get away with the sale.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 10: Clara decides to search the museum's archives for any clues about the theft. ---
+--- Plot Point 10: Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript. ---
 ────────────────────────────────────────────────────────────
-Clara decided to search the museum's archives for any clues about the
-theft. She knew that the archives were a treasure trove of information,
-and she hoped to find something that would lead her to the manuscript.
-Detective James agreed, and together they began to search the archives,
-looking for any documents or records that might be relevant to the case.
+Clara discovered a cryptic message at the crime scene, a small piece of
+paper with a code written on it. The code was complex, but Clara was
+determined to crack it, knowing that it could lead her to The Fox's
+identity and the location of the stolen manuscript. She took the paper
+to the museum's cryptologist, who began to work on deciphering the code.
 
-The archives were a vast repository of information, with documents and
-records dating back centuries. Clara and Detective James worked
-tirelessly, searching through the shelves and boxes, looking for any
-clues that might have been left behind. As they worked, Clara explained
-the significance of the documents and records, providing Detective James
-with context and insight.
+As they worked, Clara couldn't help but feel a sense of excitement. She
+had been searching for a lead, and now she had one. The code was the key
+to unlocking the mystery of the theft, and Clara was determined to solve
+it.
 
-The search was painstaking, but Clara was determined to find something.
-She knew that the archives held the key to solving the case, and she was
-willing to do whatever it took to recover the manuscript. As they
-worked, Clara felt a sense of excitement growing. She was getting closer
-to solving the case, and she knew that she was on the right track.
-
-The archives were a labyrinth of information, with twists and turns that
-led to unexpected discoveries. Clara and Detective James worked
-together, following the trail of clues, and slowly but surely, they
-began to piece together the puzzle of the theft. Clara's knowledge of
-the archives and her expertise in the manuscript were invaluable, and
-Detective James relied on her to guide him through the complex web of
-information.
+The cryptologist worked tirelessly, using their knowledge of codes and
+ciphers to decipher the message. Finally, after hours of work, they
+cracked the code, revealing a message that read: "Look to the shadows
+for the truth." Clara's eyes narrowed as she thought about the message,
+wondering what it could mean.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 11: Clara discovers a cryptic message in an old museum logbook. ---
+--- Plot Point 11: Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff. ---
 ────────────────────────────────────────────────────────────
-As Clara and Detective James searched the archives, Clara stumbled upon
-an old museum logbook. She opened it, and as she flipped through the
-pages, she noticed a cryptic message scrawled in the margin. The message
-was dated several decades ago, and it read: "The truth lies in the
-shadows." Clara felt a shiver run down her spine as she realized that
-the message might be relevant to the case.
+Clara decoded the cryptic message, revealing a possible lead on The
+Fox's accomplice within the museum staff. The message had been a riddle,
+leading Clara to a specific staff member who had been acting
+suspiciously. Clara's eyes widened as she realized that the staff member
+was none other than Sarah, the quiet and reserved woman she had
+interviewed earlier.
 
-Clara showed the message to Detective James, and he raised an eyebrow.
-He asked her to explain the context of the message, and Clara told him
-that the logbook belonged to a former museum curator. The curator had
-been known for his eccentricities, and Clara suspected that he might
-have left behind a trail of clues.
+Clara felt a sense of excitement and trepidation as she realized that
+she had been on the right track all along. She had suspected that Sarah
+might be involved, and now she had proof. Clara decided to bring Sarah
+in for further questioning, to see if she could get to the bottom of the
+mystery.
 
-The message was cryptic, but Clara was determined to decipher its
-meaning. She spent the next hour poring over the logbook, looking for
-any other clues that might be hidden within its pages. As she worked,
-Detective James watched her, his eyes narrowed in concentration. He knew
-that Clara was close to something, and he was willing to follow her
-lead.
-
-The logbook was a treasure trove of information, with notes and
-observations that provided a glimpse into the past. Clara's discovery of
-the cryptic message was a breakthrough, and she knew that she was on the
-right track. She felt a sense of excitement growing, and she was
-determined to follow the trail of clues to its conclusion.
+As Clara prepared to confront Sarah, she couldn't help but feel a sense
+of unease. She had been working with Sarah for months, and she had
+always thought of her as a friend. But now, Clara wasn't so sure. She
+wondered if Sarah had been playing her all along, using their friendship
+to further her own goals.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 12: The cryptic message leads Clara to a hidden room in the museum's basement. ---
+--- Plot Point 12: Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft. ---
 ────────────────────────────────────────────────────────────
-The cryptic message led Clara to a hidden room in the museum's basement.
-She and Detective James made their way to the basement, following the
-trail of clues that Clara had uncovered. As they descended the stairs,
-Clara felt a sense of excitement growing. She knew that she was getting
-close to solving the case, and she was determined to see it through.
+Clara interviewed the museum staff members, gathering information about
+potential suspects and their alibis for the night of the theft. She
+started with Sarah, asking her about her whereabouts the night before.
+Sarah seemed nervous, but she provided a solid alibi, saying that she
+had been at home, alone.
 
-The hidden room was a small, cramped space that was hidden behind a
-false wall. Clara had never known that it existed, and she felt a sense
-of wonder as she stepped inside. The room was filled with old artifacts
-and documents, and Clara's eyes widened as she took in the treasure
-trove of information.
+Clara wasn't convinced, and she decided to investigate further. She
+spoke to the other staff members, asking them if they had seen or heard
+anything suspicious. One of the staff members mentioned that they had
+seen Sarah arguing with one of the security guards earlier that day.
+Clara's ears perked up as she heard this, wondering if there might be a
+connection between the argument and the theft.
 
-Detective James watched her, his eyes narrowed in concentration. He knew
-that Clara was close to something, and he was willing to follow her
-lead. As they searched the room, Clara stumbled upon a series of old
-letters and documents that seemed to be connected to the manuscript. She
-felt a sense of excitement growing, and she knew that she was on the
-right track.
-
-The hidden room was a revelation, and Clara felt a sense of awe as she
-explored its secrets. She knew that she had uncovered something
-significant, and she was determined to follow the trail of clues to its
-conclusion. As she worked, Detective James watched her, his eyes
-narrowed in concentration. He knew that Clara was close to solving the
-case, and he was willing to follow her lead.
+As Clara continued to investigate, she began to piece together a
+timeline of the events surrounding the theft. She discovered that Sarah
+had been in the museum late the night before, supposedly working on a
+project. But Clara wasn't sure if she believed this, and she decided to
+look deeper into Sarah's alibi.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 13: In the hidden room, Clara finds a set of old letters and documents related to the manuscript. ---  
+--- Plot Point 13: Clara identifies a discrepancy in the staff member's alibi. ---
 ────────────────────────────────────────────────────────────
-In the hidden room, Clara found a set of old letters and documents
-related to the manuscript. She spent hours poring over the letters,
-reading about the manuscript's history and the people who had handled it
-over the years. The letters were a treasure trove of information, and
-Clara felt a sense of excitement growing as she delved deeper into the
-documents.
+Clara identified a discrepancy in Sarah's alibi, a small inconsistency
+that suggested she might not have been telling the truth. Sarah had said
+that she was at home alone the night before, but Clara had discovered
+that Sarah's neighbor had seen her leaving her apartment around 10 pm.
+Clara's eyes narrowed as she thought about this, wondering what Sarah
+might have been doing.
 
-As she read, Clara discovered that the manuscript had been the subject
-of a centuries-old conspiracy. The letters revealed a web of secrets and
-lies that had surrounded the manuscript, and Clara's eyes widened as she
-realized the significance of her discovery. She felt a sense of awe as
-she realized that she had uncovered a piece of history that had been
-hidden for centuries.
+Clara decided to confront Sarah about the discrepancy, to see if she
+could get to the bottom of the mystery. She called Sarah into her
+office, asking her to explain the inconsistency in her alibi. Sarah
+seemed taken aback, but she tried to explain, saying that she had gone
+out for a walk to clear her head.
 
-The documents were a window into the past, and Clara felt a sense of
-wonder as she explored the secrets that they held. She spent hours
-reading and studying the documents, and as she did, she began to piece
-together the puzzle of the manuscript's history. Detective James watched
-her, his eyes narrowed in concentration, as Clara worked to unravel the
-mystery of the manuscript.
+Clara wasn't convinced, and she decided to press Sarah further. She
+asked her about the argument with the security guard, wondering if there
+might be a connection between the argument and the theft. Sarah seemed
+hesitant, but she eventually opened up, telling Clara about the argument
+and how it had been about a misunderstanding.
 
-The letters and documents were a significant discovery, and Clara knew
-that she had to share them with Detective James. She felt a sense of
-excitement growing as she realized that she was getting close to solving
-the case. She was determined to follow the trail of clues to its
-conclusion, and she was willing to do whatever it took to recover the
+
+────────────────────────────────────────────────────────────
+--- Plot Point 14: Clara obtains security footage of the staff member's suspicious activity. ---
+────────────────────────────────────────────────────────────
+Clara obtained security footage of Sarah's suspicious activity, a video
+that showed her entering the museum late the night before. The footage
+was grainy, but it clearly showed Sarah slipping into the museum,
+avoiding the security cameras. Clara's eyes widened as she watched the
+footage, realizing that she had finally found the proof she needed.
+
+The footage showed Sarah making her way to the display case, where she
+seemed to be waiting for someone. Clara's heart racing with excitement,
+she realized that Sarah must have been working with The Fox, helping
+them to steal the manuscript. Clara decided to confront Sarah about the
+footage, to see if she could get her to confess.
+
+As Clara prepared to confront Sarah, she couldn't help but feel a sense
+of satisfaction. She had been working on the case for days, and finally,
+she had found the break she needed. Clara was determined to solve the
+case, and she was willing to do whatever it took to recover the stolen
 manuscript.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 14: The documents reveal a centuries-old conspiracy surrounding the manuscript. ---
+--- Plot Point 15: Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft. ---
 ────────────────────────────────────────────────────────────
-The documents revealed a centuries-old conspiracy surrounding the
-manuscript. Clara's eyes widened as she realized the significance of her
-discovery. The conspiracy had involved some of the most powerful people
-in history, and Clara felt a sense of awe as she realized that she had
-uncovered a piece of history that had been hidden for centuries.
+Clara analyzed the security footage, discovering a staff member's
+suspicious activity near the display case on the night of the theft. The
+footage showed Sarah lingering around the case, glancing nervously at
+her watch. Clara's eyes narrowed as she thought about this, wondering
+what Sarah might have been waiting for.
 
-The documents told a story of secrets and lies, of people who had been
-willing to do whatever it took to possess the manuscript. Clara felt a
-sense of wonder as she explored the secrets that the documents held. She
-spent hours reading and studying the documents, and as she did, she
-began to piece together the puzzle of the manuscript's history.
+As Clara continued to analyze the footage, she noticed that Sarah seemed
+to be communicating with someone, using a series of subtle hand
+gestures. Clara's heart racing with excitement, she realized that Sarah
+must have been working with The Fox, helping them to steal the
+manuscript. Clara decided to enhance the footage, to see if she could
+get a better look at Sarah's accomplice.
 
-As Clara delved deeper into the documents, she realized that the
-conspiracy was still alive and well. She felt a sense of unease growing
-as she realized that she had stumbled into something much bigger than
-she had ever imagined. Detective James watched her, his eyes narrowed in
-concentration, as Clara worked to unravel the mystery of the manuscript.
-
-The conspiracy was a complex web of secrets and lies, and Clara knew
-that she had to be careful. She felt a sense of danger growing, and she
-knew that she had to be vigilant. She was determined to follow the trail
-of clues to its conclusion, and she was willing to do whatever it took
-to recover the manuscript.
+The enhanced footage revealed a shocking truth: Sarah had been working
+with one of the museum's security guards. Clara's eyes widened as she
+realized the extent of the betrayal, wondering how the guard could have
+been involved in the theft. Clara decided to bring the guard in for
+questioning, to see if she could get to the bottom of the mystery.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 15: Clara realizes that she is in danger due to her knowledge about the manuscript. ---
+--- Plot Point 16: Clara interviews the staff member, who provides an alibi that Clara suspects is false. ---
 ────────────────────────────────────────────────────────────
-Clara realized that she was in danger due to her knowledge about the
-manuscript. She felt a sense of unease growing as she realized that she
-had stumbled into something much bigger than she had ever imagined. The
-conspiracy was still alive and well, and Clara knew that she had to be
-careful.
+Clara interviewed the staff member, who provided an alibi that Clara
+suspected was false. The staff member, a quiet and reserved woman,
+seemed nervous and fidgety, avoiding eye contact. Clara's ears perked up
+as she listened to the alibi, wondering if the staff member was hiding
+something.
 
-As she delved deeper into the documents, Clara began to realize the
-significance of her discovery. She had uncovered a piece of history that
-had been hidden for centuries, and she knew that there were people who
-would stop at nothing to keep it that way. Clara felt a sense of fear
-growing, and she knew that she had to be vigilant.
+The staff member said that she had been at home, watching TV, at the
+time of the theft. But Clara noticed that the staff member seemed
+hesitant, and she decided to press her further. Clara asked the staff
+member about her whereabouts earlier that day, wondering if she might
+have been seen near the display case.
 
-Detective James watched her, his eyes narrowed in concentration, as
-Clara worked to unravel the mystery of the manuscript. He knew that
-Clara was in danger, and he was determined to protect her. Together,
-they began to work on a plan to keep Clara safe and to recover the
-manuscript.
-
-The danger was real, and Clara knew that she had to be careful. She felt
-a sense of unease growing, and she knew that she had to trust Detective
-James to keep her safe. Clara was determined to follow the trail of
-clues to its conclusion, and she was willing to do whatever it took to
-recover the manuscript.
+The staff member seemed taken aback, but she tried to explain, saying
+that she had been on a break. Clara wasn't convinced, and she decided to
+investigate further. She asked the staff member about her relationship
+with the security guard, wondering if there might be a connection
+between them.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 16: Clara decides to confide in the museum director about her findings. ---
+--- Plot Point 17: Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency. ---
 ────────────────────────────────────────────────────────────
-Clara decided to confide in the museum director about her findings. She
-knew that she had to trust someone, and the museum director was the
-obvious choice. Clara made her way to the director's office, her heart
-pounding in her chest. She took a deep breath and explained everything,
-from the cryptic message to the centuries-old conspiracy.
+Clara discovered a discrepancy in the staff member's alibi and
+confronted them about the inconsistency. The staff member seemed taken
+aback, but they tried to explain, saying that they had forgotten to
+mention a trip to the store. Clara's eyes narrowed as she thought about
+this, wondering if the staff member was telling the truth.
 
-The museum director listened, his eyes widening in surprise. He asked
-Clara to explain, and she told him about the documents she had found and
-the secrets they held. The director's expression changed from surprise
-to concern, and Clara knew that he understood the significance of her
-discovery.
+Clara decided to press the staff member further, to see if she could get
+to the bottom of the mystery. She asked the staff member about their
+relationship with the security guard, wondering if there might be a
+connection between them. The staff member seemed hesitant, but they
+eventually opened up, telling Clara about their friendship.
 
-The museum director was a man of integrity, and Clara knew that she
-could trust him. He listened intently, his eyes narrowed in
-concentration, as Clara explained the danger she was in. He promised to
-do everything in his power to keep her safe and to help her recover the
-manuscript.
-
-As Clara left the director's office, she felt a sense of relief growing.
-She knew that she had made the right decision in confiding in the
-director. Together, they would work to unravel the mystery of the
-manuscript and to bring the perpetrator to justice.
+Clara's ears perked up as she listened to the staff member's story,
+wondering if she might be getting close to the truth. She decided to
+investigate further, to see if she could find any evidence of a
+connection between the staff member and the security guard. Clara's
+heart racing with excitement, she realized that she might be on the
+verge of solving the case.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 17: The museum director reveals that he has been receiving threatening messages about the manuscript. ---
+--- Plot Point 18: The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind. ---
 ────────────────────────────────────────────────────────────
-The museum director revealed that he had been receiving threatening
-messages about the manuscript. Clara's eyes widened in surprise as she
-realized that the director had been keeping secrets of his own. The
-director explained that he had been receiving messages, warning him to
-keep quiet about the manuscript and its secrets.
+The staff member cracked under pressure and revealed their involvement
+in the theft, but claimed they were coerced by the true mastermind.
+Clara's eyes widened as she listened to the staff member's confession,
+realizing that she had finally found a break in the case.
 
-Clara felt a sense of fear growing as she realized that the conspiracy
-was more extensive than she had ever imagined. The director's revelation
-added a new layer of complexity to the case, and Clara knew that she had
-to be careful. She was determined to follow the trail of clues to its
-conclusion, and she was willing to do whatever it took to recover the
-manuscript.
+The staff member said that they had been approached by the security
+guard, who had offered them a large sum of money to help with the theft.
+The staff member claimed that they had been hesitant at first, but the
+guard had convinced them that it would be easy and that they would never
+get caught. Clara's ears perked up as she listened to the staff member's
+story, wondering if they might be telling the truth.
 
-The museum director's revelation was a significant development, and
-Clara knew that she had to take it seriously. She felt a sense of unease
-growing, and she knew that she had to trust the director to keep her
-safe. Together, they would work to unravel the mystery of the manuscript
-and to bring the perpetrator to justice.
-
-As Clara and the director worked together, they began to piece together
-the puzzle of the conspiracy. They knew that they had to be careful, but
-they were determined to see justice served. Clara was willing to do
-whatever it took to recover the manuscript, and she was grateful to have
-the director's support.
+Clara decided to investigate further, to see if she could find any
+evidence of the security guard's involvement. She asked the staff member
+about the guard's identity, wondering if she might be able to track them
+down. The staff member provided a name, and Clara's heart racing with
+excitement, she realized that she might be on the verge of solving the
+case.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 18: Clara and the museum director agree to work together to uncover the truth. ---
+--- Plot Point 19: Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer. ---
 ────────────────────────────────────────────────────────────
-Clara and the museum director agreed to work together to uncover the
-truth. They knew that they had to be careful, but they were determined
-to see justice served. The director promised to provide Clara with any
-resources she needed, and Clara promised to keep him informed of any
-developments.
+Clara obtained a list of the staff member's contacts and discovered a
+connection to a known black market dealer. The dealer, a notorious
+figure in the art world, was known for his ability to sell stolen goods
+to the highest bidder. Clara's eyes widened as she realized the extent
+of the dealer's involvement, wondering if she might be able to track him
+down.
 
-Together, they began to work on a plan to recover the manuscript and to
-bring the perpetrator to justice. Clara felt a sense of relief growing
-as she realized that she was no longer alone. She had the director's
-support, and she knew that she could trust him to keep her safe.
+Clara decided to investigate further, to see if she could find any
+evidence of the dealer's involvement in the theft. She asked the staff
+member about their relationship with the dealer, wondering if they might
+have been in contact with him recently. The staff member seemed
+hesitant, but they eventually opened up, telling Clara about their
+dealings with the dealer.
 
-As they worked together, Clara and the director began to piece together
-the puzzle of the conspiracy. They knew that they had to be careful, but
-they were determined to see justice served. Clara was willing to do
-whatever it took to recover the manuscript, and she was grateful to have
-the director's support.
-
-The partnership between Clara and the director was a significant
-development, and Clara knew that it would be crucial to the success of
-the investigation. She felt a sense of hope growing as she realized that
-she was one step closer to recovering the manuscript.
+Clara's ears perked up as she listened to the staff member's story,
+realizing that she might be getting close to the truth. She decided to
+track down the dealer, to see if she could recover the stolen
+manuscript. Clara's heart racing with excitement, she realized that she
+might be on the verge of solving the case.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 19: The police officer returns to the museum with a surprising lead about the thief's identity. ---    
+--- Plot Point 20: Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript. ---
 ────────────────────────────────────────────────────────────
-The police officer, Detective James, returned to the museum with a
-surprising lead about the thief's identity. Clara and the museum
-director were waiting for him, eager to hear any news. Detective James
-explained that he had received a tip from an anonymous source, revealing
-the identity of the thief.
+Clara and the police set up a sting operation to catch the black market
+dealer and recover the stolen manuscript. The operation was complex,
+involving multiple officers and a series of undercover agents. Clara's
+heart racing with excitement, she realized that she might be on the
+verge of solving the case.
 
-The revelation was shocking, and Clara's eyes widened in surprise. The
-thief was someone she knew, someone who had been close to the museum and
-its staff. Clara felt a sense of betrayal growing as she realized that
-the thief had been hiding in plain sight.
+The police had tracked the dealer to a warehouse on the outskirts of the
+city, where they suspected he was hiding the manuscript. Clara and the
+officers set up a sting, posing as buyers interested in purchasing the
+manuscript. The dealer, confident in his ability to sell the manuscript,
+agreed to meet with them.
 
-The museum director's expression was grim, and Clara knew that he was
-taking the news seriously. Detective James explained that he had already
-begun to investigate the lead, and he was confident that they would be
-able to recover the manuscript soon.
-
-As Clara listened to Detective James, she felt a sense of hope growing.
-She knew that they were one step closer to recovering the manuscript,
-and she was grateful for the detective's hard work. The investigation
-was nearing its conclusion, and Clara was eager to see justice served.
+As the meeting approached, Clara's nerves began to fray. She knew that
+the operation was risky, and that anything could go wrong. But she was
+determined to see it through, to recover the stolen manuscript and bring
+the dealer to justice. Clara's eyes locked onto the dealer, and she
+smiled, knowing that she had him right where she wanted him.
 
 
 ────────────────────────────────────────────────────────────
---- Plot Point 20: Clara, the museum director, and the police officer devise a plan to catch the thief and recover the manuscript. ---
+--- Plot Point 21: The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person. ---
 ────────────────────────────────────────────────────────────
-Clara, the museum director, and Detective James devised a plan to catch
-the thief and recover the manuscript. They worked together, using all
-the information they had gathered to create a strategy that would bring
-the perpetrator to justice. The plan was complex, involving a sting
-operation and a team of undercover officers.
+The sting operation was successful, and the black market dealer was
+arrested, but the manuscript was not found on their person. Clara's
+heart sank as she realized that the dealer must have hidden the
+manuscript elsewhere. But she was determined to find it, and she began
+to question the dealer, trying to get him to reveal the manuscript's
+location.
 
-Clara felt a sense of excitement growing as she realized that they were
-finally close to recovering the manuscript. She knew that the plan was
-risky, but she was willing to do whatever it took to see justice served.
-The museum director and Detective James were equally determined, and
-together they put their plan into action.
+The dealer, however, was not cooperative. He refused to say anything,
+and Clara was forced to use her skills of persuasion to try and get him
+to talk. After hours of questioning, the dealer finally cracked,
+revealing that he had sold the manuscript to a private collector.
 
-The sting operation was a success, and the thief was caught in the act.
-The manuscript was recovered, and Clara felt a sense of relief wash over
-her. She had done it, she had solved the case and recovered the
-manuscript. The museum director and Detective James were equally
-thrilled, and they all shared a moment of triumph.
+Clara's eyes widened as she listened to the dealer's confession,
+realizing that she had been one step behind the thief all along. But she
+was determined to recover the manuscript, and she set her sights on the
+private collector. Clara's heart racing with excitement, she realized
+that she might be on the verge of solving the case.
 
-As Clara held the manuscript in her hands, she felt a sense of pride and
-accomplishment. She had worked tirelessly to recover the manuscript, and
-she had succeeded. The case was closed, and justice had been served.
-Clara smiled, knowing that she had made a difference, and that the
-manuscript was safe once again.
+
+────────────────────────────────────────────────────────────
+--- Plot Point 22: The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity. ---
+────────────────────────────────────────────────────────────
+The black market dealer revealed that the manuscript was sold to a
+private collector, who was willing to return it in exchange for
+immunity. Clara's ears perked up as she listened to the dealer's
+confession, realizing that she might be able to recover the manuscript
+after all.
+
+The private collector, a wealthy and influential figure, had been known
+to collect rare and valuable artifacts. Clara suspected that the
+collector might have been aware of the manuscript's stolen status, but
+she was willing to offer them immunity in exchange for the manuscript's
+return.
+
+Clara's heart racing with excitement, she realized that she might be on
+the verge of solving the case. She contacted the private collector,
+offering them a deal: in exchange for the manuscript's return, the
+collector would receive immunity from prosecution. The collector agreed,
+and Clara arranged to meet with them to recover the manuscript.
+
+
+────────────────────────────────────────────────────────────
+--- Plot Point 23: Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity. ---
+────────────────────────────────────────────────────────────
+Clara and the police negotiated with the private collector, and a deal
+was made to return the manuscript in exchange for immunity. The
+collector, a middle-aged man with a passion for rare artifacts, seemed
+reluctant to give up the manuscript, but he eventually agreed to the
+terms.
+
+Clara's eyes locked onto the manuscript as it was handed over, feeling a
+sense of relief and satisfaction. She had solved the case, and the
+manuscript was finally back where it belonged. The collector, in turn,
+received immunity from prosecution, and Clara was willing to let him off
+with a warning.
+
+As the deal was finalized, Clara couldn't help but feel a sense of pride
+and accomplishment. She had worked tirelessly to solve the case, and it
+had finally paid off. The manuscript was back, and the thief had been
+brought to justice. Clara's heart racing with excitement, she realized
+that she had done it – she had solved the case of the stolen manuscript.
+
+
+────────────────────────────────────────────────────────────
+--- Plot Point 24: The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact. ---
+────────────────────────────────────────────────────────────
+The manuscript was returned, and Clara was hailed as a hero for solving
+the case and recovering the valuable artifact. The museum's staff and
+patrons were overjoyed, and Clara was praised for her dedication and
+expertise. The manuscript was put back on display, and Clara was invited
+to give a lecture on its history and significance.
+
+As Clara stood in front of the crowd, she felt a sense of pride and
+satisfaction. She had solved the case, and the manuscript was finally
+back where it belonged. The crowd applauded, and Clara smiled, knowing
+that she had done something truly special. She had recovered a valuable
+piece of history, and she had brought a thief to justice.
+
+The museum's director approached Clara, shaking her hand and
+congratulating her on a job well done. "You are a true hero, Clara," the
+director said, smiling. "Your dedication and expertise have recovered a
+priceless artifact, and we are forever grateful." Clara blushed, feeling
+a sense of pride and humility. She had done what she loved, and she had
+made a difference. The case of the stolen manuscript was closed, and
+Clara had emerged victorious.
 
 ════════════════════════════════════════════════════════════
 
 ════════════════════════════════════════════════════════════
 RUN SUMMARY
 ════════════════════════════════════════════════════════════
-  Elapsed time  : 24.7 s
-  Total events  : 20
-  KG stats      : {'nodes': 119, 'edges': 179, 'edges_by_source': {'domain': 70, 'text': 109}}
-  Token usage   : TokenUsage(input=1,266, output=7,400, cost=$0.00 [Groq free tier])
+  Elapsed time  : 27.4 s
+  Total events  : 24
+  KG stats      : {'nodes': 137, 'edges': 202, 'edges_by_source': {'domain': 93, 'text': 109}}
+  Token usage   : TokenUsage(input=3,690, output=7,470, cost=$0.00 [Groq free tier])
 
+  Crime story events saved to : output/crime_story_events.json
+  Solving story events saved to : output/solving_story_events.json
+  Run summary saved to    : output/run_summary.json
+  Prose saved to  : output/story_prose.txt
 ## Rambling Rhino Driver
-We will have a class/script/notebook with defined methods for the execution of our system.
+This is main_system_script.py in the main directory.

@@ -1,0 +1,208 @@
+[
+  {
+    "event_id": "E1",
+    "description": "The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours.",
+    "characters": [
+      "The Thief",
+      "Museum Staff"
+    ],
+    "goals": [
+      "steal the manuscript"
+    ],
+    "caused_by": [],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E2",
+    "description": "The thief uses a custom-made lockpick to bypass the display case's security lock.",
+    "characters": [
+      "The Thief"
+    ],
+    "goals": [
+      "steal the manuscript"
+    ],
+    "caused_by": [
+      "E1"
+    ],
+    "goal_type": "obstruct"
+  },
+  {
+    "event_id": "E3",
+    "description": "The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment.",
+    "characters": [
+      "The Thief"
+    ],
+    "goals": [
+      "discover the manuscript's secrets"
+    ],
+    "caused_by": [
+      "E2"
+    ],
+    "goal_type": "obstruct"
+  },
+  {
+    "event_id": "E4",
+    "description": "A small, valuable item is found hidden within the manuscript, which was the true target of the theft.",
+    "characters": [
+      "The Thief"
+    ],
+    "goals": [
+      "sell the valuable item"
+    ],
+    "caused_by": [
+      "E3"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E5",
+    "description": "The thief escapes the museum without triggering any alarms, using a pre-planned route.",
+    "characters": [
+      "The Thief"
+    ],
+    "goals": [
+      "avoid detection"
+    ],
+    "caused_by": [
+      "E4"
+    ],
+    "goal_type": "obstruct"
+  },
+  {
+    "event_id": "E6",
+    "description": "The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.",
+    "characters": [
+      "Clara",
+      "The Thief"
+    ],
+    "goals": [
+      "recover the manuscript",
+      "discover the thief's identity"
+    ],
+    "caused_by": [
+      "E5"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "->E7",
+    "description": "Clara realizes that the thief must have had inside help to bypass the museum's security system.",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "identify the insider"
+    ],
+    "caused_by": [
+      "E6"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E8",
+    "description": "Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft.",
+    "characters": [
+      "Clara",
+      "Museum Staff"
+    ],
+    "goals": [
+      "identify the insider"
+    ],
+    "caused_by": [
+      "E7"
+    ],
+    "goal_type": "obstruct"
+  },
+  {
+    "event_id": "E9",
+    "description": "The thief, now in possession of the valuable item, contacts a potential buyer on the black market.",
+    "characters": [
+      "The Thief",
+      "The Buyer"
+    ],
+    "goals": [
+      "sell the valuable item"
+    ],
+    "caused_by": [
+      "E5"
+    ],
+    "goal_type": "obstruct"
+  },
+  {
+    "event_id": "E10",
+    "description": "Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript.",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "track down the thief",
+      "recover the manuscript"
+    ],
+    "caused_by": [
+      "E6",
+      "E8"
+    ],
+    "goal_type": "initiate"
+  },
+  {
+    "event_id": "E_b1",
+    "description": "Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "uncover the thief's identity"
+    ],
+    "caused_by": [
+      "E10"
+    ],
+    "goal_type": "investigation"
+  },
+  {
+    "event_id": "E_b2",
+    "description": "Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft",
+    "characters": [
+      "Clara",
+      "museum staff"
+    ],
+    "goals": [
+      "identify the accomplice"
+    ],
+    "caused_by": [
+      "E_b1"
+    ],
+    "goal_type": "investigation"
+  },
+  {
+    "event_id": "E_b3",
+    "description": "Clara identifies a discrepancy in the staff member's alibi",
+    "characters": [
+      "Clara",
+      "museum staff member"
+    ],
+    "goals": [
+      "investigate theft",
+      "uncover accomplice"
+    ],
+    "caused_by": [
+      "E_b2"
+    ],
+    "goal_type": "investigative"
+  },
+  {
+    "event_id": "E_b4",
+    "description": "Clara obtains security footage of the staff member's suspicious activity",
+    "characters": [
+      "Clara",
+      "security team"
+    ],
+    "goals": [
+      "gather evidence",
+      "build case against accomplice"
+    ],
+    "caused_by": [
+      "E_b3"
+    ],
+    "goal_type": "evidential"
+  }
+]
