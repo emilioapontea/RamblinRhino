@@ -31,6 +31,11 @@ class PlotEvent:
     caused_by:   list[str]     = field(default_factory=list)
     causes:      list[str]     = field(default_factory=list)
     goal_type:   Optional[str] = None
+    location:    Optional[str] = None
+    preconditions: list[str]   = field(default_factory=list)
+    effects:       list[str]   = field(default_factory=list)
+    required_objects: list[str] = field(default_factory=list)
+    clue:         Optional[str] = None
 
     def __str__(self) -> str:
         return (
@@ -38,7 +43,29 @@ class PlotEvent:
             f"  characters : {self.characters}\n"
             f"  goals      : {self.goals}\n"
             f"  caused_by  : {self.caused_by}\n"
-            f"  goal_type  : {self.goal_type}"
+            f"  goal_type  : {self.goal_type}\n"
+            f"  location   : {self.location}\n"
+            f"  preconditions: {self.preconditions}\n"
+            f"  effects    : {self.effects}\n"
+            f"  required_objects: {self.required_objects}\n"
+            f"  clue       : {self.clue}"
+        )
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "PlotEvent":
+        return cls(
+            event_id=str(data.get("event_id", "")),
+            description=str(data.get("description", "")).strip(),
+            characters=list(data.get("characters", [])),
+            goals=list(data.get("goals", [])),
+            caused_by=list(data.get("caused_by", [])),
+            causes=list(data.get("causes", [])),
+            goal_type=data.get("goal_type"),
+            location=data.get("location"),
+            preconditions=list(data.get("preconditions", [])),
+            effects=list(data.get("effects", [])),
+            required_objects=list(data.get("required_objects", [])),
+            clue=data.get("clue"),
         )
 
 
@@ -57,6 +84,18 @@ class TokenUsage:
             f"output={self.output_tokens:,}, "
             f"cost=$0.00 [Groq free tier])"
         )
+
+
+@dataclass
+class InterpretedAction:
+    action_type: str
+    target: str = ""
+    target_location: Optional[str] = None
+    target_object: Optional[str] = None
+    target_character: Optional[str] = None
+    intent_summary: str = ""
+    implied_effects: list[str] = field(default_factory=list)
+    risk_flags: list[str] = field(default_factory=list)
 
 
 class LLMClient:
@@ -147,6 +186,40 @@ class LLMClient:
             label="reflection call",
         )
         return events
+
+    def interpret_player_action(
+        self,
+        command: str,
+        world_context: str,
+    ) -> InterpretedAction:
+        prompt = _build_action_interpretation_prompt(command, world_context)
+        raw = self._complete(_ACTION_INTERPRETER_SYSTEM_PROMPT, prompt)
+        parsed = _parse_action_interpretation(raw)
+        if parsed:
+            return parsed
+        return _heuristic_interpreted_action(command)
+
+    def accommodate_story_break(
+        self,
+        exception_action: str,
+        world_context: str,
+        affected_events: list[PlotEvent],
+    ) -> list[PlotEvent]:
+        prompt = _build_accommodation_prompt(exception_action, world_context, affected_events)
+        events, _ = self._complete_events_with_repair(
+            system=_REFLECTION_SYSTEM_PROMPT,
+            user_prompt=prompt,
+            label="accommodation call",
+        )
+        return events
+
+    def narrate_interactive_event(
+        self,
+        event: PlotEvent,
+        world_context: str,
+    ) -> str:
+        prompt = _build_interactive_event_prose_prompt(event, world_context)
+        return self._complete(_INTERACTIVE_EVENT_PROSE_SYSTEM_PROMPT, prompt).strip()
 
     ## Prose Generation, produces a long, plot-point-labeled story
     def generate_prose(
@@ -320,6 +393,22 @@ Do not include any explanation, preamble, or markdown formatting.
 Start your response with [ and end with ].
 """
 
+_ACTION_INTERPRETER_SYSTEM_PROMPT = """\
+You are an action interpreter for an interactive detective story game.
+Convert the player's natural-language command into a single JSON object.
+Use one of these action types only:
+"move", "inspect", "talk", "take", "use", "damage", "block", "accuse", "wait", "unknown".
+Return only valid JSON with double-quoted strings and no markdown.
+"""
+
+_INTERACTIVE_EVENT_PROSE_SYSTEM_PROMPT = """\
+You are a mystery game narrator.
+Turn a structured plot event into short, immersive prose for the player.
+Write 2-4 sentences in natural story language.
+Do not use bullets, labels, JSON, or meta commentary.
+Focus on what the player would perceive, infer, or feel as the event unfolds.
+"""
+
 
 def _build_engagement_prompt(
     premise: str,
@@ -353,6 +442,8 @@ Rules:
 - Identify perpetrator characters involved
 - Note any story goals this event initiates, resolves, or obstructs
 - List which prior event_id(s) causally enable this event
+- Include a concrete story location for where the event happens
+- Include simple gameplay-friendly preconditions and effects
 
 Your response must be ONLY a JSON array. Each element must have exactly these fields:
   "event_id": string (ex. "E1", "E2": if continuing, start from the next number)
@@ -361,6 +452,11 @@ Your response must be ONLY a JSON array. Each element must have exactly these fi
   "goals": list of short goal-phrase strings
   "caused_by": list of event_id strings that enable this event ([] for the first event)
   "goal_type": "initiate" or "resolve" or "obstruct" or null
+  "location": short room/location name string
+  "preconditions": list of short state strings needed before the event
+  "effects": list of short state strings caused by the event
+  "required_objects": list of important object strings used or needed in the event
+  "clue": short clue string revealed by this event, or null
 
 Example of correct output format, note only the output format and not the actual text in description:
 [
@@ -370,7 +466,12 @@ Example of correct output format, note only the output format and not the actual
     "characters": ["Clara"],
     "goals": ["discover what happened"],
     "caused_by": [],
-    "goal_type": "initiate"
+    "goal_type": "initiate",
+    "location": "Museum Gallery",
+    "preconditions": ["museum is open"],
+    "effects": ["display case is broken", "theft is discovered"],
+    "required_objects": ["display case"],
+    "clue": "Shards suggest the case was opened from inside"
   }},
   {{
     "event_id": "E2",
@@ -378,7 +479,12 @@ Example of correct output format, note only the output format and not the actual
     "characters": ["Clara"],
     "goals": ["recover the manuscript"],
     "caused_by": ["E1"],
-    "goal_type": "initiate"
+    "goal_type": "initiate",
+    "location": "Museum Gallery",
+    "preconditions": ["display case is broken"],
+    "effects": ["manuscript is confirmed missing"],
+    "required_objects": ["manuscript"],
+    "clue": "Only staff with access could approach unnoticed"
   }}
 ]
 
@@ -412,9 +518,88 @@ Rules:
 
 Your response must be ONLY a JSON array using the same schema:
   "event_id" (use "E_b1", "E_b2", etc.), "description", "characters", "goals",
-  "caused_by", "goal_type"
+  "caused_by", "goal_type", "location", "preconditions", "effects",
+  "required_objects", "clue"
 
 Output only the JSON array, nothing else:"""
+
+
+def _build_action_interpretation_prompt(command: str, world_context: str) -> str:
+    return f"""\
+World context:
+{world_context}
+
+Player command:
+{command}
+
+Interpret the command for the game engine.
+Return exactly one JSON object with these fields:
+{{
+  "action_type": string,
+  "target": string,
+  "target_location": string or null,
+  "target_object": string or null,
+  "target_character": string or null,
+  "intent_summary": string,
+  "implied_effects": [string],
+  "risk_flags": [string]
+}}
+
+Use null where appropriate. Output only the JSON object.
+"""
+
+
+def _build_accommodation_prompt(
+    exception_action: str,
+    world_context: str,
+    affected_events: list[PlotEvent],
+) -> str:
+    affected_text = "\n".join(
+        f"[{event.event_id}] {event.description} @ {event.location or 'Unknown'}"
+        for event in affected_events
+    ) or "No explicit affected events were identified."
+
+    return f"""\
+World context:
+{world_context}
+
+The player performed an exceptional action:
+{exception_action}
+
+These events were threatened or invalidated:
+{affected_text}
+
+Generate 1-2 replacement plot events that preserve solvability.
+Rules:
+- Keep the story coherent and playable
+- Introduce alternate clues, witnesses, or evidence if needed
+- Keep each event at abstract plot level
+- Use the same event schema as the rest of the system
+- Prefer locations already mentioned in the world context
+
+Output only the JSON array, nothing else.
+"""
+
+
+def _build_interactive_event_prose_prompt(
+    event: PlotEvent,
+    world_context: str,
+) -> str:
+    return f"""\
+World context:
+{world_context}
+
+Structured event:
+- Event ID: {event.event_id}
+- Description: {event.description}
+- Location: {event.location or "Unknown"}
+- Characters: {", ".join(event.characters) if event.characters else "None"}
+- Goals: {", ".join(event.goals) if event.goals else "None"}
+- Effects: {", ".join(event.effects) if event.effects else "None"}
+- Clue: {event.clue or "None"}
+
+Write a short prose update that feels like the story is happening right now in the game.
+"""
 
 
 def _build_solving_prompt(
@@ -447,6 +632,8 @@ Rules:
 - Identify characters involved
 - Note any story goals this event initiates, resolves, or obstructs
 - List which prior event_id(s) causally enable this event
+- Include a concrete story location for where the event happens
+- Include simple gameplay-friendly preconditions and effects
 - Every string value must be enclosed in double quotes
 - Output valid JSON only
 
@@ -457,6 +644,11 @@ Your response must be ONLY a JSON array. Each element must have exactly these fi
   "goals": list of short goal-phrase strings
   "caused_by": list of event_id strings that enable this event
   "goal_type": "initiate" or "resolve" or "obstruct" or null
+  "location": short room/location name string
+  "preconditions": list of short state strings needed before the event
+  "effects": list of short state strings caused by the event
+  "required_objects": list of important object strings used or needed in the event
+  "clue": short clue string revealed by this event, or null
 
 Example:
 [
@@ -466,7 +658,12 @@ Example:
     "characters": ["Detective Mora", "Clara"],
     "goals": ["identify the thief's entry route"],
     "caused_by": ["E10"],
-    "goal_type": "initiate"
+    "goal_type": "initiate",
+    "location": "Security Office",
+    "preconditions": ["security logs are available"],
+    "effects": ["entry window is narrowed"],
+    "required_objects": ["security logs", "witness timelines"],
+    "clue": "A disabled camera marks the likely route"
   }},
   {{
     "event_id": "E12",
@@ -474,7 +671,12 @@ Example:
     "characters": ["Clara", "Detective Mora"],
     "goals": ["explain the theft motive"],
     "caused_by": ["E11"],
-    "goal_type": "initiate"
+    "goal_type": "initiate",
+    "location": "Archive Office",
+    "preconditions": ["entry window is narrowed"],
+    "effects": ["theft motive is clarified"],
+    "required_objects": ["hidden-compartment notes"],
+    "clue": "The thief wanted what was inside the manuscript, not the manuscript itself"
   }}
 ]
 
@@ -525,6 +727,85 @@ def _parse_plot_events(raw: str) -> list[PlotEvent]:
             goals=       list(rec.get("goals",      [])),
             caused_by=   list(rec.get("caused_by",  [])),
             goal_type=   rec.get("goal_type"),
+            location=    rec.get("location"),
+            preconditions=list(rec.get("preconditions", [])),
+            effects=       list(rec.get("effects", [])),
+            required_objects=list(rec.get("required_objects", [])),
+            clue=         rec.get("clue"),
         ))
 
     return events
+
+
+def _heuristic_interpreted_action(command: str) -> InterpretedAction:
+    lower = command.lower().strip()
+    if any(word in lower for word in ("perpetrator", "culprit", "thief", "killer")) and any(
+        word in lower for word in ("find", "caught", "catch", "identify", "it's", "is ")
+    ):
+        return InterpretedAction(
+            action_type="accuse",
+            target=command.strip(),
+            target_character=command.strip(),
+        )
+    if lower.startswith("go "):
+        target = command[3:].strip()
+        return InterpretedAction(action_type="move", target=target, target_location=target)
+    if lower.startswith("inspect "):
+        target = command[8:].strip()
+        return InterpretedAction(action_type="inspect", target=target, target_object=target)
+    if lower.startswith("talk "):
+        target = command[5:].strip()
+        return InterpretedAction(action_type="talk", target=target, target_character=target)
+    if lower.startswith("take "):
+        target = command[5:].strip()
+        return InterpretedAction(action_type="take", target=target, target_object=target)
+    if "steal" in lower:
+        target = re.sub(r".*steal(?:s|ing)?\s+", "", command, flags=re.IGNORECASE).strip()
+        target = target or "something valuable"
+        return InterpretedAction(action_type="take", target=target, target_object=target)
+    if lower.startswith("use "):
+        target = command[4:].strip()
+        return InterpretedAction(action_type="use", target=target, target_object=target)
+    if any(word in lower for word in ("break ", "destroy ", "smash ", "burn ", "tear ")):
+        target = command.split(" ", 1)[1] if " " in command else command
+        return InterpretedAction(action_type="damage", target=target, target_object=target)
+    if any(word in lower for word in ("block ", "jam ", "lock ")):
+        target = command.split(" ", 1)[1] if " " in command else command
+        return InterpretedAction(action_type="block", target=target, target_object=target)
+    if lower.startswith("accuse "):
+        target = command[7:].strip()
+        return InterpretedAction(action_type="accuse", target=target, target_character=target)
+    if lower in {"wait", "pass"}:
+        return InterpretedAction(action_type="wait", target="wait")
+    return InterpretedAction(action_type="unknown", target=command)
+
+
+def _parse_action_interpretation(raw: str) -> Optional[InterpretedAction]:
+    if not raw or not raw.strip():
+        return None
+    cleaned = re.sub(r"```(?:json)?", "", raw).strip().strip("`").strip()
+    start = cleaned.find("{")
+    end = cleaned.rfind("}") + 1
+    if start == -1 or end == 0:
+        return None
+    json_str = cleaned[start:end]
+    try:
+        data = json.loads(json_str)
+    except json.JSONDecodeError:
+        try:
+            fixed = re.sub(r",\s*([}\]])", r"\1", json_str)
+            data = json.loads(fixed)
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(data, dict):
+        return None
+    return InterpretedAction(
+        action_type=str(data.get("action_type", "unknown")),
+        target=str(data.get("target", "")),
+        target_location=data.get("target_location"),
+        target_object=data.get("target_object"),
+        target_character=data.get("target_character"),
+        intent_summary=str(data.get("intent_summary", "")),
+        implied_effects=list(data.get("implied_effects", [])),
+        risk_flags=list(data.get("risk_flags", [])),
+    )
