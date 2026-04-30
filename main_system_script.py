@@ -186,7 +186,7 @@ class RamblingRhinoDriver:
         self,
         premise:            str,
         genre:              str   = "crime mystery",
-        events_per_batch:   int   = 20,
+        events_per_batch:   int   = 30,
         engagement_batches: int   = 1,
         reflection_passes:  int   = 2,
         output_dir:         Optional[str] = None,
@@ -633,8 +633,8 @@ def main() -> None:
         help="Genre hint for the LLM (default: 'crime mystery').",
     )
     parser.add_argument(
-        "--events", type=int, default=20, dest="events_per_batch",
-        help="Total pre-reflection plot events across story and solving phases (default: 20).",
+        "--events", type=int, default=30, dest="events_per_batch",
+        help="Total pre-reflection plot events across story and solving phases (default: 30, which targets 15 solving events).",
     )
     parser.add_argument(
         "--batches", type=int, default=1, dest="engagement_batches",
