@@ -1,85 +1,141 @@
-# Reading Model Driven Story Generation
+# Rambling Rhino Story Engine
 > **System Name:** Rambling Rhino Story Engine
 
-> **Project Template:** Reader Model Driven Story Generation
+> **Project Template:** Intervention and Accommodation
 
 > Team Rambling Rhino
 
-To install our conda environment (`rhino`) with necessary dependencies:
+Rambling Rhino generates a crime mystery, separates the crime backstory from the playable investigation, and lets the user play through the solving story as an interactive text game. The system uses LLM-generated plot events, QUEST-style causal structure, a lightweight world model, and dynamic repair when the player derails the investigation.
+
+## Current Project Behavior
+- The crime story is treated as backstory and world context.
+- The solving story is treated as the playable investigation sequence.
+- Interactive mode accepts open-ended text input.
+- Player actions are interpreted as constituent, consistent, or exceptional.
+- Exceptional actions can trigger accommodation, which repairs the investigation with alternate leads.
+- `story_prose.txt` is generated from the solving story, not the full crime timeline.
+
+## Setup
+Create and activate the project environment:
+
 ```bash
-conda env create -file environment.yml
+conda env create -f environment.yml
 conda activate rhino
 ```
 
-Then install spaCy and download the language model:
+Install spaCy and the English model:
+
 ```bash
 pip install spacy
 python -m spacy download en_core_web_sm
 ```
 
-If you have pip dependencies to add (be sure you are in the `rhino` environment):
+If `networkx` is missing in your current Python, install it in the same environment you use to run the project:
+
 ```bash
-conda install <package> pip
-conda env export > environment.yml
+python -m pip install networkx
 ```
 
-## API Key Setup
-Our system uses the free tier of the Groq API. To get a Groq API key:
-1. Go to [https://console.groq.com/keys](https://console.groq.com/keys)
-2. Log in with your Google account
-3. Click "Create API Key," create an API key, and copy it.
-4. In llm_api_wrapper.py, replace API_KEY_HERE with your API key, so that it reads:
-> python GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "gsk_YOUR_KEY_HERE
+## Groq API Key
+The project uses the Groq API for:
+- story generation
+- reflection / repair generation
+- interactive action interpretation
+- interactive event narration
+- full prose generation
 
-or in terminal enter:
+Set your key in the terminal before running:
+
 ```bash
 export GROQ_API_KEY="YOUR_GROQ_API_KEY"
 ```
-## How to Run the System
-Run 'python main_system_script.py' in the terminal.
-### With a custom premise and genre:
-Run 'python main_system_script.py --premise "Your premise goes here" --genre "Your genre goes here"'
-### With more events or reflection passes
-Run ''python main_system_script.py --events m --reflection-passes n', replacing m and n with numbers
-### Saving output to files
-Run 'python main_system_script.py --output-dir ./output', which saves 2 files to the output directory: story_events.json (all plot events with QUEST metadata), and story_prose.txt (the final generated story)
-### Verbose mode (which prints the raw LLM responses)
-Run 'python main_system_script.py --verbose'
+
+You only need a Groq key when generating a new story or using the LLM-backed interactive features. If you load a previously saved story, the project can still run with local fallbacks.
+
+## How to Run
+Generate a new story:
+
+```bash
+python main_system_script.py
+```
+
+Generate a new story with custom premise and genre:
+
+```bash
+python main_system_script.py --premise "Your premise goes here" --genre "crime mystery"
+```
+
+Generate a new story and save outputs:
+
+```bash
+python main_system_script.py --output-dir ./output
+```
+
+Run the interactive investigation:
+
+```bash
+python main_system_script.py --interactive
+```
+
+Load a previously saved story and skip regeneration:
+
+```bash
+python main_system_script.py --load-story ./output/run_summary.json --interactive
+```
+
+Generate with more events or reflection passes:
+
+```bash
+python main_system_script.py --events 20 --reflection-passes 3
+```
+
+Verbose mode:
+
+```bash
+python main_system_script.py --verbose
+```
+
+## Saved Outputs
+When you run with `--output-dir`, the project writes:
+- `crime_story_events.json`: structured crime backstory events
+- `solving_story_events.json`: structured playable solving events
+- `run_summary.json`: premise, events, world summary, and prose metadata
+- `story_prose.txt`: prose generated from the solving story
 
 ## Repository Structure
-main_system_script.py (the top-level driver)
+- `main_system_script.py`: top-level driver for story generation, reflection, saving, loading, and interactive mode
+- `llm_api_wrapper.py`: Groq client, event generation, reflection, action interpretation, accommodation prompts, and prose generation
+- `interactive_story_world.py`: world model, room graph, interactive loop, action validation, classification, dynamic repair, and event prose rendering
+- `environment.yml`: environment definition
+- `complexity_checking/complexity_checker.py`: QUEST coherence checks
+- `quest_parsing/knowledge_graph.py`: graph representation used by the system
+- `quest_parsing/narrative_ingestor.py`: text-to-graph ingestion
+- `quest_parsing/narrative_schema.py`: node and arc schema
+- `quest_parsing/arc_classifier.py`: narrative arc classification
+- `quest_parsing/node_classifier.py`: narrative node classification
 
-llm_api_wrapper.py (Groq API warpper, engagement + reflection + prose)
+## Core Modules
+### LLMClient
+Handles:
+- crime story event generation
+- solving story event generation
+- reflection / bridging events
+- interactive action interpretation
+- accommodation event generation
+- event narration
+- full solving-story prose generation
 
-environment.yml
-
-Graesser-Question-answering.pdf
-
-complexity_checking/
-
-> complexity_checker.py (QUEST coherence checker, node/arc requirements)
-
-quest_parsing/
-
-> arc_classifier.py (classifies arc types between narrative nodes)
-
-> knowledge_graph.py
-
-> narrative_ingestor.py (end-to-end text --> KG pipeline)
-
-> narrative_schema.py (node and arc data structures (ex. EventNode, GoalNode))
-
-> node_classifier.py (classifies clauses into Event/Action/Goal/State nodes)
-
-## Engagement Modules
-### ContextPrompter
-A class that manages feedback from the `ComplexityChecker` and generates an engineered prompt to pass on to the LLM.
-### LLM
-A wrapper class to handle API requests to our chosen LLM and receive output in the form of QUEST events, goals, etc. to be parsed into the QUEST `KnowledgeGraph`.
-
-## Reflection Modules
 ### KnowledgeGraph
-A class (`quest_parsing.KnowledgeGraph`) to support `(subject --predicate--> object)` relationships in our QUEST graph. We will primarily be using the `NarrativeIngestor` (`quest_parsing.narrative_ingestor`) class which uses `spaCy`'s [`en_core_web_sm`](https://spacy.io/models/en#en_core_web_sm) (12 MB) CPU pipeline for tokenization, part of speech tagging, named entity recognition, etc., to build up the knowledge graph from our LLM's text responses.
+A graph structure used to store story relationships and support reflection/coherence checks. The project uses `NarrativeIngestor` and the QUEST-related parsing modules to derive additional structure from event text.
+
+### InteractiveStoryGame
+Builds the playable investigation world and manages:
+- room traversal
+- clue discovery
+- inventory
+- open-ended player commands
+- classification of actions
+- dynamic repair of broken story paths
 
 > Example usage
 ```python
@@ -288,7 +344,7 @@ Reflection complete: 24 total events.
 ════════════════════════════════════════════════════════════
 PHASE 5: STORY GENERATION
 ════════════════════════════════════════════════════════════
-  Generating story from 24 plot events...
+  Generating story from 10 plot events...
 
 ════════════════════════════════════════════════════════════
 GENERATED STORY
