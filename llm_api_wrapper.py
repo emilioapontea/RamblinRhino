@@ -16,9 +16,11 @@ import requests
 GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "API_KEY_HERE")
 
 _API_URL = "https://api.groq.com/openai/v1/chat/completions"
+_LOCAL_LLM_URL = "http://localhost:11434/v1/chat/completions"  # Ollama default
 
 # There are 2 model options: "llama-3.3-70b-versatile", "llama-3.1-8b-instant"
 _MODEL = "llama-3.3-70b-versatile"
+_LOCAL_MODEL = "llama3"  # Default local model (can be overridden)
 
 
 # Data Structures
@@ -73,12 +75,19 @@ class PlotEvent:
 class TokenUsage:
     input_tokens:  int = 0
     output_tokens: int = 0
+    mode: str = "api"  # "api" or "local"
 
     def add(self, inp: int, out: int) -> None:
         self.input_tokens  += inp
         self.output_tokens += out
 
     def __str__(self) -> str:
+        if self.mode == "local":
+            return (
+                f"TokenUsage(input≈{self.input_tokens:,}, "
+                f"output≈{self.output_tokens:,}, "
+                f"cost=$0.00 [local LLM, no API costs])"
+            )
         return (
             f"TokenUsage(input={self.input_tokens:,}, "
             f"output={self.output_tokens:,}, "
@@ -107,22 +116,61 @@ class LLMClient:
         temperature:   float = 0.85,
         request_delay: float = 0.5,
         verbose:       bool  = False,
+        use_local_llm: bool  = False,
+        local_model:   str   = _LOCAL_MODEL,
+        local_url:     str   = _LOCAL_LLM_URL,
     ) -> None:
-        if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
-            raise ValueError("No Groq API key found.")
-        self.api_key       = api_key
-        self.model         = model
-        self.max_tokens    = max_tokens
-        self.temperature   = temperature
-        self.request_delay = request_delay
-        self.verbose       = verbose
-        self.usage         = TokenUsage()
+        self.use_local_llm  = use_local_llm
+        self.verbose        = verbose
+        self.max_tokens     = max_tokens
+        self.temperature    = temperature
+        self.request_delay  = request_delay
+        self.usage          = TokenUsage(mode="local" if use_local_llm else "api")
 
         self._session = requests.Session()
         self._session.headers.update({
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type":  "application/json",
+            "Content-Type": "application/json",
         })
+
+        if use_local_llm:
+            # Local LLM mode (Ollama)
+            self.model = local_model
+            self.api_url = local_url
+            print(f"[LLMClient] Using local LLM: {self.model} at {self.api_url}")
+            # Test connection to local LLM
+            try:
+                test_resp = self._session.post(
+                    self.api_url,
+                    json={
+                        "model": self.model,
+                        "messages": [{"role": "user", "content": "hi"}],
+                        "max_tokens": 10,
+                        "temperature": 0.5,
+                    },
+                    timeout=120,
+                )
+                if test_resp.status_code != 200:
+                    raise RuntimeError(
+                        f"Local LLM not responding (status {test_resp.status_code}). "
+                        f"Is Ollama running at {self.api_url}? "
+                        f"Install and start with: ollama pull {self.model} && ollama serve"
+                    )
+                print(f"[LLMClient] Local LLM connection successful ✓")
+            except requests.RequestException as e:
+                raise RuntimeError(
+                    f"Cannot connect to local LLM at {self.api_url}: {e}\n"
+                    f"Make sure Ollama is running. Install from https://ollama.ai"
+                )
+        else:
+            # Groq API mode
+            if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
+                raise ValueError("No Groq API key found.")
+            self.api_key = api_key
+            self.model = model
+            self.api_url = "https://api.groq.com/openai/v1/chat/completions"
+            self._session.headers.update({
+                "Authorization": f"Bearer {self.api_key}",
+            })
 
     ## Engagement Phase
     def generate_crime_plot_events(
@@ -314,7 +362,7 @@ class LLMClient:
 
         for attempt in range(1, retries + 1):
             try:
-                resp = self._session.post(_API_URL, json=payload, timeout=120)
+                resp = self._session.post(self.api_url, json=payload, timeout=120 + attempt * 30)
                 if resp.status_code == 429 or resp.status_code >= 500:
                     # Use longer backoff for 429 rate-limit errors
                     if resp.status_code == 429:

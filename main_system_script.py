@@ -191,6 +191,8 @@ class RamblingRhinoDriver:
         reflection_passes:  int   = 2,
         output_dir:         Optional[str] = None,
         verbose:            bool  = False,
+        use_local_llm:      bool  = False,
+        local_model:        str   = "llama3",
     ) -> None:
         self.premise            = premise
         self.genre              = genre
@@ -199,10 +201,14 @@ class RamblingRhinoDriver:
         self.reflection_passes  = reflection_passes
         self.output_dir         = Path(output_dir) if output_dir else None
         self.verbose            = verbose
+        self.use_local_llm      = use_local_llm
+        self.local_model        = local_model
 
         try:
-            self.llm = LLMClient(verbose=verbose)
-        except ValueError:
+            self.llm = LLMClient(verbose=verbose, use_local_llm=use_local_llm, local_model=local_model)
+        except ValueError as e:
+            if use_local_llm:
+                print(f"[ERROR] {e}")
             self.llm = None
         self.kg      = KnowledgeGraph()
         # ComplexityChecker is created after KG is built (it requires a KG instance)
@@ -622,6 +628,8 @@ def main() -> None:
               python main_system_script.py --interactive
               python main_system_script.py --load-story ./output/run_summary.json --interactive
               python main_system_script.py --verbose
+              python main_system_script.py --local-llm --local-model llama2
+              python main_system_script.py --local-llm --local-model mistral --events 20
         """),
     )
     parser.add_argument(
@@ -660,16 +668,25 @@ def main() -> None:
         "--load-story", type=str, default=None,
         help="Load a previously saved story JSON file and skip regeneration.",
     )
+    parser.add_argument(
+        "--local-llm", action="store_true",
+        help="Use a local LLM via Ollama instead of Groq API. Install Ollama from https://ollama.ai",
+    )
+    parser.add_argument(
+        "--local-model", type=str, default="llama2",
+        help="Local LLM model to use (default: llama2). Examples: llama2, mistral, neural-chat, dolphin-mixtral",
+    )
     args = parser.parse_args()
 
-    # Validate API key only when story generation is required
-    api_key = os.environ.get("GROQ_API_KEY", "API_KEY")
-    if not args.load_story and (not api_key or api_key == "YOUR_GROQ_API_KEY_HERE"):
-        print(
-            "\n[ERROR] No Groq API key found.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    # Validate API key only when story generation is required (and not using local LLM)
+    if not args.load_story and not args.local_llm:
+        api_key = os.environ.get("GROQ_API_KEY", "API_KEY")
+        if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
+            print(
+                "\n[ERROR] No Groq API key found. Use --local-llm to run with a local model instead.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     print("\n" + "═"*60)
     print("  RAMBLING RHINO: Story Generation System")
@@ -682,6 +699,10 @@ def main() -> None:
     print(f"  Events  : {args.events_per_batch} total ({crime_count} crime + {solving_count} solving)")
     print(f"  Batches : {args.engagement_batches} per event phase")
     print(f"  Reflect : {args.reflection_passes} pass(es)")
+    if args.local_llm:
+        print(f"  LLM     : Local ({args.local_model}) via Ollama")
+    else:
+        print(f"  LLM     : Groq API (llama-3.3-70b-versatile)")
 
     driver = RamblingRhinoDriver(
         premise=            args.premise,
@@ -691,6 +712,8 @@ def main() -> None:
         reflection_passes=  args.reflection_passes,
         output_dir=         args.output_dir,
         verbose=            args.verbose,
+        use_local_llm=      args.local_llm,
+        local_model=        args.local_model,
     )
     driver.run(interactive=args.interactive, load_story_file=args.load_story)
 

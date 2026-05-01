@@ -308,6 +308,7 @@ class InteractiveStoryGame:
     def __init__(self, world: WorldState, llm: Optional[LLMClient] = None) -> None:
         self.world = world
         self.llm = llm
+        self._current_option_map: dict = {}
 
     def _build_context_summary(self) -> str:
         room = self.world.current_room()
@@ -796,6 +797,145 @@ class InteractiveStoryGame:
         self.world.offtrack_turns = 0
         return self.world.last_intervention
 
+    def _generate_available_options(self) -> dict:
+        """Generate clear, structured options for the player based on current game state."""
+        room = self.world.current_room()
+        next_event = self.world.next_story_event()
+        options = {
+            "movement": [],
+            "interaction": [],
+            "investigation": [],
+            "decisions": [],
+        }
+
+        # Movement options: nearby rooms
+        if room.exits:
+            for direction, destination in room.exits.items():
+                options["movement"].append({
+                    "action": f"go {direction.lower()}",
+                    "display": f"Go {direction.lower()} to {destination}",
+                    "target": destination,
+                })
+
+        # Interaction options: NPCs in this room
+        for npc in room.npcs:
+            options["interaction"].append({
+                "action": f"talk to {npc.lower()}",
+                "display": f"Talk to {npc}",
+                "target": npc,
+            })
+
+        # Investigation options: objects and clues in room
+        for obj in room.objects:
+            options["investigation"].append({
+                "action": f"inspect {obj.lower()}",
+                "display": f"Inspect {obj}",
+                "target": obj,
+            })
+        for clue in room.clues:
+            options["investigation"].append({
+                "action": f"inspect {clue.lower()}",
+                "display": f"Examine {clue}",
+                "target": clue,
+            })
+
+        # Take objects
+        for obj in room.objects:
+            if obj not in self.world.inventory:
+                options["investigation"].append({
+                    "action": f"take {obj.lower()}",
+                    "display": f"Take {obj}",
+                    "target": obj,
+                })
+
+        # Use inventory items
+        for item in self.world.inventory:
+            options["interaction"].append({
+                "action": f"use {item.lower()}",
+                "display": f"Use {item}",
+                "target": item,
+            })
+
+        # Decision-based options
+        if next_event and next_event.event.characters:
+            suspect_name = _match_name(self.world.suspect_name or "", next_event.event.characters)
+            if suspect_name:
+                options["decisions"].append({
+                    "action": f"accuse {suspect_name.lower()}",
+                    "display": f"Accuse {suspect_name}",
+                    "target": suspect_name,
+                })
+
+        # Wait option
+        options["decisions"].append({
+            "action": "wait",
+            "display": "Wait for more information",
+            "target": "wait",
+        })
+
+        return options
+
+    def _format_options_display(self) -> str:
+        """Format available options for display to player."""
+        room = self.world.current_room()
+        next_event = self.world.next_story_event()
+        objectives_str = ", ".join(self.world.objectives) if self.world.objectives else "investigate the case"
+        known_clues_str = f" ({len(self.world.known_clues)} clues found)" if self.world.known_clues else " (no clues yet)"
+
+        lines = []
+        lines.append("\n" + "─" * 60)
+        lines.append(f"OBJECTIVE: {objectives_str}{known_clues_str}")
+        lines.append("─" * 60)
+        
+        # Current situation
+        next_event_display = ""
+        if next_event:
+            next_event_display = f"\nNext story beat: {next_event.event.description}"
+            lines.append(next_event_display)
+
+        lines.append("")
+        options = self._generate_available_options()
+
+        # Display options grouped by category
+        option_num = 1
+        option_map = {}
+
+        if options["movement"]:
+            lines.append("📍 WHERE YOU CAN GO:")
+            for opt in options["movement"]:
+                lines.append(f"  [{option_num}] {opt['display']}")
+                option_map[option_num] = opt
+                option_num += 1
+
+        if options["interaction"]:
+            lines.append("\n🗣️  WHO/WHAT YOU CAN INTERACT WITH:")
+            for opt in options["interaction"]:
+                lines.append(f"  [{option_num}] {opt['display']}")
+                option_map[option_num] = opt
+                option_num += 1
+
+        if options["investigation"]:
+            lines.append("\n🔍 WHAT YOU CAN INVESTIGATE:")
+            for opt in options["investigation"]:
+                lines.append(f"  [{option_num}] {opt['display']}")
+                option_map[option_num] = opt
+                option_num += 1
+
+        if options["decisions"]:
+            lines.append("\n⚖️  MAJOR DECISIONS:")
+            for opt in options["decisions"]:
+                lines.append(f"  [{option_num}] {opt['display']}")
+                option_map[option_num] = opt
+                option_num += 1
+
+        lines.append("\n" + "─" * 60)
+        lines.append("Enter an option number, or describe your action in natural language.")
+        lines.append("Type 'status' for case progress, 'inventory' for items, 'map' for locations.")
+        lines.append("─" * 60)
+
+        self._current_option_map = option_map
+        return "\n".join(lines)
+
     def _final_status_check(self) -> Optional[str]:
         if self.world.story_status in {"solved", "failed", "unsolvable"}:
             return self.world.ending_reason
@@ -823,11 +963,23 @@ class InteractiveStoryGame:
             return "Type a natural-language action like 'go to the security office' or 'inspect the display case'."
 
         lower = raw.lower()
+        
+        # Check if user entered a numbered option
+        if lower.isdigit():
+            option_num = int(lower)
+            if option_num in self._current_option_map:
+                selected_opt = self._current_option_map[option_num]
+                # Recursively handle the selected action
+                return self.handle_command(selected_opt["action"])
+            else:
+                return f"Invalid option number. Please choose from the available options [1-{len(self._current_option_map)}]."
+        
         if lower in {"help", "?"}:
             return (
                 "Commands still supported directly: look, status, map, inventory, quit.\n"
                 "You can also type open-ended actions like 'go to the gallery', 'inspect the case', "
-                "'talk to Clara', 'take the notes', 'break the footage', or 'accuse Sarah'."
+                "'talk to Clara', 'take the notes', 'break the footage', or 'accuse Sarah'.\n"
+                "Or select one of the numbered options displayed before each prompt."
             )
 
         if lower == "look":
@@ -836,13 +988,15 @@ class InteractiveStoryGame:
         if lower == "status":
             triggered = sum(1 for event in self.world.event_states if event.triggered)
             valid_total = sum(1 for event in self.world.event_states if not event.invalidated)
+            objectives_str = ", ".join(self.world.objectives) if self.world.objectives else "investigate the case"
             return (
-                f"Story status: {self.world.story_status}\n"
-                f"Last action type: {self.world.last_classification or 'none yet'}\n"
-                f"Objective focus: {', '.join(self.world.objectives) if self.world.objectives else 'investigate the case'}\n"
-                f"Known clues: {', '.join(self.world.known_clues) if self.world.known_clues else 'none yet'}\n"
-                f"Progress: {triggered}/{valid_total} active story events completed\n"
-                f"Last intervention: {self.world.last_intervention or 'none'}"
+                f"🎯 Objectives: {objectives_str}\n"
+                f"📋 Story status: {self.world.story_status}\n"
+                f"📍 Current location: {self.world.player_location}\n"
+                f"🔍 Known clues: {', '.join(self.world.known_clues) if self.world.known_clues else 'none yet'}\n"
+                f"📦 Inventory: {', '.join(self.world.inventory) if self.world.inventory else 'empty'}\n"
+                f"✅ Progress: {triggered}/{valid_total} active story beats completed\n"
+                f"💬 Last update: {self.world.last_intervention or 'investigation ongoing'}"
             )
 
         if lower == "map":
@@ -853,7 +1007,7 @@ class InteractiveStoryGame:
             return "\n".join(lines)
 
         if lower == "inventory":
-            return "Inventory: " + (", ".join(self.world.inventory) if self.world.inventory else "empty")
+            return "📦 Inventory: " + (", ".join(self.world.inventory) if self.world.inventory else "empty")
 
         if lower == "quit":
             return "quit"
@@ -882,14 +1036,13 @@ class InteractiveStoryGame:
         result = self._apply_action(action)
 
         response_parts = [
-            f"Action classification: {classification}",
             result,
         ]
 
         if classification == "exceptional":
             self.world.exceptional_actions += 1
             intervention = self._accommodate_exception(action, affected_events)
-            response_parts.append(intervention)
+            response_parts.append(f"⚠️  {intervention}")
             self.world.offtrack_turns = 0
         else:
             if classification == "consistent":
@@ -899,15 +1052,15 @@ class InteractiveStoryGame:
 
             event_text = self._trigger_ready_event()
             if event_text:
-                response_parts.append(event_text)
+                response_parts.append(f"📖 {event_text}")
 
             hint = self._soft_hint()
             if hint:
-                response_parts.append(hint)
+                response_parts.append(f"💡 {hint}")
 
         final_status = self._final_status_check()
         if final_status:
-            response_parts.append(f"Ending: {final_status}")
+            response_parts.append(f"\n🎬 ENDING: {final_status}")
 
         return "\n\n".join(part for part in response_parts if part)
 
@@ -915,19 +1068,20 @@ class InteractiveStoryGame:
         print("\n" + "=" * 60)
         print("RAMBLING RHINO: INTERACTIVE STORY MODE")
         print("=" * 60)
-        print(self.world.premise)
-        print()
+        print(f"\n🎭 {self.world.premise}\n")
         print(self.world.describe_current_room())
         print("\nType 'help' for commands. Type 'quit' to stop.\n")
 
         opening_event = self._trigger_ready_event()
         if opening_event:
-            print(opening_event)
-            print()
+            print(f"📖 {opening_event}\n")
 
         while True:
+            # Display available options before prompting
+            print(self._format_options_display())
+            
             try:
-                command = input("> ")
+                command = input("\n> ")
             except EOFError:
                 print("\nExiting interactive mode.")
                 return
@@ -937,11 +1091,10 @@ class InteractiveStoryGame:
                 print("Exiting interactive mode.")
                 return
 
-            print(result)
-            print()
+            print(f"\n{result}")
 
             if self.world.story_status in {"solved", "failed", "unsolvable"}:
-                print(f"Final story status: {self.world.story_status}")
+                print(f"\n🎬 Final story status: {self.world.story_status}")
                 return
 
 
