@@ -222,7 +222,8 @@ def _room_description(name: str) -> str:
 
 
 def _connect_rooms(rooms: dict[str, Room]) -> None:
-    ordered = [name for name in DEFAULT_ROOM_ORDER if name in rooms]
+    # ordered = [name for name in DEFAULT_ROOM_ORDER if name in rooms]
+    ordered = list(rooms.keys())
     for idx, name in enumerate(ordered):
         room = rooms[name]
         if idx > 0:

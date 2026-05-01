@@ -684,6 +684,16 @@ def main() -> None:
         )
         sys.exit(1)
 
+    # Adjust defaults for interactive mode (fresh generation, not loading)
+    # Interactive mode benefits from more solving events and room variety
+    if args.interactive and not args.load_story:
+        # Increase total events for more diverse locations and richer gameplay
+        if args.events_per_batch == 30:  # Only adjust if using default
+            args.events_per_batch = 60  # 30 crime + 30 solving events
+        # Increase reflection passes for better narrative coherence in an interactive setting
+        if args.reflection_passes == 2:  # Only adjust if using default
+            args.reflection_passes = 3
+
     print("\n" + "═"*60)
     print("  RAMBLING RHINO: Story Generation System")
     print("  Team Rambling Rhino | Reader-Model-Driven Generation")
@@ -695,6 +705,8 @@ def main() -> None:
     print(f"  Events  : {args.events_per_batch} total ({crime_count} crime + {solving_count} solving)")
     print(f"  Batches : {args.engagement_batches} per event phase")
     print(f"  Reflect : {args.reflection_passes} pass(es)")
+    if args.interactive:
+        print(f"  Mode    : Interactive (room connectivity ensured)")
 
     driver = RamblingRhinoDriver(
         premise=            args.premise,
