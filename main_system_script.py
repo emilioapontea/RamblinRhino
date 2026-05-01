@@ -211,6 +211,7 @@ class RamblingRhinoDriver:
         self.solving_story_events: list[PlotEvent] = []
         self.events: list[PlotEvent] = []
         self.world_state: Optional[WorldState] = None
+        self.loaded_story_replay = False
 
     def _require_llm(self) -> LLMClient:
         if self.llm is None:
@@ -245,6 +246,7 @@ class RamblingRhinoDriver:
         )
 
     def load_story_from_file(self, story_file: str) -> None:
+        self.loaded_story_replay = True
         story_path = Path(story_file)
         with open(story_path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -460,7 +462,8 @@ class RamblingRhinoDriver:
         if not self.world_state:
             print("[interactive] World state could not be created.")
             return
-        InteractiveStoryGame(self.world_state, llm=self.llm).run()
+        interactive_llm = None if self.loaded_story_replay else self.llm
+        InteractiveStoryGame(self.world_state, llm=interactive_llm).run()
 
     def run(self, interactive: bool = False, load_story_file: Optional[str] = None) -> dict:
         # Executes the full pipeline and returns a results dict.
@@ -509,6 +512,9 @@ class RamblingRhinoDriver:
                     "effects":     ev.effects,
                     "required_objects": ev.required_objects,
                     "clue":        ev.clue,
+                    "is_decision_point": ev.is_decision_point,
+                    "decision_context": ev.decision_context,
+                    "hidden_expected_intents": ev.hidden_expected_intents,
                 }
                 for ev in self.crime_story_events
             ],
@@ -525,6 +531,9 @@ class RamblingRhinoDriver:
                     "effects":     ev.effects,
                     "required_objects": ev.required_objects,
                     "clue":        ev.clue,
+                    "is_decision_point": ev.is_decision_point,
+                    "decision_context": ev.decision_context,
+                    "hidden_expected_intents": ev.hidden_expected_intents,
                 }
                 for ev in self.solving_story_events
             ],
@@ -541,6 +550,9 @@ class RamblingRhinoDriver:
                     "effects":     ev.effects,
                     "required_objects": ev.required_objects,
                     "clue":        ev.clue,
+                    "is_decision_point": ev.is_decision_point,
+                    "decision_context": ev.decision_context,
+                    "hidden_expected_intents": ev.hidden_expected_intents,
                 }
                 for ev in self.events
             ],
@@ -558,6 +570,7 @@ class RamblingRhinoDriver:
         if not self.world_state:
             return {}
         return {
+            "player_name": self.world_state.player_name,
             "player_start_location": self.world_state.player_location,
             "objectives": self.world_state.objectives,
             "rooms": {

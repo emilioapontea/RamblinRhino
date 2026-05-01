@@ -21,6 +21,14 @@ _API_URL = "https://api.groq.com/openai/v1/chat/completions"
 _MODEL = "llama-3.3-70b-versatile"
 
 
+def _as_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "yes", "1"}
+    return bool(value)
+
+
 # Data Structures
 @dataclass
 class PlotEvent:
@@ -36,6 +44,9 @@ class PlotEvent:
     effects:       list[str]   = field(default_factory=list)
     required_objects: list[str] = field(default_factory=list)
     clue:         Optional[str] = None
+    is_decision_point: bool = False
+    decision_context: str = ""
+    hidden_expected_intents: list[str] = field(default_factory=list)
 
     def __str__(self) -> str:
         return (
@@ -48,7 +59,8 @@ class PlotEvent:
             f"  preconditions: {self.preconditions}\n"
             f"  effects    : {self.effects}\n"
             f"  required_objects: {self.required_objects}\n"
-            f"  clue       : {self.clue}"
+            f"  clue       : {self.clue}\n"
+            f"  decision_point: {self.is_decision_point}"
         )
 
     @classmethod
@@ -66,6 +78,9 @@ class PlotEvent:
             effects=list(data.get("effects", [])),
             required_objects=list(data.get("required_objects", [])),
             clue=data.get("clue"),
+            is_decision_point=_as_bool(data.get("is_decision_point", False)),
+            decision_context=str(data.get("decision_context", "") or ""),
+            hidden_expected_intents=list(data.get("hidden_expected_intents", [])),
         )
 
 
@@ -407,6 +422,7 @@ Turn a structured plot event into short, immersive prose for the player.
 Write 2-4 sentences in natural story language.
 Do not use bullets, labels, JSON, or meta commentary.
 Focus on what the player would perceive, infer, or feel as the event unfolds.
+If the event names Clara, write her actions as the player's actions in second person.
 """
 
 
@@ -434,6 +450,7 @@ The crime story should focus on:
 - the crime itself
 - How the crime is committed by the perpetrator(s).
 - The detail of the act and the method used.
+- Clara is the playable protagonist/archivist; do not make Clara the culprit.
 
 Rules:
 - One sentence per event, abstract plot level only
@@ -444,6 +461,7 @@ Rules:
 - List which prior event_id(s) causally enable this event
 - Include a concrete story location for where the event happens
 - Include simple gameplay-friendly preconditions and effects
+- For crime backstory, set "is_decision_point" to false unless this event will also be played interactively.
 
 Your response must be ONLY a JSON array. Each element must have exactly these fields:
   "event_id": string (ex. "E1", "E2": if continuing, start from the next number)
@@ -457,6 +475,9 @@ Your response must be ONLY a JSON array. Each element must have exactly these fi
   "effects": list of short state strings caused by the event
   "required_objects": list of important object strings used or needed in the event
   "clue": short clue string revealed by this event, or null
+  "is_decision_point": boolean
+  "decision_context": hidden short description of why this is a meaningful open-ended intervention point, or ""
+  "hidden_expected_intents": hidden list of broad action intents that could advance this beat
 
 Example of correct output format, note only the output format and not the actual text in description:
 [
@@ -471,7 +492,10 @@ Example of correct output format, note only the output format and not the actual
     "preconditions": ["museum is open"],
     "effects": ["display case is broken", "theft is discovered"],
     "required_objects": ["display case"],
-    "clue": "Shards suggest the case was opened from inside"
+    "clue": "Shards suggest the case was opened from inside",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   }},
   {{
     "event_id": "E2",
@@ -484,7 +508,10 @@ Example of correct output format, note only the output format and not the actual
     "preconditions": ["display case is broken"],
     "effects": ["manuscript is confirmed missing"],
     "required_objects": ["manuscript"],
-    "clue": "Only staff with access could approach unnoticed"
+    "clue": "Only staff with access could approach unnoticed",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   }}
 ]
 
@@ -599,6 +626,7 @@ Structured event:
 - Clue: {event.clue or "None"}
 
 Write a short prose update that feels like the story is happening right now in the game.
+The player is Clara. If Clara appears in the event, address her actions as "you" instead of describing Clara as a separate person.
 """
 
 
@@ -623,6 +651,7 @@ These events should continue directly from the existing crime-story events and f
 - the intellectual pursuit of justice
 - the methodical breakdown of evidence by detectives, investigators, or law enforcement
 - deduction, interviews, evidence analysis, confrontation, revelation, and case resolution
+- Clara is the player character and should be the central investigator.
 
 Rules:
 - One sentence per event, abstract plot level only
@@ -634,6 +663,9 @@ Rules:
 - List which prior event_id(s) causally enable this event
 - Include a concrete story location for where the event happens
 - Include simple gameplay-friendly preconditions and effects
+- Mark only meaningful intervention moments as "is_decision_point": true.
+- A decision point is a moment where the player has enough context to make a real open-ended investigative choice.
+- Do not create menu options. "hidden_expected_intents" is engine-only metadata and must contain broad intents, not text to show the player.
 - Every string value must be enclosed in double quotes
 - Output valid JSON only
 
@@ -649,6 +681,9 @@ Your response must be ONLY a JSON array. Each element must have exactly these fi
   "effects": list of short state strings caused by the event
   "required_objects": list of important object strings used or needed in the event
   "clue": short clue string revealed by this event, or null
+  "is_decision_point": boolean
+  "decision_context": hidden short description of why this is a meaningful open-ended intervention point, or ""
+  "hidden_expected_intents": hidden list of broad action intents that could advance this beat
 
 Example:
 [
@@ -663,7 +698,10 @@ Example:
     "preconditions": ["security logs are available"],
     "effects": ["entry window is narrowed"],
     "required_objects": ["security logs", "witness timelines"],
-    "clue": "A disabled camera marks the likely route"
+    "clue": "A disabled camera marks the likely route",
+    "is_decision_point": true,
+    "decision_context": "The player can decide how to pursue the first evidence lead.",
+    "hidden_expected_intents": ["inspect_footage", "question_security", "visit_gallery"]
   }},
   {{
     "event_id": "E12",
@@ -676,7 +714,10 @@ Example:
     "preconditions": ["entry window is narrowed"],
     "effects": ["theft motive is clarified"],
     "required_objects": ["hidden-compartment notes"],
-    "clue": "The thief wanted what was inside the manuscript, not the manuscript itself"
+    "clue": "The thief wanted what was inside the manuscript, not the manuscript itself",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   }}
 ]
 
@@ -732,6 +773,9 @@ def _parse_plot_events(raw: str) -> list[PlotEvent]:
             effects=       list(rec.get("effects", [])),
             required_objects=list(rec.get("required_objects", [])),
             clue=         rec.get("clue"),
+            is_decision_point=_as_bool(rec.get("is_decision_point", False)),
+            decision_context=str(rec.get("decision_context", "") or ""),
+            hidden_expected_intents=list(rec.get("hidden_expected_intents", [])),
         ))
 
     return events

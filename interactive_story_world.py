@@ -29,6 +29,9 @@ NON_SUSPECT_TOKENS = {
     "museum staff",
 }
 
+MAX_COMMAND_WORDS = 12
+MAX_AUTONARRATED_EVENTS = 3
+
 
 def _normalize(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
@@ -99,11 +102,14 @@ class WorldState:
     active_facts: list[str] = field(default_factory=list)
     story_status: str = "active"
     ending_reason: str = ""
+    player_name: str = "Clara"
     last_classification: str = ""
     last_intervention: str = ""
     offtrack_turns: int = 0
     exceptional_actions: int = 0
     suspect_name: Optional[str] = None
+    last_action_signature: str = ""
+    repeated_action_count: int = 0
 
     def current_room(self) -> Room:
         return self.rooms[self.player_location]
@@ -242,6 +248,7 @@ def build_world_from_events(
     events: list[PlotEvent],
     premise: str,
     playable_events: Optional[list[PlotEvent]] = None,
+    player_name: str = "Clara",
 ) -> WorldState:
     active_events = playable_events if playable_events is not None else events
     rooms: dict[str, Room] = {}
@@ -257,7 +264,10 @@ def build_world_from_events(
             rooms[location] = Room(name=location, description=_room_description(location))
 
         room = rooms[location]
-        room.npcs.extend(char for char in event.characters if char and char not in room.npcs)
+        room.npcs.extend(
+            char for char in event.characters
+            if char and char not in room.npcs and _normalize(char) != _normalize(player_name)
+        )
         room.objects.extend(obj for obj in event.required_objects if obj and obj not in room.objects)
 
         if event.clue and event.clue not in room.clues:
@@ -296,6 +306,7 @@ def build_world_from_events(
         premise=premise,
         rooms=rooms,
         player_location=start_room,
+        player_name=player_name,
         known_clues=[],
         objectives=objectives[:5],
         event_states=event_states,
@@ -319,6 +330,7 @@ class InteractiveStoryGame:
                 f"at {next_event.event.location}"
             )
         return "\n".join([
+            f"Player character: {self.world.player_name}",
             f"Current location: {room.name}",
             f"Visible objects: {', '.join(room.objects) if room.objects else 'none'}",
             f"Visible people: {', '.join(room.npcs) if room.npcs else 'none'}",
@@ -330,19 +342,74 @@ class InteractiveStoryGame:
             f"Active facts: {', '.join(self.world.active_facts[:20])}",
         ])
 
+    def _player_is_character(self, character: str) -> bool:
+        return _normalize(character) == _normalize(self.world.player_name)
+
+    def _player_relative_text(self, text: str) -> str:
+        name = re.escape(self.world.player_name)
+        verb_replacements = {
+            "analyzes": "analyze",
+            "compares": "compare",
+            "confronts": "confront",
+            "decides": "decide",
+            "decodes": "decode",
+            "discovers": "discover",
+            "finds": "find",
+            "identifies": "identify",
+            "interviews": "interview",
+            "learns": "learn",
+            "notices": "notice",
+            "obtains": "obtain",
+            "questions": "question",
+            "realizes": "realize",
+            "reviews": "review",
+            "shows": "show",
+            "suspects": "suspect",
+        }
+        for third_person, second_person in verb_replacements.items():
+            text = re.sub(
+                rf"\b{name}\s+{third_person}\b",
+                f"you {second_person}",
+                text,
+                flags=re.IGNORECASE,
+            )
+            text = re.sub(
+                rf"\band\s+{third_person}\b",
+                f"and {second_person}",
+                text,
+                flags=re.IGNORECASE,
+            )
+            text = re.sub(
+                rf"\byou\s+{third_person}\b",
+                f"you {second_person}",
+                text,
+                flags=re.IGNORECASE,
+            )
+        text = re.sub(rf"\b{name}'s\b", "your", text, flags=re.IGNORECASE)
+        text = re.sub(rf"\b{name}\b", "you", text, flags=re.IGNORECASE)
+        text = re.sub(r"\bshe\b", "you", text, flags=re.IGNORECASE)
+        text = re.sub(r"\bher\b", "your", text, flags=re.IGNORECASE)
+        return text[:1].upper() + text[1:] if text else text
+
     def _fallback_event_prose(self, event: PlotEvent) -> str:
         room_phrase = f"In the {event.location.lower()}, " if event.location else ""
         description_text = event.description.strip()
+        if any(self._player_is_character(character) for character in event.characters):
+            description_text = self._player_relative_text(description_text)
         people_phrase = ""
-        if event.characters:
-            if len(event.characters) == 1:
-                people_phrase = f"{event.characters[0]} "
-            elif len(event.characters) == 2:
-                people_phrase = f"{event.characters[0]} and {event.characters[1]} "
+        non_player_characters = [
+            character for character in event.characters
+            if not self._player_is_character(character)
+        ]
+        if non_player_characters and not any(self._player_is_character(character) for character in event.characters):
+            if len(non_player_characters) == 1:
+                people_phrase = f"{non_player_characters[0]} "
+            elif len(non_player_characters) == 2:
+                people_phrase = f"{non_player_characters[0]} and {non_player_characters[1]} "
             else:
-                people_phrase = f"{', '.join(event.characters[:-1])}, and {event.characters[-1]} "
-        if event.characters and description_text:
-            first_character = event.characters[0].lower()
+                people_phrase = f"{', '.join(non_player_characters[:-1])}, and {non_player_characters[-1]} "
+        if non_player_characters and description_text:
+            first_character = non_player_characters[0].lower()
             if description_text.lower().startswith(first_character):
                 people_phrase = ""
 
@@ -353,8 +420,6 @@ class InteractiveStoryGame:
             lines.append(f"The moment leaves behind a telling detail: {event.clue}.")
         elif event.effects:
             lines.append(f"The development changes the investigation in a concrete way: {', '.join(event.effects)}.")
-        if event.goals:
-            lines.append(f"For now, the focus shifts toward {', '.join(event.goals)}.")
         return " ".join(line for line in lines if line).strip()
 
     def _render_event_prose(self, event: PlotEvent) -> str:
@@ -371,7 +436,18 @@ class InteractiveStoryGame:
         return self._fallback_event_prose(event)
 
     def _heuristic_action(self, command: str) -> InterpretedAction:
-        lower = command.lower().strip()
+        corrected_command = command
+        typo_replacements = {
+            r"\bconfonrt\b": "confront",
+            r"\bhte\b": "the",
+            r"\bteh\b": "the",
+            r"\binterragate\b": "interrogate",
+            r"\bth eknown\b": "the known",
+        }
+        for pattern, replacement in typo_replacements.items():
+            corrected_command = re.sub(pattern, replacement, corrected_command, flags=re.IGNORECASE)
+
+        lower = corrected_command.lower().strip()
         if any(word in lower for word in ("perpetrator", "culprit", "thief", "killer")) and any(
             word in lower for word in ("find", "caught", "catch", "identify", "it's", "is ")
         ):
@@ -380,6 +456,9 @@ class InteractiveStoryGame:
                 target=command.strip(),
                 target_character=command.strip(),
             )
+        if lower.startswith("confront "):
+            target = re.sub(r"^confront\s+(the\s+)?", "", corrected_command, count=1, flags=re.IGNORECASE).strip()
+            return InterpretedAction(action_type="talk", target=target, target_character=target)
         if lower.startswith("go "):
             target = re.sub(r"^(go|walk|move|head)\s+(to\s+)?", "", lower, count=1).strip()
             return InterpretedAction(action_type="move", target=target, target_location=target)
@@ -390,7 +469,38 @@ class InteractiveStoryGame:
             target = command[8:].strip()
             return InterpretedAction(action_type="inspect", target=target, target_object=target)
         if lower.startswith("talk "):
-            target = command[5:].strip()
+            target = re.sub(r"^to\s+", "", command[5:].strip(), flags=re.IGNORECASE)
+            return InterpretedAction(action_type="talk", target=target, target_character=target)
+        if lower.startswith(("ask ", "question ", "interrogate ", "interragate ")):
+            target = re.sub(
+                r"^(ask|question|interrogate|interragate)\s+(the\s+)?",
+                "",
+                corrected_command,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+            target = re.split(r"\s+(about|who|what|why|where|when|how)\b", target, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+            return InterpretedAction(action_type="talk", target=target, target_character=target)
+        if lower.startswith(("contact ", "find ", "track down ", "locate ")):
+            target = re.sub(
+                r"^(contact|find|track down|locate)\s+(the\s+)?(known\s+)?",
+                "",
+                corrected_command,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+            next_event = self.world.next_story_event()
+            if next_event and (
+                _normalize(target) in _normalize(next_event.event.description)
+                or any(_normalize(target) in _normalize(char) for char in next_event.event.characters)
+                or any(_normalize(target) in _normalize(goal) for goal in next_event.event.goals)
+            ):
+                return InterpretedAction(
+                    action_type="move",
+                    target=next_event.event.location or target,
+                    target_location=next_event.event.location or target,
+                    intent_summary=f"pursue {target}",
+                )
             return InterpretedAction(action_type="talk", target=target, target_character=target)
         if lower.startswith("take "):
             target = command[5:].strip()
@@ -416,6 +526,16 @@ class InteractiveStoryGame:
         return InterpretedAction(action_type="unknown", target=command)
 
     def _interpret_action(self, command: str) -> InterpretedAction:
+        lower = command.lower().strip()
+        if any(phrase in lower for phrase in ("go there", "go to this location", "go to that location", "go to the lead")):
+            next_event = self.world.next_story_event()
+            if next_event and next_event.event.location:
+                return InterpretedAction(
+                    action_type="move",
+                    target=next_event.event.location,
+                    target_location=next_event.event.location,
+                    intent_summary=f"go to {next_event.event.location}",
+                )
         if not self.llm:
             return self._heuristic_action(command)
         try:
@@ -431,6 +551,69 @@ class InteractiveStoryGame:
         objects = list(dict.fromkeys([*room.objects, *self.world.inventory]))
         people = list(dict.fromkeys(room.npcs))
         return objects, people
+
+    def _action_signature(self, action: InterpretedAction) -> str:
+        target = (
+            action.target_location
+            or action.target_object
+            or action.target_character
+            or action.target
+        )
+        return f"{action.action_type}:{_normalize(target or '')}"
+
+    def _track_action_repetition(self, action: InterpretedAction) -> int:
+        signature = self._action_signature(action)
+        if signature and signature == self.world.last_action_signature:
+            self.world.repeated_action_count += 1
+        else:
+            self.world.last_action_signature = signature
+            self.world.repeated_action_count = 0
+        return self.world.repeated_action_count
+
+    def _next_lead_guidance(self) -> Optional[str]:
+        next_event = self.world.next_story_event()
+        if not next_event:
+            return None
+
+        event = next_event.event
+        parts = [f"No new story beat opens from that. The next lead is tied to {event.location}."]
+
+        path = self.world.path_to_room(event.location or "")
+        if path and len(path) > 1:
+            parts.append(f"Route: {' -> '.join(path)}.")
+
+        required = [obj for obj in event.required_objects if obj]
+        people = [char for char in event.characters if char]
+        if required:
+            parts.append(f"Something relevant here: {', '.join(required[:2])}.")
+        elif people:
+            parts.append(f"Someone relevant here: {', '.join(people[:2])}.")
+
+        return " ".join(parts)
+
+    def _person_lead_guidance(self, target: str) -> Optional[str]:
+        lead = self._person_lead(target)
+        if not lead:
+            return None
+
+        matched, location = lead
+        parts = [f"{matched} is part of the next lead, but they are not here."]
+        if location:
+            parts.append(f"Look in {location}.")
+            path = self.world.path_to_room(location)
+            if path and len(path) > 1:
+                parts.append(f"Route: {' -> '.join(path)}.")
+        return " ".join(parts)
+
+    def _person_lead(self, target: str) -> Optional[tuple[str, str]]:
+        for event_state in self.world.remaining_story_events():
+            matched = _match_name(target, event_state.event.characters)
+            if not matched or self._player_is_character(matched):
+                continue
+
+            location = event_state.event.location or infer_location_from_text(event_state.event.description)
+            return matched, location
+        return None
 
     def _validate_action(self, action: InterpretedAction) -> tuple[bool, str]:
         room = self.world.current_room()
@@ -463,8 +646,14 @@ class InteractiveStoryGame:
             target = action.target_character or action.target
             if not target:
                 return False, "That action needs a person."
+            if action.action_type == "talk" and self._player_is_character(target):
+                return False, f"You are {self.world.player_name}; choose someone else to question or inspect a lead."
+            if action.action_type == "talk" and _normalize(target) in {"suspect", "the suspect"} and people:
+                return True, ""
             matched = _match_name(target, people)
             if matched or action.action_type == "accuse":
+                return True, ""
+            if self._person_lead(target):
                 return True, ""
             return False, f"No one here matches '{target}'."
 
@@ -527,14 +716,26 @@ class InteractiveStoryGame:
                 next_event.event.location or "",
                 *(next_event.event.required_objects or []),
                 *(next_event.event.characters or []),
+                *(next_event.event.goals or []),
+                *(next_event.event.hidden_expected_intents or []),
             ]
+            if next_event.event.clue:
+                target_pool.append(next_event.event.clue)
             target = action.target or ""
+            intent = action.intent_summary or ""
             if self.world.player_location == next_event.event.location:
                 if action.action_type in {"inspect", "talk", "take", "use"}:
                     return "constituent", affected_events
                 if action.action_type == "move" and action.target_location == next_event.event.location:
                     return "constituent", affected_events
-            if any(_normalize(target) in _normalize(item) for item in target_pool if item and target):
+            normalized_target = _normalize(target)
+            normalized_intent = _normalize(intent)
+            if any(
+                (normalized_target and normalized_target in _normalize(item))
+                or (normalized_intent and normalized_intent in _normalize(item))
+                for item in target_pool
+                if item
+            ):
                 return "constituent", affected_events
 
         if action.action_type in {"move", "inspect", "talk", "take", "use", "wait"}:
@@ -570,11 +771,33 @@ class InteractiveStoryGame:
 
         if action.action_type == "talk":
             target = _match_name(action.target_character or action.target, room.npcs)
+            if not target and _normalize(action.target_character or action.target) in {"suspect", "the suspect"} and room.npcs:
+                target = (
+                    _match_name("staff member", room.npcs)
+                    or _match_name("suspect", room.npcs)
+                    or room.npcs[0]
+                )
             if target:
-                self.world.add_fact(f"talked to {target}")
+                fact = f"talked to {target}"
+                already_talked = fact in self.world.active_facts
+                self.world.add_fact(fact)
                 for clue in room.clues:
                     self.world.add_clue(clue)
+                if already_talked:
+                    return f"You have already talked to {target}; they do not add anything new."
                 return f"You talk to {target}. They share what they know about this location."
+
+            lead = self._person_lead(action.target_character or action.target)
+            if lead:
+                lead_name, location = lead
+                path = self.world.travel_player(location)
+                room = self.world.current_room()
+                if lead_name not in room.npcs:
+                    room.npcs.append(lead_name)
+                self.world.add_fact(f"approached {lead_name}")
+                route = f"Route taken: {' -> '.join(path)}\n" if path and len(path) > 1 else ""
+                return f"{route}You follow the lead to {location} and approach {lead_name}."
+
             return f"No one here matches '{action.target}'."
 
         if action.action_type == "take":
@@ -657,6 +880,41 @@ class InteractiveStoryGame:
                 return False
         return True
 
+    def _is_decision_event(self, event_state: StoryEventState) -> bool:
+        event = event_state.event
+        if event.goal_type == "resolve":
+            return False
+        if event.is_decision_point:
+            return True
+
+        try:
+            event_index = self.world.event_states.index(event_state)
+        except ValueError:
+            event_index = 0
+
+        description = event.description.lower()
+        decision_terms = (
+            "confront",
+            "interview",
+            "question",
+            "suspect",
+            "alibi",
+            "choose",
+            "decide",
+            "lead",
+            "trail",
+        )
+        if event.goal_type == "obstruct":
+            return True
+        if any(term in description for term in decision_terms):
+            return True
+        if event.clue and event_index % 3 == 0:
+            return True
+        return event_index == 0
+
+    def _open_decision_prompt(self, event_state: StoryEventState) -> str:
+        return "What do you do?"
+
     def _trigger_ready_event(self) -> Optional[str]:
         next_event = self.world.next_story_event()
         if not next_event or not self._event_is_ready(next_event):
@@ -676,6 +934,27 @@ class InteractiveStoryGame:
             self.world.ending_reason = f"Case resolved: {event.description}"
 
         return self._render_event_prose(event)
+
+    def _trigger_story_segment(self) -> Optional[str]:
+        response_parts: list[str] = []
+
+        for _ in range(MAX_AUTONARRATED_EVENTS):
+            next_event = self.world.next_story_event()
+            if not next_event or not self._event_is_ready(next_event):
+                break
+
+            should_pause_after = self._is_decision_event(next_event)
+            event_text = self._trigger_ready_event()
+            if event_text:
+                response_parts.append(event_text)
+
+            if self.world.story_status in {"solved", "failed", "unsolvable"}:
+                break
+            if should_pause_after:
+                response_parts.append(self._open_decision_prompt(next_event))
+                break
+
+        return "\n\n".join(response_parts) if response_parts else None
 
     def _fallback_accommodation(
         self,
@@ -821,13 +1100,15 @@ class InteractiveStoryGame:
         raw = command.strip()
         if not raw:
             return "Type a natural-language action like 'go to the security office' or 'inspect the display case'."
+        if len(raw.split()) > MAX_COMMAND_WORDS:
+            return f"Keep actions short: {MAX_COMMAND_WORDS} words or fewer."
 
         lower = raw.lower()
         if lower in {"help", "?"}:
             return (
                 "Commands still supported directly: look, status, map, inventory, quit.\n"
                 "You can also type open-ended actions like 'go to the gallery', 'inspect the case', "
-                "'talk to Clara', 'take the notes', 'break the footage', or 'accuse Sarah'."
+                "'question Sarah', 'take the notes', 'break the footage', or 'accuse Sarah'."
             )
 
         if lower == "look":
@@ -858,8 +1139,22 @@ class InteractiveStoryGame:
         if lower == "quit":
             return "quit"
 
+        if lower.startswith(("who ", "why ", "what ")):
+            room = self.world.current_room()
+            next_event = self.world.next_story_event()
+            lines = [self.world.describe_current_room()]
+            if next_event:
+                lines.append(
+                    f"Current lead: {next_event.event.description} "
+                    f"({next_event.event.location})."
+                )
+            if room.npcs:
+                lines.append("People present: " + ", ".join(room.npcs))
+            return "\n".join(lines)
+
         self.world.turn_count += 1
         action = self._interpret_action(raw)
+        repeat_count = self._track_action_repetition(action)
         valid, reason = self._validate_action(action)
         if not valid:
             self.world.offtrack_turns += 1
@@ -886,6 +1181,15 @@ class InteractiveStoryGame:
             result,
         ]
 
+        if action.action_type == "unknown":
+            guidance = self._next_lead_guidance()
+            if guidance:
+                response_parts.append(guidance)
+            hint = self._soft_hint()
+            if hint:
+                response_parts.append(hint)
+            return "\n\n".join(part for part in response_parts if part)
+
         if classification == "exceptional":
             self.world.exceptional_actions += 1
             intervention = self._accommodate_exception(action, affected_events)
@@ -897,9 +1201,13 @@ class InteractiveStoryGame:
             else:
                 self.world.offtrack_turns = 0
 
-            event_text = self._trigger_ready_event()
+            event_text = self._trigger_story_segment()
             if event_text:
                 response_parts.append(event_text)
+            elif classification == "constituent" and repeat_count >= 1:
+                guidance = self._next_lead_guidance()
+                if guidance:
+                    response_parts.append(guidance)
 
             hint = self._soft_hint()
             if hint:
@@ -920,7 +1228,7 @@ class InteractiveStoryGame:
         print(self.world.describe_current_room())
         print("\nType 'help' for commands. Type 'quit' to stop.\n")
 
-        opening_event = self._trigger_ready_event()
+        opening_event = self._trigger_story_segment()
         if opening_event:
             print(opening_event)
             print()
