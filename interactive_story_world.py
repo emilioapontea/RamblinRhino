@@ -222,14 +222,31 @@ def _room_description(name: str) -> str:
 
 
 def _connect_rooms(rooms: dict[str, Room]) -> None:
-    # ordered = [name for name in DEFAULT_ROOM_ORDER if name in rooms]
-    ordered = list(rooms.keys())
-    for idx, name in enumerate(ordered):
+    MUSEUM_INTERNAL = {
+        "Museum Entrance", "Museum Gallery", "Archive Office",
+        "Security Office", "Staff Hallway", "Storage Room",
+        "Museum Storage", "Museum Staff Offices", "Museum Board Room",
+        "Museum Security Room", "Museum Staff Office", "Security Room",
+        "Security System Room",
+    }
+    EXTERNAL = {
+        "Parking Lot", "Warehouse", "Historical Society Office",
+        "Bank Safe-Deposit Box", "Clara's Office",
+    }
+    internal = [r for r in rooms if any(k in r for k in MUSEUM_INTERNAL) or r not in EXTERNAL]
+    external = [r for r in rooms if r in EXTERNAL]
+    for idx, name in enumerate(internal): # Chain internal rooms together
         room = rooms[name]
         if idx > 0:
-            room.exits["back"] = ordered[idx - 1]
-        if idx < len(ordered) - 1:
-            room.exits["forward"] = ordered[idx + 1]
+            room.exits["back"] = internal[idx - 1]
+        if idx < len(internal) - 1:
+            room.exits["forward"] = internal[idx + 1]
+    gateway = "Museum Entrance" if "Museum Entrance" in rooms else (internal[0] if internal else None) # Connect external rooms to Museum Entrance or first internal room as gateway
+    for name in external:
+        if gateway and name in rooms:
+            rooms[name].exits["back"] = gateway
+            if gateway in rooms:
+                rooms[gateway].exits[f"to {name}"] = name
 
 
 def _infer_primary_suspect(events: list[PlotEvent]) -> Optional[str]:
@@ -259,6 +276,8 @@ def build_world_from_events(
 
     for event in events:
         location = event.location or infer_location_from_text(event.description)
+        if not location or location.lower() in {"unknown", "none", "unspecified"}:
+            location = infer_location_from_text(event.description)
         event.location = location
 
         if location not in rooms:
@@ -785,8 +804,15 @@ class InteractiveStoryGame:
                 for clue in room.clues:
                     self.world.add_clue(clue)
                 if already_talked:
-                    return f"You have already talked to {target}; they do not add anything new."
-                return f"You talk to {target}. They share what they know about this location."
+                    return f"You have already spoken with {target}. They have nothing new to add."
+                clues_here = [c for c in room.clues if c not in self.world.known_clues]
+                if clues_here:
+                    self.world.add_clue(clues_here[0])
+                    return (
+                        f"You question {target}. After some hesitation, they reveal: "
+                        f"\"{clues_here[0]}\""
+                    )
+                return f"You speak with {target}, but they seem guarded and offer nothing new at this time."
 
             lead = self._person_lead(action.target_character or action.target)
             if lead:

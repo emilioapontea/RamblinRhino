@@ -39,8 +39,8 @@ If `networkx` is missing in your current Python, install it in the same environm
 python -m pip install networkx
 ```
 
-## Groq API Key
-The project uses the Groq API for:
+## Cerebras API Key
+The project uses the Cerebras Inference API for:
 - story generation
 - reflection / repair generation
 - interactive action interpretation
@@ -49,11 +49,15 @@ The project uses the Groq API for:
 
 Set your key in the terminal before running:
 
-```bash
-export GROQ_API_KEY="YOUR_GROQ_API_KEY"
+```
+$env:CEREBRAS_API_KEY="YOUR_API_KEY_GOES_HERE"
 ```
 
-You only need a Groq key when generating a new story or using the LLM-backed interactive features. If you load a previously saved story, the project can still run with local fallbacks.
+To get a Cerebras Inference API key:
+- Go to https://cloud.cerebras.ai/platform/org_4jprj3hmkmyfnhcwvy66yrr8/get-started?onboarding=true
+- Log in, copy an API key
+
+You only need a Cerebras API key when generating a new story or using the LLM-backed interactive features. If you load a previously saved story, the project can still run with local fallbacks.
 
 ## How to Run
 Generate a new story:
@@ -109,7 +113,7 @@ By default, the system generates `30` total pre-reflection events, which splits 
 
 ## Repository Structure
 - `main_system_script.py`: top-level driver for story generation, reflection, saving, loading, and interactive mode
-- `llm_api_wrapper.py`: Groq client, event generation, reflection, action interpretation, accommodation prompts, and prose generation
+- `llm_api_wrapper.py`: Cerebras client, event generation, reflection, action interpretation, accommodation prompts, and prose generation
 - `interactive_story_world.py`: world model, room graph, interactive loop, action validation, classification, dynamic repair, and event prose rendering
 - `environment.yml`: environment definition
 - `complexity_checking/complexity_checker.py`: QUEST coherence checks

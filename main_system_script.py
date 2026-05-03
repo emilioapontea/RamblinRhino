@@ -1,8 +1,8 @@
 # main_system_script.py
 # Rambling Rhino: Reader-Model-Driven Story Generation Driver
 
-# Uses the Groq API, free, with a limit of ~6000 tokens a min, ~500,000 tokens a day
-# Model used: llama-3.3-70b-versatile
+# Uses the Cerebras Inference API, free tier
+# Model used: llama3.1-8b
 
 # This script is the top-level script that wires together all the system components and runs a full
 # Crime Story Events --> Reflection --> Solving Story Events --> Reflection --> Prose pipeline
@@ -47,6 +47,8 @@
         # python main_system_script.py --output-dir ./output
     # Verbose (print raw LLM responses):
         # python main_system_script.py --verbose
+    # Interactive mode:
+        # python main_system_script.py --interactive
 
 from __future__ import annotations
 
@@ -216,7 +218,7 @@ class RamblingRhinoDriver:
     def _require_llm(self) -> LLMClient:
         if self.llm is None:
             raise RuntimeError(
-                "This action requires a Groq API key. Set GROQ_API_KEY or load a saved story for offline replay."
+                "This action requires an API key. Set CEREBRAS_API_KEY or load a saved story for offline replay."
             )
         return self.llm
 
@@ -402,7 +404,7 @@ class RamblingRhinoDriver:
                     "Generate 1-2 bridging plot events to address this structural gap."
                 )
                 print(f"\n  Repairing: {fb_msg}")
-                time.sleep(2)   # avoid Groq 429 rate-limit between reflection calls
+                time.sleep(2)   # avoids rate-limit between reflection calls
                 bridging = self._require_llm().reflect_on_quest_gap(
                     gap_description=       gap_description,
                     story_so_far=          story_summary,
@@ -678,10 +680,10 @@ def main() -> None:
     args = parser.parse_args()
 
     # Validate API key only when story generation is required
-    api_key = os.environ.get("GROQ_API_KEY", "API_KEY")
-    if not args.load_story and (not api_key or api_key == "YOUR_GROQ_API_KEY_HERE"):
+    api_key = os.environ.get("CEREBRAS_API_KEY", "API_KEY")
+    if not args.load_story and (not api_key or api_key == "YOUR_CEREBRAS_API_KEY_HERE"):
         print(
-            "\n[ERROR] No Groq API key found.",
+            "\n[ERROR] No Cerebras API key found.",
             file=sys.stderr,
         )
         sys.exit(1)
