@@ -487,6 +487,74 @@ class RamblingRhinoDriver:
             self._build_world_state()
         prose = ""
         if interactive:
+            result = {
+                "premise":  self.premise,
+                "genre":    self.genre,
+                "crime_story_events": [
+                    {
+                        "event_id":    ev.event_id,
+                        "description": ev.description,
+                        "characters":  ev.characters,
+                        "goals":       ev.goals,
+                        "caused_by":   ev.caused_by,
+                        "goal_type":   ev.goal_type,
+                        "location":    ev.location,
+                        "preconditions": ev.preconditions,
+                        "effects":     ev.effects,
+                        "required_objects": ev.required_objects,
+                        "clue":        ev.clue,
+                        "is_decision_point": ev.is_decision_point,
+                        "decision_context": ev.decision_context,
+                        "hidden_expected_intents": ev.hidden_expected_intents,
+                    }
+                    for ev in self.crime_story_events
+                ],
+                "solving_story_events": [
+                    {
+                        "event_id":    ev.event_id,
+                        "description": ev.description,
+                        "characters":  ev.characters,
+                        "goals":       ev.goals,
+                        "caused_by":   ev.caused_by,
+                        "goal_type":   ev.goal_type,
+                        "location":    ev.location,
+                        "preconditions": ev.preconditions,
+                        "effects":     ev.effects,
+                        "required_objects": ev.required_objects,
+                        "clue":        ev.clue,
+                        "is_decision_point": ev.is_decision_point,
+                        "decision_context": ev.decision_context,
+                        "hidden_expected_intents": ev.hidden_expected_intents,
+                    }
+                    for ev in self.solving_story_events
+                ],
+                "events":   [
+                    {
+                        "event_id":    ev.event_id,
+                        "description": ev.description,
+                        "characters":  ev.characters,
+                        "goals":       ev.goals,
+                        "caused_by":   ev.caused_by,
+                        "goal_type":   ev.goal_type,
+                        "location":    ev.location,
+                        "preconditions": ev.preconditions,
+                        "effects":     ev.effects,
+                        "required_objects": ev.required_objects,
+                        "clue":        ev.clue,
+                        "is_decision_point": ev.is_decision_point,
+                        "decision_context": ev.decision_context,
+                        "hidden_expected_intents": ev.hidden_expected_intents,
+                    }
+                    for ev in self.events
+                ],
+                "kg_stats": self.kg.stats(),
+                "prose":    prose,
+                "prose_source": "solving_story_events" if self.solving_story_events else "events",
+                "usage":    str(self.llm.usage) if self.llm else "TokenUsage(unavailable: no API key)",
+                "world":    self._world_summary(),
+            }
+            if self.output_dir:
+                self._save_outputs(result)
             self.run_interactive_story()
         else:
             prose = self.run_prose()
