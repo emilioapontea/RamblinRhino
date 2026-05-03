@@ -1117,7 +1117,7 @@ class InteractiveStoryGame:
             return self.world.ending_reason
 
         if self.world.exceptional_actions >= 3 and not any(
-            event.goal_type == "resolve" and not event.invalidated
+            event.event.goal_type == "resolve" and not event.invalidated
             for event in self.world.remaining_story_events()
         ):
             self.world.story_status = "unsolvable"
