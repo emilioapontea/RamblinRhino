@@ -848,9 +848,28 @@ class InteractiveStoryGame:
             if self.world.suspect_name and _match_name(accused, [self.world.suspect_name]):
                 if len(self.world.known_clues) >= 3:
                     self.world.story_status = "solved"
-                    self.world.ending_reason = f"You accuse {self.world.suspect_name} and the evidence holds."
+                    clue_summary = "\n  - ".join(self.world.known_clues)
+                    self.world.ending_reason = (
+                        f"\n{'='*60}\n"
+                        f"CASE CLOSED\n"
+                        f"{'='*60}\n"
+                        f"You confront {self.world.suspect_name} with the full weight of your evidence.\n\n"
+                        f"The clues you uncovered:\n  - {clue_summary}\n\n"
+                        f"Faced with the proof, {self.world.suspect_name} has no way out. "
+                        f"The authorities are called and an arrest is made. "
+                        f"The stolen manuscript — and the secrets it contained — are finally recovered. "
+                        f"Your instincts as an investigator solved the case.\n\n"
+                        f"Turns taken: {self.world.turn_count} | "
+                        f"Clues gathered: {len(self.world.known_clues)} | "
+                        f"Disruptions: {self.world.exceptional_actions}\n"
+                        f"{'='*60}"
+                    )
                     return self.world.ending_reason
-                return f"You accuse {self.world.suspect_name}, but you do not have enough evidence yet."
+                return (
+                    f"You accuse {self.world.suspect_name}, but you need more evidence first.\n"
+                    f"Clues found so far: {len(self.world.known_clues)}/3 needed.\n"
+                    f"Known clues: {', '.join(self.world.known_clues) if self.world.known_clues else 'none yet'}"
+                )
             self.world.add_fact(f"wrong accusation against {accused}")
             self.world.last_intervention = (
                 f"The accusation against {accused} rattles the investigation and forces the case to shift."
@@ -1082,7 +1101,19 @@ class InteractiveStoryGame:
 
         if not self.world.remaining_story_events():
             self.world.story_status = "solved"
-            self.world.ending_reason = "Every remaining story beat has been completed."
+            clue_summary = "\n  - ".join(self.world.known_clues) if self.world.known_clues else "none recorded"
+            self.world.ending_reason = (
+                f"\n{'='*60}\n"
+                f"INVESTIGATION COMPLETE\n"
+                f"{'='*60}\n"
+                f"Every thread of the investigation has been followed to its conclusion.\n\n"
+                f"Evidence gathered:\n  - {clue_summary}\n\n"
+                f"The case is closed. Justice has been served.\n\n"
+                f"Turns taken: {self.world.turn_count} | "
+                f"Clues gathered: {len(self.world.known_clues)} | "
+                f"Disruptions: {self.world.exceptional_actions}\n"
+                f"{'='*60}"
+            )
             return self.world.ending_reason
 
         if self.world.exceptional_actions >= 3 and not any(
@@ -1250,7 +1281,12 @@ class InteractiveStoryGame:
             print()
 
             if self.world.story_status in {"solved", "failed", "unsolvable"}:
-                print(f"Final story status: {self.world.story_status}")
+                if self.world.story_status == "solved":
+                    print(f"\nFinal story status: SOLVED")
+                elif self.world.story_status == "unsolvable":
+                    print(f"\nFinal story status: UNSOLVABLE — too many critical disruptions.")
+                else:
+                    print(f"\nFinal story status: {self.world.story_status.upper()}")
                 return
 
 
