@@ -1209,7 +1209,6 @@ class InteractiveStoryGame:
         result = self._apply_action(action)
 
         response_parts = [
-            f"Action classification: {classification}",
             result,
         ]
 
@@ -1248,6 +1247,18 @@ class InteractiveStoryGame:
         final_status = self._final_status_check()
         if final_status:
             response_parts.append(f"Ending: {final_status}")
+        if self.world.story_status == "active":
+            next_event = self.world.next_story_event()
+            if next_event and next_event.event.location:
+                if next_event.event.location == self.world.player_location:
+                    response_parts.append(f"You are in the right place. What do you do?")
+                else:
+                    response_parts.append(
+                        # f"The investigation points toward {next_event.event.location}. "
+                        f"What do you do next?"
+                    )
+            else:
+                response_parts.append("What do you do next?")
 
         return "\n\n".join(part for part in response_parts if part)
 
