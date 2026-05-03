@@ -464,8 +464,7 @@ class RamblingRhinoDriver:
         if not self.world_state:
             print("[interactive] World state could not be created.")
             return
-        interactive_llm = None if self.loaded_story_replay else self.llm
-        InteractiveStoryGame(self.world_state, llm=interactive_llm).run()
+        InteractiveStoryGame(self.world_state, llm=self.llm).run()
 
     def run(self, interactive: bool = False, load_story_file: Optional[str] = None) -> dict:
         # Executes the full pipeline and returns a results dict.

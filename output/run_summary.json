@@ -4,729 +4,2651 @@
   "crime_story_events": [
     {
       "event_id": "E1",
-      "description": "The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours.",
+      "description": "The priceless 18th-century manuscript is put on display at the local museum for the final time before the auction.",
       "characters": [
-        "The Thief",
-        "Museum Staff"
+        "Curator",
+        "Security"
       ],
       "goals": [
-        "steal the manuscript"
+        "raise public awareness"
       ],
       "caused_by": [],
-      "goal_type": "initiate"
+      "goal_type": null,
+      "location": "Museum Gallery",
+      "preconditions": [
+        "auction is imminent",
+        "security is on duty"
+      ],
+      "effects": [
+        "public is informed about the auction"
+      ],
+      "required_objects": [
+        "display case",
+        "manuscript"
+      ],
+      "clue": null,
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E2",
-      "description": "The thief uses a custom-made lockpick to bypass the display case's security lock.",
+      "description": "The curator, Rachel, discovers that the museum's key access system fails that night.",
       "characters": [
-        "The Thief"
+        "Curator Rachel"
       ],
       "goals": [
-        "steal the manuscript"
+        "conceal the failure"
       ],
       "caused_by": [
         "E1"
       ],
-      "goal_type": "obstruct"
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "key access system is online"
+      ],
+      "effects": [
+        "key access system fails",
+        "potential security breach"
+      ],
+      "required_objects": [
+        "key access system"
+      ],
+      "clue": "A cryptic note is found next to the system",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E3",
-      "description": "The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment.",
+      "description": "A hidden camera in the museum captures footage of a suspicious person entering through a side door.",
       "characters": [
-        "The Thief"
+        "Maintenance",
+        "Security"
       ],
       "goals": [
-        "discover the manuscript's secrets"
+        "investigate the theft"
       ],
       "caused_by": [
         "E2"
       ],
-      "goal_type": "obstruct"
+      "goal_type": "initiate",
+      "location": "Security Room",
+      "preconditions": [
+        "surveillance is enabled"
+      ],
+      "effects": [
+        "security team is alerted to the incident"
+      ],
+      "required_objects": [
+        "security camera"
+      ],
+      "clue": "The camera angle is partially obstructed",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E4",
-      "description": "A small, valuable item is found hidden within the manuscript, which was the true target of the theft.",
+      "description": "Clara, the archivist, discovers a hidden document in the curator's office that suggests a former museum employee might be involved.",
       "characters": [
-        "The Thief"
+        "Clara",
+        "Curator Rachel"
       ],
       "goals": [
-        "sell the valuable item"
+        "uncover museum employee's involvement"
       ],
       "caused_by": [
-        "E3"
+        "E2"
       ],
-      "goal_type": "initiate"
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "hidden document is found"
+      ],
+      "effects": [
+        "potential suspects are identified"
+      ],
+      "required_objects": [
+        "hidden document"
+      ],
+      "clue": "A suspicious alibi is mentioned",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E5",
-      "description": "The thief escapes the museum without triggering any alarms, using a pre-planned route.",
+      "description": "The museum's security team reviews the security footage and identifies the thief as a former employee, now a local antique dealer.",
       "characters": [
-        "The Thief"
+        "Security",
+        "Archivist"
       ],
       "goals": [
-        "avoid detection"
+        "confirm the thief's identity"
+      ],
+      "caused_by": [
+        "E3",
+        "E4"
+      ],
+      "goal_type": "initiate",
+      "location": "Security Room",
+      "preconditions": [
+        "security footage is reviewed"
+      ],
+      "effects": [
+        "theft is confirmed, and thief's identity is known"
+      ],
+      "required_objects": [
+        "security camera footage"
+      ],
+      "clue": "A distinctive tattoo is visible on the thief's hand",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
+    },
+    {
+      "event_id": "E6",
+      "description": "The archivist notices that the museum's catalog of valuable items is incomplete and that a specific section related to the manuscript is missing.",
+      "characters": [
+        "Clara",
+        "Curator Rachel"
+      ],
+      "goals": [
+        "investigate the catalog theft"
+      ],
+      "caused_by": [
+        "E1"
+      ],
+      "goal_type": "initiate",
+      "location": "Archivist's Office",
+      "preconditions": [
+        "catalog is available"
+      ],
+      "effects": [
+        "incomplete catalog is discovered"
+      ],
+      "required_objects": [
+        "catalog"
+      ],
+      "clue": "A torn page with a handwritten note is found",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
+    },
+    {
+      "event_id": "E7",
+      "description": "The thief, Alex, sends a threatening message to the curator, Rachel, warning her not to investigate further.",
+      "characters": [
+        "Alex",
+        "Curator Rachel"
+      ],
+      "goals": [
+        "intimidate the curator"
+      ],
+      "caused_by": [
+        "E5"
+      ],
+      "goal_type": "initiate",
+      "location": "Rachel's Personal Phone",
+      "preconditions": [
+        "thief's identity is known"
+      ],
+      "effects": [
+        "curator is intimidated",
+        "investigation is slowed"
+      ],
+      "required_objects": [
+        "phone"
+      ],
+      "clue": "The message is encrypted",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
+    },
+    {
+      "event_id": "E8",
+      "description": "Clara discovers a hidden safe in the curator's office that contains a cryptic message and a note about the manuscript's true value.",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "uncover the manuscript's true value"
       ],
       "caused_by": [
         "E4"
       ],
-      "goal_type": "obstruct"
-    },
-    {
-      "event_id": "E6",
-      "description": "The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.",
-      "characters": [
-        "Clara",
-        "The Thief"
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "hidden safe is found"
       ],
-      "goals": [
-        "recover the manuscript",
-        "discover the thief's identity"
+      "effects": [
+        "manuscript's true value is revealed"
       ],
-      "caused_by": [
-        "E5"
+      "required_objects": [
+        "hidden safe"
       ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "->E7",
-      "description": "Clara realizes that the thief must have had inside help to bypass the museum's security system.",
-      "characters": [
-        "Clara"
-      ],
-      "goals": [
-        "identify the insider"
-      ],
-      "caused_by": [
-        "E6"
-      ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E8",
-      "description": "Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft.",
-      "characters": [
-        "Clara",
-        "Museum Staff"
-      ],
-      "goals": [
-        "identify the insider"
-      ],
-      "caused_by": [
-        "E7"
-      ],
-      "goal_type": "obstruct"
+      "clue": "A cryptic message is decoded",
+      "is_decision_point": true,
+      "decision_context": "Player must choose how to proceed with this new information",
+      "hidden_expected_intents": [
+        "obtain more information about the manuscript"
+      ]
     },
     {
       "event_id": "E9",
-      "description": "The thief, now in possession of the valuable item, contacts a potential buyer on the black market.",
+      "description": "The police arrive at the museum and take statements from the staff, including Clara and Rachel, about the theft.",
       "characters": [
-        "The Thief",
-        "The Buyer"
+        "Police",
+        "Clara",
+        "Curator Rachel"
       ],
       "goals": [
-        "sell the valuable item"
+        "collect evidence and testimonies"
       ],
       "caused_by": [
-        "E5"
+        "E8"
       ],
-      "goal_type": "obstruct"
+      "goal_type": "initiate",
+      "location": "Museum Police Station",
+      "preconditions": [
+        "police are notified"
+      ],
+      "effects": [
+        "evidence is collected",
+        "testimonies are recorded"
+      ],
+      "required_objects": [
+        "police report"
+      ],
+      "clue": "A suspicious character is mentioned in the testimonies",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E10",
-      "description": "Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript.",
+      "description": "The thief, Alex, is caught by the police while trying to sell the manuscript on the black market.",
       "characters": [
-        "Clara"
+        "Police",
+        "Alex"
       ],
       "goals": [
-        "track down the thief",
-        "recover the manuscript"
+        "bring the thief to justice"
       ],
       "caused_by": [
-        "E6",
-        "E8"
+        "E9"
       ],
-      "goal_type": "initiate"
+      "goal_type": "resolve",
+      "location": "Black Market Bazaar",
+      "preconditions": [
+        "thief is identified"
+      ],
+      "effects": [
+        "thief is arrested",
+        "case is solved"
+      ],
+      "required_objects": [
+        "police"
+      ],
+      "clue": "The manuscript is recovered",
+      "is_decision_point": true,
+      "decision_context": "Player must choose how to conclude the story",
+      "hidden_expected_intents": [
+        "achieve a satisfying resolution"
+      ]
     },
     {
       "event_id": "E_b1",
-      "description": "Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff",
+      "description": "The police investigate Alex's alibi for the time of the theft.",
       "characters": [
-        "Clara"
+        "Detective",
+        "Alex"
       ],
       "goals": [
-        "uncover the thief's identity"
+        "Verify thief's identity",
+        "Reconstruct crime scene"
       ],
       "caused_by": [
-        "E10"
+        "E",
+        "1",
+        "0"
       ],
-      "goal_type": "investigation"
+      "goal_type": "Investigation",
+      "location": "Police station",
+      "preconditions": [],
+      "effects": [
+        "New lead on Alex's accomplice",
+        "Falsified alibi detection"
+      ],
+      "required_objects": [],
+      "clue": "Documented timeline",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E_b2",
-      "description": "Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft",
+      "description": "The museum staff and police collaborate to analyze the stolen manuscript for forgery.",
       "characters": [
-        "Clara",
-        "museum staff"
+        "Rachel",
+        "Detective",
+        "Expert forger"
       ],
       "goals": [
-        "identify the accomplice"
+        "Verify manuscript authenticity",
+        "Identify forger"
       ],
       "caused_by": [
-        "E_b1"
+        "E",
+        "_",
+        "b",
+        "1"
       ],
-      "goal_type": "investigation"
+      "goal_type": "Investigation",
+      "location": "Labs and offices",
+      "preconditions": [],
+      "effects": [
+        "Manuscript authenticity confirmed",
+        "Forger identified"
+      ],
+      "required_objects": [
+        "Stolen manuscript"
+      ],
+      "clue": "Examination results",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E_b3",
-      "description": "Clara identifies a discrepancy in the staff member's alibi",
+      "description": "The cryptic message in the curator's safe is analyzed by the police expert.",
       "characters": [
-        "Clara",
-        "museum staff member"
+        "Curator",
+        "Police Expert"
       ],
       "goals": [
-        "investigate theft",
-        "uncover accomplice"
+        "Understand the message",
+        "Uncover a lead"
       ],
       "caused_by": [
-        "E_b2"
+        "E",
+        "8"
       ],
-      "goal_type": "investigative"
+      "goal_type": "Information",
+      "location": "Police Station",
+      "preconditions": [
+        "The message exists",
+        "The police expert is present"
+      ],
+      "effects": [
+        "The police have a new lead"
+      ],
+      "required_objects": [
+        "The cryptic message",
+        "Police resources"
+      ],
+      "clue": "Hidden safe",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E_b4",
-      "description": "Clara obtains security footage of the staff member's suspicious activity",
+      "description": "Rachel and Clara discuss their next steps with the museum director.",
       "characters": [
+        "Rachel",
         "Clara",
-        "security team"
+        "Museum Director"
       ],
       "goals": [
-        "gather evidence",
-        "build case against accomplice"
+        "Plan a course of action",
+        "Secure resources"
       ],
       "caused_by": [
-        "E_b3"
+        "E",
+        "1",
+        "0"
       ],
-      "goal_type": "evidential"
+      "goal_type": "Collaboration",
+      "location": "Museum Office",
+      "preconditions": [
+        "The thief is caught",
+        "The museum director is present"
+      ],
+      "effects": [
+        "The staff have a plan"
+      ],
+      "required_objects": [
+        "Meeting, Museum resources"
+      ],
+      "clue": "Missing manuscript section",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     }
   ],
   "solving_story_events": [
     {
-      "event_id": "E11",
-      "description": "Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft.",
+      "event_id": "E14",
+      "description": "Clara inspects the scene where the manuscript was kept and finds a torn piece of fabric caught in a display case",
       "characters": [
         "Clara"
       ],
       "goals": [
-        "identify a suspect"
+        "Investigate the crime scene"
       ],
       "caused_by": [
-        "E_b4"
+        "E1",
+        "E2"
       ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E12",
-      "description": "Clara interviews the staff member, who provides an alibi that Clara suspects is false.",
-      "characters": [
-        "Clara",
-        "staff member"
+      "goal_type": "initiate",
+      "location": "Museum Gallery",
+      "preconditions": [
+        "Manuscript missing",
+        "Scene not yet disturbed"
       ],
-      "goals": [
-        "verify the staff member's alibi"
+      "effects": [
+        "Fabric discovered"
       ],
-      "caused_by": [
-        "E11"
+      "required_objects": [
+        "Fabric"
       ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E13",
-      "description": "Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency.",
-      "characters": [
-        "Clara",
-        "staff member"
-      ],
-      "goals": [
-        "confront the suspect"
-      ],
-      "caused_by": [
-        "E12"
-      ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E14",
-      "description": "The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind.",
-      "characters": [
-        "Clara",
-        "staff member"
-      ],
-      "goals": [
-        "uncover the mastermind's identity"
-      ],
-      "caused_by": [
-        "E13"
-      ],
-      "goal_type": "initiate"
+      "clue": "Torn fabric, possibly from a black jumpsuit",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Inspect"
+      ]
     },
     {
       "event_id": "E15",
-      "description": "Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer.",
+      "description": "Clara decides to investigate the side door where the thief entered",
       "characters": [
         "Clara"
       ],
       "goals": [
-        "track down the black market dealer"
+        "Find the thief's entry point"
       ],
       "caused_by": [
-        "E14"
+        "E3"
       ],
-      "goal_type": "initiate"
+      "goal_type": "initiate",
+      "location": "Side Door",
+      "preconditions": [
+        "Hidden camera footage analyzed"
+      ],
+      "effects": [
+        "Door examined"
+      ],
+      "required_objects": [
+        "Hidden camera footage"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "Where to focus the investigation",
+      "hidden_expected_intents": [
+        "Investigate"
+      ]
     },
     {
       "event_id": "E16",
-      "description": "Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript.",
+      "description": "Clara examines the side door and finds a dropped glove with a custom-made cufflink",
       "characters": [
-        "Clara",
-        "police"
+        "Clara"
       ],
       "goals": [
-        "recover the stolen manuscript"
+        "Find physical evidence"
       ],
       "caused_by": [
         "E15"
       ],
-      "goal_type": "initiate"
+      "goal_type": "resolve",
+      "location": "Side Door",
+      "preconditions": [
+        "Door examined"
+      ],
+      "effects": [
+        "Glove discovered"
+      ],
+      "required_objects": [
+        "Glove",
+        "Cufflink"
+      ],
+      "clue": "Custom-made cufflink on the glove",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Inspect"
+      ]
     },
     {
       "event_id": "E17",
-      "description": "The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person.",
+      "description": "Alex, the thief, receives a text message from an unknown number warning him to keep quiet",
       "characters": [
-        "Clara",
-        "police",
-        "black market dealer"
+        "Alex"
       ],
       "goals": [
-        "recover the stolen manuscript"
+        "Threaten Clara"
       ],
       "caused_by": [
-        "E16"
+        "E7"
       ],
-      "goal_type": "obstruct"
+      "goal_type": "obstruct",
+      "location": "Alex's Phone",
+      "preconditions": [
+        "Threat message sent"
+      ],
+      "effects": [
+        "Warning message on phone"
+      ],
+      "required_objects": [
+        "Phone"
+      ],
+      "clue": "Unknown sender IP address",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Analyze"
+      ]
     },
     {
       "event_id": "E18",
-      "description": "The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity.",
-      "characters": [
-        "Clara",
-        "police",
-        "black market dealer"
-      ],
-      "goals": [
-        "recover the stolen manuscript"
-      ],
-      "caused_by": [
-        "E17"
-      ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E19",
-      "description": "Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity.",
-      "characters": [
-        "Clara",
-        "police",
-        "private collector"
-      ],
-      "goals": [
-        "recover the stolen manuscript"
-      ],
-      "caused_by": [
-        "E18"
-      ],
-      "goal_type": "resolve"
-    },
-    {
-      "event_id": "E20",
-      "description": "The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact.",
+      "description": "Clara decides to review the security footage of Alex's alibi for the time of the theft",
       "characters": [
         "Clara"
       ],
       "goals": [
-        "solve the case"
+        "Verify alibi"
+      ],
+      "caused_by": [
+        "E10",
+        "E_b1"
+      ],
+      "goal_type": "initiate",
+      "location": "Security Room",
+      "preconditions": [
+        "Thief caught, alibi disputed"
+      ],
+      "effects": [
+        "Footage reviewed"
+      ],
+      "required_objects": [
+        "Security footage"
+      ],
+      "clue": "Person seen entering the antique shop at 11:45 PM",
+      "is_decision_point": true,
+      "decision_context": "What to do with new evidence",
+      "hidden_expected_intents": [
+        "Analyze"
+      ]
+    },
+    {
+      "event_id": "E19",
+      "description": "Clara cross-references the security footage against the antique shop's staff schedule and finds a discrepancy",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find inconsistency"
+      ],
+      "caused_by": [
+        "E18"
+      ],
+      "goal_type": "resolve",
+      "location": "Security Room",
+      "preconditions": [
+        "Footage reviewed"
+      ],
+      "effects": [
+        "Discrepancy found"
+      ],
+      "required_objects": [
+        "Staff schedule",
+        "Security footage"
+      ],
+      "clue": "Staff member claimed to be on a break at the time of the theft",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Compare"
+      ]
+    },
+    {
+      "event_id": "E20",
+      "description": "Clara decides to interview the antique shop staff member who was supposed to be on a break during the theft",
+      "characters": [
+        "Clara",
+        "Staff Member"
+      ],
+      "goals": [
+        "Question witness"
       ],
       "caused_by": [
         "E19"
       ],
-      "goal_type": "resolve"
+      "goal_type": "initiate",
+      "location": "Antique Shop Office",
+      "preconditions": [
+        "Discrepancy found"
+      ],
+      "effects": [
+        "Interview scheduled"
+      ],
+      "required_objects": [
+        "Staff schedule",
+        "Witness"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to interview the witness",
+      "hidden_expected_intents": [
+        "Ask"
+      ]
+    },
+    {
+      "event_id": "E21",
+      "description": "Clara interviews the antique shop staff member and finds them evasive about their whereabouts during the break",
+      "characters": [
+        "Clara",
+        "Staff Member"
+      ],
+      "goals": [
+        "Find contradiction in testimony"
+      ],
+      "caused_by": [
+        "E20"
+      ],
+      "goal_type": "resolve",
+      "location": "Antique Shop Office",
+      "preconditions": [
+        "Interview scheduled"
+      ],
+      "effects": [
+        "Witness contradicts previous statement"
+      ],
+      "required_objects": [
+        "Staff member testimony",
+        "Witness"
+      ],
+      "clue": "Staff member claimed to be in the back room during the break",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Detect"
+      ]
+    },
+    {
+      "event_id": "E22",
+      "description": "Clara discovers a hidden safe in the curator's office and finds a note about a secret meeting with Alex",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find physical evidence"
+      ],
+      "caused_by": [
+        "E8"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Hidden safe discovered"
+      ],
+      "effects": [
+        "Note found"
+      ],
+      "required_objects": [
+        "Safe",
+        "Note"
+      ],
+      "clue": "Secret meeting planned between curator and Alex",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Examine"
+      ]
+    },
+    {
+      "event_id": "E23",
+      "description": "Clara decides to investigate the secret meeting between the curator and Alex",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find motive"
+      ],
+      "caused_by": [
+        "E22"
+      ],
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Note found"
+      ],
+      "effects": [
+        "Secret meeting location identified"
+      ],
+      "required_objects": [
+        "Note",
+        "Meeting location"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to investigate the motive",
+      "hidden_expected_intents": [
+        "Follow up"
+      ]
+    },
+    {
+      "event_id": "E24",
+      "description": "Clara discovers a suspicious email sent by the curator to Alex during the time of the meeting",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find digital evidence"
+      ],
+      "caused_by": [
+        "E23"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Computer",
+      "preconditions": [
+        "Secret meeting location identified"
+      ],
+      "effects": [
+        "Email discovered"
+      ],
+      "required_objects": [
+        "Email",
+        "Email server"
+      ],
+      "clue": "Curator sent a password-protected attachment to Alex",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Decrypt"
+      ]
+    },
+    {
+      "event_id": "E25",
+      "description": "Clara decides to interview the curator about the suspicious email",
+      "characters": [
+        "Clara",
+        "Curator"
+      ],
+      "goals": [
+        "Question witness"
+      ],
+      "caused_by": [
+        "E24"
+      ],
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Email discovered"
+      ],
+      "effects": [
+        "Interview scheduled"
+      ],
+      "required_objects": [
+        "Email",
+        "Witness"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to question the curator",
+      "hidden_expected_intents": [
+        "Ask"
+      ]
+    },
+    {
+      "event_id": "E26",
+      "description": "Clara interviews the curator and finds them evasive about their relationship with Alex",
+      "characters": [
+        "Clara",
+        "Curator"
+      ],
+      "goals": [
+        "Find contradiction in testimony"
+      ],
+      "caused_by": [
+        "E25"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Interview scheduled"
+      ],
+      "effects": [
+        "Witness contradicts previous statement"
+      ],
+      "required_objects": [
+        "Curator testimony",
+        "Witness"
+      ],
+      "clue": "Curator claimed to have been in a meeting with Alex for a completely different reason",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Detect"
+      ]
+    },
+    {
+      "event_id": "E27",
+      "description": "Clara discovers a hidden folder on the curator's computer with a document discussing the manuscript's true value",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find physical evidence"
+      ],
+      "caused_by": [
+        "E24"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Computer",
+      "preconditions": [
+        "Email discovered"
+      ],
+      "effects": [
+        "Document found"
+      ],
+      "required_objects": [
+        "Document",
+        "Computer"
+      ],
+      "clue": "True value of the manuscript is over 10 times its estimated worth",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Examine"
+      ]
+    },
+    {
+      "event_id": "E28",
+      "description": "Clara decides to investigate the source of the manuscript's true value",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find motive"
+      ],
+      "caused_by": [
+        "E27"
+      ],
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Document found"
+      ],
+      "effects": [
+        "True value source identified"
+      ],
+      "required_objects": [
+        "Document",
+        "True value"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to investigate the motive",
+      "hidden_expected_intents": [
+        "Follow up"
+      ]
+    },
+    {
+      "event_id": "E29",
+      "description": "Clara discovers a suspicious transaction on the museum's accounts related to the manuscript's true value",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find digital evidence"
+      ],
+      "caused_by": [
+        "E28"
+      ],
+      "goal_type": "resolve",
+      "location": "Museum Accounts",
+      "preconditions": [
+        "True value source identified"
+      ],
+      "effects": [
+        "Transaction discovered"
+      ],
+      "required_objects": [
+        "Transaction",
+        "Accounts"
+      ],
+      "clue": "Curator's assistant made a large withdrawal related to the manuscript's true value",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Analyze"
+      ]
+    },
+    {
+      "event_id": "E30",
+      "description": "Clara decides to interview the curator's assistant about the suspicious transaction",
+      "characters": [
+        "Clara",
+        "Assistant"
+      ],
+      "goals": [
+        "Question witness"
+      ],
+      "caused_by": [
+        "E29"
+      ],
+      "goal_type": "initiate",
+      "location": "Assistant's Office",
+      "preconditions": [
+        "Transaction discovered"
+      ],
+      "effects": [
+        "Interview scheduled"
+      ],
+      "required_objects": [
+        "Transaction",
+        "Witness"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to question the assistant",
+      "hidden_expected_intents": [
+        "Ask"
+      ]
+    },
+    {
+      "event_id": "E31",
+      "description": "Clara interviews the curator's assistant and finds them evasive about their involvement in the suspicious transaction",
+      "characters": [
+        "Clara",
+        "Assistant"
+      ],
+      "goals": [
+        "Find contradiction in testimony"
+      ],
+      "caused_by": [
+        "E30"
+      ],
+      "goal_type": "resolve",
+      "location": "Assistant's Office",
+      "preconditions": [
+        "Interview scheduled"
+      ],
+      "effects": [
+        "Witness contradicts previous statement"
+      ],
+      "required_objects": [
+        "Assistant testimony",
+        "Witness"
+      ],
+      "clue": "Assistant claimed to have been in a meeting with the curator at the time of the transaction",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Detect"
+      ]
+    },
+    {
+      "event_id": "E32",
+      "description": "Clara discovers a hidden safe in the museum's storage room and finds a note about a secret meeting between the curator and the thief",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find physical evidence"
+      ],
+      "caused_by": [
+        "E24"
+      ],
+      "goal_type": "resolve",
+      "location": "Storage Room",
+      "preconditions": [
+        "Hidden safe discovered"
+      ],
+      "effects": [
+        "Note found"
+      ],
+      "required_objects": [
+        "Safe",
+        "Note"
+      ],
+      "clue": "Secret meeting planned between curator and Alex",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Examine"
+      ]
+    },
+    {
+      "event_id": "E33",
+      "description": "Clara decides to investigate the secret meeting between the curator and the thief",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find motive"
+      ],
+      "caused_by": [
+        "E32"
+      ],
+      "goal_type": "initiate",
+      "location": "Storage Room",
+      "preconditions": [
+        "Note found"
+      ],
+      "effects": [
+        "Secret meeting location identified"
+      ],
+      "required_objects": [
+        "Note",
+        "Meeting location"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to investigate the motive",
+      "hidden_expected_intents": [
+        "Follow up"
+      ]
+    },
+    {
+      "event_id": "E34",
+      "description": "Clara discovers a suspicious email sent by the curator to Alex during the time of the meeting",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find digital evidence"
+      ],
+      "caused_by": [
+        "E33"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Computer",
+      "preconditions": [
+        "Secret meeting location identified"
+      ],
+      "effects": [
+        "Email discovered"
+      ],
+      "required_objects": [
+        "Email",
+        "Email server"
+      ],
+      "clue": "Curator sent a password-protected attachment to Alex",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Decrypt"
+      ]
+    },
+    {
+      "event_id": "E35",
+      "description": "Clara decides to interview the curator about the suspicious email",
+      "characters": [
+        "Clara",
+        "Curator"
+      ],
+      "goals": [
+        "Question witness"
+      ],
+      "caused_by": [
+        "E34"
+      ],
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Email discovered"
+      ],
+      "effects": [
+        "Interview scheduled"
+      ],
+      "required_objects": [
+        "Email",
+        "Witness"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to question the curator",
+      "hidden_expected_intents": [
+        "Ask"
+      ]
+    },
+    {
+      "event_id": "E36",
+      "description": "Clara confronts the curator about the evidence she has uncovered and the curator confesses to the crime",
+      "characters": [
+        "Clara",
+        "Curator"
+      ],
+      "goals": [
+        "Accuse culprit"
+      ],
+      "caused_by": [
+        "E35"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Interview scheduled"
+      ],
+      "effects": [
+        "Culprit confessed"
+      ],
+      "required_objects": [
+        "Evidence",
+        "Culprit"
+      ],
+      "clue": "Curator's motive was to steal the manuscript and sell it for its true value",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Confront"
+      ]
     }
   ],
   "events": [
     {
       "event_id": "E1",
-      "description": "The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours.",
+      "description": "The priceless 18th-century manuscript is put on display at the local museum for the final time before the auction.",
       "characters": [
-        "The Thief",
-        "Museum Staff"
+        "Curator",
+        "Security"
       ],
       "goals": [
-        "steal the manuscript"
+        "raise public awareness"
       ],
       "caused_by": [],
-      "goal_type": "initiate"
+      "goal_type": null,
+      "location": "Museum Gallery",
+      "preconditions": [
+        "auction is imminent",
+        "security is on duty"
+      ],
+      "effects": [
+        "public is informed about the auction"
+      ],
+      "required_objects": [
+        "display case",
+        "manuscript"
+      ],
+      "clue": null,
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E2",
-      "description": "The thief uses a custom-made lockpick to bypass the display case's security lock.",
+      "description": "The curator, Rachel, discovers that the museum's key access system fails that night.",
       "characters": [
-        "The Thief"
+        "Curator Rachel"
       ],
       "goals": [
-        "steal the manuscript"
+        "conceal the failure"
       ],
       "caused_by": [
         "E1"
       ],
-      "goal_type": "obstruct"
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "key access system is online"
+      ],
+      "effects": [
+        "key access system fails",
+        "potential security breach"
+      ],
+      "required_objects": [
+        "key access system"
+      ],
+      "clue": "A cryptic note is found next to the system",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E3",
-      "description": "The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment.",
+      "description": "A hidden camera in the museum captures footage of a suspicious person entering through a side door.",
       "characters": [
-        "The Thief"
+        "Maintenance",
+        "Security"
       ],
       "goals": [
-        "discover the manuscript's secrets"
+        "investigate the theft"
       ],
       "caused_by": [
         "E2"
       ],
-      "goal_type": "obstruct"
+      "goal_type": "initiate",
+      "location": "Security Room",
+      "preconditions": [
+        "surveillance is enabled"
+      ],
+      "effects": [
+        "security team is alerted to the incident"
+      ],
+      "required_objects": [
+        "security camera"
+      ],
+      "clue": "The camera angle is partially obstructed",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E4",
-      "description": "A small, valuable item is found hidden within the manuscript, which was the true target of the theft.",
+      "description": "Clara, the archivist, discovers a hidden document in the curator's office that suggests a former museum employee might be involved.",
       "characters": [
-        "The Thief"
+        "Clara",
+        "Curator Rachel"
       ],
       "goals": [
-        "sell the valuable item"
+        "uncover museum employee's involvement"
       ],
       "caused_by": [
-        "E3"
+        "E2"
       ],
-      "goal_type": "initiate"
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "hidden document is found"
+      ],
+      "effects": [
+        "potential suspects are identified"
+      ],
+      "required_objects": [
+        "hidden document"
+      ],
+      "clue": "A suspicious alibi is mentioned",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E5",
-      "description": "The thief escapes the museum without triggering any alarms, using a pre-planned route.",
+      "description": "The museum's security team reviews the security footage and identifies the thief as a former employee, now a local antique dealer.",
       "characters": [
-        "The Thief"
+        "Security",
+        "Archivist"
       ],
       "goals": [
-        "avoid detection"
+        "confirm the thief's identity"
+      ],
+      "caused_by": [
+        "E3",
+        "E4"
+      ],
+      "goal_type": "initiate",
+      "location": "Security Room",
+      "preconditions": [
+        "security footage is reviewed"
+      ],
+      "effects": [
+        "theft is confirmed, and thief's identity is known"
+      ],
+      "required_objects": [
+        "security camera footage"
+      ],
+      "clue": "A distinctive tattoo is visible on the thief's hand",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
+    },
+    {
+      "event_id": "E6",
+      "description": "The archivist notices that the museum's catalog of valuable items is incomplete and that a specific section related to the manuscript is missing.",
+      "characters": [
+        "Clara",
+        "Curator Rachel"
+      ],
+      "goals": [
+        "investigate the catalog theft"
+      ],
+      "caused_by": [
+        "E1"
+      ],
+      "goal_type": "initiate",
+      "location": "Archivist's Office",
+      "preconditions": [
+        "catalog is available"
+      ],
+      "effects": [
+        "incomplete catalog is discovered"
+      ],
+      "required_objects": [
+        "catalog"
+      ],
+      "clue": "A torn page with a handwritten note is found",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
+    },
+    {
+      "event_id": "E7",
+      "description": "The thief, Alex, sends a threatening message to the curator, Rachel, warning her not to investigate further.",
+      "characters": [
+        "Alex",
+        "Curator Rachel"
+      ],
+      "goals": [
+        "intimidate the curator"
+      ],
+      "caused_by": [
+        "E5"
+      ],
+      "goal_type": "initiate",
+      "location": "Rachel's Personal Phone",
+      "preconditions": [
+        "thief's identity is known"
+      ],
+      "effects": [
+        "curator is intimidated",
+        "investigation is slowed"
+      ],
+      "required_objects": [
+        "phone"
+      ],
+      "clue": "The message is encrypted",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
+    },
+    {
+      "event_id": "E8",
+      "description": "Clara discovers a hidden safe in the curator's office that contains a cryptic message and a note about the manuscript's true value.",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "uncover the manuscript's true value"
       ],
       "caused_by": [
         "E4"
       ],
-      "goal_type": "obstruct"
-    },
-    {
-      "event_id": "E6",
-      "description": "The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.",
-      "characters": [
-        "Clara",
-        "The Thief"
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "hidden safe is found"
       ],
-      "goals": [
-        "recover the manuscript",
-        "discover the thief's identity"
+      "effects": [
+        "manuscript's true value is revealed"
       ],
-      "caused_by": [
-        "E5"
+      "required_objects": [
+        "hidden safe"
       ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "->E7",
-      "description": "Clara realizes that the thief must have had inside help to bypass the museum's security system.",
-      "characters": [
-        "Clara"
-      ],
-      "goals": [
-        "identify the insider"
-      ],
-      "caused_by": [
-        "E6"
-      ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E8",
-      "description": "Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft.",
-      "characters": [
-        "Clara",
-        "Museum Staff"
-      ],
-      "goals": [
-        "identify the insider"
-      ],
-      "caused_by": [
-        "E7"
-      ],
-      "goal_type": "obstruct"
+      "clue": "A cryptic message is decoded",
+      "is_decision_point": true,
+      "decision_context": "Player must choose how to proceed with this new information",
+      "hidden_expected_intents": [
+        "obtain more information about the manuscript"
+      ]
     },
     {
       "event_id": "E9",
-      "description": "The thief, now in possession of the valuable item, contacts a potential buyer on the black market.",
+      "description": "The police arrive at the museum and take statements from the staff, including Clara and Rachel, about the theft.",
       "characters": [
-        "The Thief",
-        "The Buyer"
+        "Police",
+        "Clara",
+        "Curator Rachel"
       ],
       "goals": [
-        "sell the valuable item"
+        "collect evidence and testimonies"
       ],
       "caused_by": [
-        "E5"
+        "E8"
       ],
-      "goal_type": "obstruct"
+      "goal_type": "initiate",
+      "location": "Museum Police Station",
+      "preconditions": [
+        "police are notified"
+      ],
+      "effects": [
+        "evidence is collected",
+        "testimonies are recorded"
+      ],
+      "required_objects": [
+        "police report"
+      ],
+      "clue": "A suspicious character is mentioned in the testimonies",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E10",
-      "description": "Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript.",
+      "description": "The thief, Alex, is caught by the police while trying to sell the manuscript on the black market.",
       "characters": [
-        "Clara"
+        "Police",
+        "Alex"
       ],
       "goals": [
-        "track down the thief",
-        "recover the manuscript"
+        "bring the thief to justice"
       ],
       "caused_by": [
-        "E6",
-        "E8"
+        "E9"
       ],
-      "goal_type": "initiate"
+      "goal_type": "resolve",
+      "location": "Black Market Bazaar",
+      "preconditions": [
+        "thief is identified"
+      ],
+      "effects": [
+        "thief is arrested",
+        "case is solved"
+      ],
+      "required_objects": [
+        "police"
+      ],
+      "clue": "The manuscript is recovered",
+      "is_decision_point": true,
+      "decision_context": "Player must choose how to conclude the story",
+      "hidden_expected_intents": [
+        "achieve a satisfying resolution"
+      ]
     },
     {
       "event_id": "E_b1",
-      "description": "Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff",
+      "description": "The police investigate Alex's alibi for the time of the theft.",
       "characters": [
-        "Clara"
+        "Detective",
+        "Alex"
       ],
       "goals": [
-        "uncover the thief's identity"
+        "Verify thief's identity",
+        "Reconstruct crime scene"
       ],
       "caused_by": [
-        "E10"
+        "E",
+        "1",
+        "0"
       ],
-      "goal_type": "investigation"
+      "goal_type": "Investigation",
+      "location": "Police station",
+      "preconditions": [],
+      "effects": [
+        "New lead on Alex's accomplice",
+        "Falsified alibi detection"
+      ],
+      "required_objects": [],
+      "clue": "Documented timeline",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E_b2",
-      "description": "Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft",
+      "description": "The museum staff and police collaborate to analyze the stolen manuscript for forgery.",
       "characters": [
-        "Clara",
-        "museum staff"
+        "Rachel",
+        "Detective",
+        "Expert forger"
       ],
       "goals": [
-        "identify the accomplice"
+        "Verify manuscript authenticity",
+        "Identify forger"
       ],
       "caused_by": [
-        "E_b1"
+        "E",
+        "_",
+        "b",
+        "1"
       ],
-      "goal_type": "investigation"
+      "goal_type": "Investigation",
+      "location": "Labs and offices",
+      "preconditions": [],
+      "effects": [
+        "Manuscript authenticity confirmed",
+        "Forger identified"
+      ],
+      "required_objects": [
+        "Stolen manuscript"
+      ],
+      "clue": "Examination results",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E_b3",
-      "description": "Clara identifies a discrepancy in the staff member's alibi",
+      "description": "The cryptic message in the curator's safe is analyzed by the police expert.",
       "characters": [
-        "Clara",
-        "museum staff member"
+        "Curator",
+        "Police Expert"
       ],
       "goals": [
-        "investigate theft",
-        "uncover accomplice"
+        "Understand the message",
+        "Uncover a lead"
       ],
       "caused_by": [
-        "E_b2"
+        "E",
+        "8"
       ],
-      "goal_type": "investigative"
+      "goal_type": "Information",
+      "location": "Police Station",
+      "preconditions": [
+        "The message exists",
+        "The police expert is present"
+      ],
+      "effects": [
+        "The police have a new lead"
+      ],
+      "required_objects": [
+        "The cryptic message",
+        "Police resources"
+      ],
+      "clue": "Hidden safe",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E_b4",
-      "description": "Clara obtains security footage of the staff member's suspicious activity",
+      "description": "Rachel and Clara discuss their next steps with the museum director.",
       "characters": [
+        "Rachel",
         "Clara",
-        "security team"
+        "Museum Director"
       ],
       "goals": [
-        "gather evidence",
-        "build case against accomplice"
+        "Plan a course of action",
+        "Secure resources"
       ],
       "caused_by": [
-        "E_b3"
+        "E",
+        "1",
+        "0"
       ],
-      "goal_type": "evidential"
-    },
-    {
-      "event_id": "E11",
-      "description": "Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft.",
-      "characters": [
-        "Clara"
+      "goal_type": "Collaboration",
+      "location": "Museum Office",
+      "preconditions": [
+        "The thief is caught",
+        "The museum director is present"
       ],
-      "goals": [
-        "identify a suspect"
+      "effects": [
+        "The staff have a plan"
       ],
-      "caused_by": [
-        "E_b4"
+      "required_objects": [
+        "Meeting, Museum resources"
       ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E12",
-      "description": "Clara interviews the staff member, who provides an alibi that Clara suspects is false.",
-      "characters": [
-        "Clara",
-        "staff member"
-      ],
-      "goals": [
-        "verify the staff member's alibi"
-      ],
-      "caused_by": [
-        "E11"
-      ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E13",
-      "description": "Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency.",
-      "characters": [
-        "Clara",
-        "staff member"
-      ],
-      "goals": [
-        "confront the suspect"
-      ],
-      "caused_by": [
-        "E12"
-      ],
-      "goal_type": "initiate"
+      "clue": "Missing manuscript section",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": []
     },
     {
       "event_id": "E14",
-      "description": "The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind.",
-      "characters": [
-        "Clara",
-        "staff member"
-      ],
-      "goals": [
-        "uncover the mastermind's identity"
-      ],
-      "caused_by": [
-        "E13"
-      ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E15",
-      "description": "Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer.",
+      "description": "Clara inspects the scene where the manuscript was kept and finds a torn piece of fabric caught in a display case",
       "characters": [
         "Clara"
       ],
       "goals": [
-        "track down the black market dealer"
+        "Investigate the crime scene"
       ],
       "caused_by": [
-        "E14"
+        "E1",
+        "E2"
       ],
-      "goal_type": "initiate"
+      "goal_type": "initiate",
+      "location": "Museum Gallery",
+      "preconditions": [
+        "Manuscript missing",
+        "Scene not yet disturbed"
+      ],
+      "effects": [
+        "Fabric discovered"
+      ],
+      "required_objects": [
+        "Fabric"
+      ],
+      "clue": "Torn fabric, possibly from a black jumpsuit",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Inspect"
+      ]
+    },
+    {
+      "event_id": "E15",
+      "description": "Clara decides to investigate the side door where the thief entered",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find the thief's entry point"
+      ],
+      "caused_by": [
+        "E3"
+      ],
+      "goal_type": "initiate",
+      "location": "Side Door",
+      "preconditions": [
+        "Hidden camera footage analyzed"
+      ],
+      "effects": [
+        "Door examined"
+      ],
+      "required_objects": [
+        "Hidden camera footage"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "Where to focus the investigation",
+      "hidden_expected_intents": [
+        "Investigate"
+      ]
     },
     {
       "event_id": "E16",
-      "description": "Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript.",
+      "description": "Clara examines the side door and finds a dropped glove with a custom-made cufflink",
       "characters": [
-        "Clara",
-        "police"
+        "Clara"
       ],
       "goals": [
-        "recover the stolen manuscript"
+        "Find physical evidence"
       ],
       "caused_by": [
         "E15"
       ],
-      "goal_type": "initiate"
+      "goal_type": "resolve",
+      "location": "Side Door",
+      "preconditions": [
+        "Door examined"
+      ],
+      "effects": [
+        "Glove discovered"
+      ],
+      "required_objects": [
+        "Glove",
+        "Cufflink"
+      ],
+      "clue": "Custom-made cufflink on the glove",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Inspect"
+      ]
     },
     {
       "event_id": "E17",
-      "description": "The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person.",
+      "description": "Alex, the thief, receives a text message from an unknown number warning him to keep quiet",
       "characters": [
-        "Clara",
-        "police",
-        "black market dealer"
+        "Alex"
       ],
       "goals": [
-        "recover the stolen manuscript"
+        "Threaten Clara"
       ],
       "caused_by": [
-        "E16"
+        "E7"
       ],
-      "goal_type": "obstruct"
+      "goal_type": "obstruct",
+      "location": "Alex's Phone",
+      "preconditions": [
+        "Threat message sent"
+      ],
+      "effects": [
+        "Warning message on phone"
+      ],
+      "required_objects": [
+        "Phone"
+      ],
+      "clue": "Unknown sender IP address",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Analyze"
+      ]
     },
     {
       "event_id": "E18",
-      "description": "The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity.",
-      "characters": [
-        "Clara",
-        "police",
-        "black market dealer"
-      ],
-      "goals": [
-        "recover the stolen manuscript"
-      ],
-      "caused_by": [
-        "E17"
-      ],
-      "goal_type": "initiate"
-    },
-    {
-      "event_id": "E19",
-      "description": "Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity.",
-      "characters": [
-        "Clara",
-        "police",
-        "private collector"
-      ],
-      "goals": [
-        "recover the stolen manuscript"
-      ],
-      "caused_by": [
-        "E18"
-      ],
-      "goal_type": "resolve"
-    },
-    {
-      "event_id": "E20",
-      "description": "The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact.",
+      "description": "Clara decides to review the security footage of Alex's alibi for the time of the theft",
       "characters": [
         "Clara"
       ],
       "goals": [
-        "solve the case"
+        "Verify alibi"
+      ],
+      "caused_by": [
+        "E10",
+        "E_b1"
+      ],
+      "goal_type": "initiate",
+      "location": "Security Room",
+      "preconditions": [
+        "Thief caught, alibi disputed"
+      ],
+      "effects": [
+        "Footage reviewed"
+      ],
+      "required_objects": [
+        "Security footage"
+      ],
+      "clue": "Person seen entering the antique shop at 11:45 PM",
+      "is_decision_point": true,
+      "decision_context": "What to do with new evidence",
+      "hidden_expected_intents": [
+        "Analyze"
+      ]
+    },
+    {
+      "event_id": "E19",
+      "description": "Clara cross-references the security footage against the antique shop's staff schedule and finds a discrepancy",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find inconsistency"
+      ],
+      "caused_by": [
+        "E18"
+      ],
+      "goal_type": "resolve",
+      "location": "Security Room",
+      "preconditions": [
+        "Footage reviewed"
+      ],
+      "effects": [
+        "Discrepancy found"
+      ],
+      "required_objects": [
+        "Staff schedule",
+        "Security footage"
+      ],
+      "clue": "Staff member claimed to be on a break at the time of the theft",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Compare"
+      ]
+    },
+    {
+      "event_id": "E20",
+      "description": "Clara decides to interview the antique shop staff member who was supposed to be on a break during the theft",
+      "characters": [
+        "Clara",
+        "Staff Member"
+      ],
+      "goals": [
+        "Question witness"
       ],
       "caused_by": [
         "E19"
       ],
-      "goal_type": "resolve"
+      "goal_type": "initiate",
+      "location": "Antique Shop Office",
+      "preconditions": [
+        "Discrepancy found"
+      ],
+      "effects": [
+        "Interview scheduled"
+      ],
+      "required_objects": [
+        "Staff schedule",
+        "Witness"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to interview the witness",
+      "hidden_expected_intents": [
+        "Ask"
+      ]
+    },
+    {
+      "event_id": "E21",
+      "description": "Clara interviews the antique shop staff member and finds them evasive about their whereabouts during the break",
+      "characters": [
+        "Clara",
+        "Staff Member"
+      ],
+      "goals": [
+        "Find contradiction in testimony"
+      ],
+      "caused_by": [
+        "E20"
+      ],
+      "goal_type": "resolve",
+      "location": "Antique Shop Office",
+      "preconditions": [
+        "Interview scheduled"
+      ],
+      "effects": [
+        "Witness contradicts previous statement"
+      ],
+      "required_objects": [
+        "Staff member testimony",
+        "Witness"
+      ],
+      "clue": "Staff member claimed to be in the back room during the break",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Detect"
+      ]
+    },
+    {
+      "event_id": "E22",
+      "description": "Clara discovers a hidden safe in the curator's office and finds a note about a secret meeting with Alex",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find physical evidence"
+      ],
+      "caused_by": [
+        "E8"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Hidden safe discovered"
+      ],
+      "effects": [
+        "Note found"
+      ],
+      "required_objects": [
+        "Safe",
+        "Note"
+      ],
+      "clue": "Secret meeting planned between curator and Alex",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Examine"
+      ]
+    },
+    {
+      "event_id": "E23",
+      "description": "Clara decides to investigate the secret meeting between the curator and Alex",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find motive"
+      ],
+      "caused_by": [
+        "E22"
+      ],
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Note found"
+      ],
+      "effects": [
+        "Secret meeting location identified"
+      ],
+      "required_objects": [
+        "Note",
+        "Meeting location"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to investigate the motive",
+      "hidden_expected_intents": [
+        "Follow up"
+      ]
+    },
+    {
+      "event_id": "E24",
+      "description": "Clara discovers a suspicious email sent by the curator to Alex during the time of the meeting",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find digital evidence"
+      ],
+      "caused_by": [
+        "E23"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Computer",
+      "preconditions": [
+        "Secret meeting location identified"
+      ],
+      "effects": [
+        "Email discovered"
+      ],
+      "required_objects": [
+        "Email",
+        "Email server"
+      ],
+      "clue": "Curator sent a password-protected attachment to Alex",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Decrypt"
+      ]
+    },
+    {
+      "event_id": "E25",
+      "description": "Clara decides to interview the curator about the suspicious email",
+      "characters": [
+        "Clara",
+        "Curator"
+      ],
+      "goals": [
+        "Question witness"
+      ],
+      "caused_by": [
+        "E24"
+      ],
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Email discovered"
+      ],
+      "effects": [
+        "Interview scheduled"
+      ],
+      "required_objects": [
+        "Email",
+        "Witness"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to question the curator",
+      "hidden_expected_intents": [
+        "Ask"
+      ]
+    },
+    {
+      "event_id": "E26",
+      "description": "Clara interviews the curator and finds them evasive about their relationship with Alex",
+      "characters": [
+        "Clara",
+        "Curator"
+      ],
+      "goals": [
+        "Find contradiction in testimony"
+      ],
+      "caused_by": [
+        "E25"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Interview scheduled"
+      ],
+      "effects": [
+        "Witness contradicts previous statement"
+      ],
+      "required_objects": [
+        "Curator testimony",
+        "Witness"
+      ],
+      "clue": "Curator claimed to have been in a meeting with Alex for a completely different reason",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Detect"
+      ]
+    },
+    {
+      "event_id": "E27",
+      "description": "Clara discovers a hidden folder on the curator's computer with a document discussing the manuscript's true value",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find physical evidence"
+      ],
+      "caused_by": [
+        "E24"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Computer",
+      "preconditions": [
+        "Email discovered"
+      ],
+      "effects": [
+        "Document found"
+      ],
+      "required_objects": [
+        "Document",
+        "Computer"
+      ],
+      "clue": "True value of the manuscript is over 10 times its estimated worth",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Examine"
+      ]
+    },
+    {
+      "event_id": "E28",
+      "description": "Clara decides to investigate the source of the manuscript's true value",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find motive"
+      ],
+      "caused_by": [
+        "E27"
+      ],
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Document found"
+      ],
+      "effects": [
+        "True value source identified"
+      ],
+      "required_objects": [
+        "Document",
+        "True value"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to investigate the motive",
+      "hidden_expected_intents": [
+        "Follow up"
+      ]
+    },
+    {
+      "event_id": "E29",
+      "description": "Clara discovers a suspicious transaction on the museum's accounts related to the manuscript's true value",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find digital evidence"
+      ],
+      "caused_by": [
+        "E28"
+      ],
+      "goal_type": "resolve",
+      "location": "Museum Accounts",
+      "preconditions": [
+        "True value source identified"
+      ],
+      "effects": [
+        "Transaction discovered"
+      ],
+      "required_objects": [
+        "Transaction",
+        "Accounts"
+      ],
+      "clue": "Curator's assistant made a large withdrawal related to the manuscript's true value",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Analyze"
+      ]
+    },
+    {
+      "event_id": "E30",
+      "description": "Clara decides to interview the curator's assistant about the suspicious transaction",
+      "characters": [
+        "Clara",
+        "Assistant"
+      ],
+      "goals": [
+        "Question witness"
+      ],
+      "caused_by": [
+        "E29"
+      ],
+      "goal_type": "initiate",
+      "location": "Assistant's Office",
+      "preconditions": [
+        "Transaction discovered"
+      ],
+      "effects": [
+        "Interview scheduled"
+      ],
+      "required_objects": [
+        "Transaction",
+        "Witness"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to question the assistant",
+      "hidden_expected_intents": [
+        "Ask"
+      ]
+    },
+    {
+      "event_id": "E31",
+      "description": "Clara interviews the curator's assistant and finds them evasive about their involvement in the suspicious transaction",
+      "characters": [
+        "Clara",
+        "Assistant"
+      ],
+      "goals": [
+        "Find contradiction in testimony"
+      ],
+      "caused_by": [
+        "E30"
+      ],
+      "goal_type": "resolve",
+      "location": "Assistant's Office",
+      "preconditions": [
+        "Interview scheduled"
+      ],
+      "effects": [
+        "Witness contradicts previous statement"
+      ],
+      "required_objects": [
+        "Assistant testimony",
+        "Witness"
+      ],
+      "clue": "Assistant claimed to have been in a meeting with the curator at the time of the transaction",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Detect"
+      ]
+    },
+    {
+      "event_id": "E32",
+      "description": "Clara discovers a hidden safe in the museum's storage room and finds a note about a secret meeting between the curator and the thief",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find physical evidence"
+      ],
+      "caused_by": [
+        "E24"
+      ],
+      "goal_type": "resolve",
+      "location": "Storage Room",
+      "preconditions": [
+        "Hidden safe discovered"
+      ],
+      "effects": [
+        "Note found"
+      ],
+      "required_objects": [
+        "Safe",
+        "Note"
+      ],
+      "clue": "Secret meeting planned between curator and Alex",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Examine"
+      ]
+    },
+    {
+      "event_id": "E33",
+      "description": "Clara decides to investigate the secret meeting between the curator and the thief",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find motive"
+      ],
+      "caused_by": [
+        "E32"
+      ],
+      "goal_type": "initiate",
+      "location": "Storage Room",
+      "preconditions": [
+        "Note found"
+      ],
+      "effects": [
+        "Secret meeting location identified"
+      ],
+      "required_objects": [
+        "Note",
+        "Meeting location"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to investigate the motive",
+      "hidden_expected_intents": [
+        "Follow up"
+      ]
+    },
+    {
+      "event_id": "E34",
+      "description": "Clara discovers a suspicious email sent by the curator to Alex during the time of the meeting",
+      "characters": [
+        "Clara"
+      ],
+      "goals": [
+        "Find digital evidence"
+      ],
+      "caused_by": [
+        "E33"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Computer",
+      "preconditions": [
+        "Secret meeting location identified"
+      ],
+      "effects": [
+        "Email discovered"
+      ],
+      "required_objects": [
+        "Email",
+        "Email server"
+      ],
+      "clue": "Curator sent a password-protected attachment to Alex",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Decrypt"
+      ]
+    },
+    {
+      "event_id": "E35",
+      "description": "Clara decides to interview the curator about the suspicious email",
+      "characters": [
+        "Clara",
+        "Curator"
+      ],
+      "goals": [
+        "Question witness"
+      ],
+      "caused_by": [
+        "E34"
+      ],
+      "goal_type": "initiate",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Email discovered"
+      ],
+      "effects": [
+        "Interview scheduled"
+      ],
+      "required_objects": [
+        "Email",
+        "Witness"
+      ],
+      "clue": null,
+      "is_decision_point": true,
+      "decision_context": "How to question the curator",
+      "hidden_expected_intents": [
+        "Ask"
+      ]
+    },
+    {
+      "event_id": "E36",
+      "description": "Clara confronts the curator about the evidence she has uncovered and the curator confesses to the crime",
+      "characters": [
+        "Clara",
+        "Curator"
+      ],
+      "goals": [
+        "Accuse culprit"
+      ],
+      "caused_by": [
+        "E35"
+      ],
+      "goal_type": "resolve",
+      "location": "Curator's Office",
+      "preconditions": [
+        "Interview scheduled"
+      ],
+      "effects": [
+        "Culprit confessed"
+      ],
+      "required_objects": [
+        "Evidence",
+        "Culprit"
+      ],
+      "clue": "Curator's motive was to steal the manuscript and sell it for its true value",
+      "is_decision_point": false,
+      "decision_context": "",
+      "hidden_expected_intents": [
+        "Confront"
+      ]
     }
   ],
   "kg_stats": {
-    "nodes": 137,
-    "edges": 202,
+    "nodes": 87,
+    "edges": 148,
     "edges_by_source": {
-      "domain": 93,
-      "text": 109
+      "domain": 148
     }
   },
-  "prose": "--- Plot Point 1: The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours. ---\nThe night before the auction, the museum was quiet, the only sound being the soft hum of the security systems. A figure, dressed in a janitor's uniform, slipped through the shadows, avoiding the few security cameras that were still active. The thief, known only by their alias, \"The Fox,\" had been planning this heist for months, studying the museum's security protocols and waiting for the perfect moment to strike. With a confident smile, The Fox made their way to the display case, their eyes fixed on the prized manuscript that lay within.\n\nThe museum's staff had long since gone home, leaving The Fox to work uninterrupted. The janitor's uniform was a clever disguise, allowing The Fox to blend in with the museum's maintenance crew. As they worked, The Fox's mind was focused on the task at hand, their movements swift and precise.\n\nThe darkness of the museum seemed to swallow The Fox whole, but they moved with ease, their senses heightened. The air was thick with the scent of old books and dust, a familiar smell that The Fox had grown to love. With each step, The Fox drew closer to their goal, their heart beating with anticipation.\n\nThe display case loomed before them, its glass surface glinting in the dim light. The Fox's eyes locked onto the manuscript, their prize, and with a steady hand, they set to work.\n\n--- Plot Point 2: The thief uses a custom-made lockpick to bypass the display case's security lock. ---\nThe Fox pulled out a custom-made lockpick, its slender shape glinting in the dim light. With a deft touch, The Fox inserted the lockpick into the display case's security lock, feeling for the subtle clicks that would signal the lock's release. The mechanism was complex, but The Fox had spent months studying its intricacies, practicing the delicate dance of lockpicking until it became second nature.\n\nAs the lock disengaged, The Fox felt a thrill of excitement. The display case's security system was state-of-the-art, but The Fox had anticipated this, designing the lockpick specifically to bypass its safeguards. With a soft click, the lock released, and The Fox swung the case open, revealing the manuscript in all its glory.\n\nThe Fox's eyes feasted on the manuscript's yellowed pages, the intricate script a testament to the craftsmanship of a bygone era. For a moment, The Fox forgot about the theft, lost in the beauty of the artifact. But the moment passed, and with a swift motion, The Fox reached in and claimed the manuscript as their own.\n\n--- Plot Point 3: The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment. ---\nWith the manuscript in hand, The Fox carefully opened the display case, revealing a hidden compartment that lay beneath. The compartment was small, barely large enough to hold a few sheets of paper, but The Fox knew that it was here that the true treasure lay. As they reached in, their fingers closed around a small, valuable item that had been hidden within the manuscript.\n\nThe item was a tiny, leather-bound book, adorned with strange symbols and markings. The Fox's eyes widened as they realized the significance of their find. This was no ordinary book, but a rare and valuable artifact that would fetch a handsome price on the black market.\n\nThe Fox's heart racing with excitement, they carefully placed the manuscript and the leather-bound book into a specially designed bag, taking care not to damage either artifact. As they sealed the bag, The Fox felt a sense of pride and accomplishment, knowing that they had pulled off the impossible.\n\n--- Plot Point 4: A small, valuable item is found hidden within the manuscript, which was the true target of the theft. ---\nThe leather-bound book was the true target of the theft, a rare and valuable artifact that The Fox had been hired to steal. The manuscript, while valuable in its own right, was merely a distraction, a way to throw the museum's security team off The Fox's trail. As The Fox held the book, they felt a sense of satisfaction, knowing that they had completed their mission.\n\nThe book was small, but its significance was immense. It was said to contain secrets and knowledge that had been lost for centuries, and The Fox knew that it would fetch a handsome price on the black market. With the book safely in hand, The Fox made their way back through the museum, avoiding the security cameras and alarms with ease.\n\nAs they reached the exit, The Fox felt a sense of relief wash over them. The heist had been a success, and they had escaped undetected. But The Fox knew that the real challenge lay ahead, selling the book on the black market without getting caught.\n\n--- Plot Point 5: The thief escapes the museum without triggering any alarms, using a pre-planned route. ---\nThe Fox made their way back through the museum, using a pre-planned route to avoid the security cameras and alarms. They moved swiftly and silently, their senses on high alert as they navigated the dark and deserted halls. The Fox had spent months studying the museum's layout, planning the perfect escape route, and now they put that knowledge to use.\n\nAs they reached the exit, The Fox felt a sense of relief wash over them. They had pulled off the impossible, stealing the manuscript and the valuable item without triggering a single alarm. The Fox slipped out into the night, disappearing into the shadows as they made their way back to their safe house.\n\nThe city was alive and bustling, but The Fox moved through it unnoticed, a ghostly figure in the darkness. They knew that the museum's security team would be on high alert, searching for any sign of the thief, but The Fox was confident that they had covered their tracks. With the manuscript and the valuable item safely in hand, The Fox disappeared into the night, ready to sell their prize on the black market.\n\n--- Plot Point 6: The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft. ---\nClara arrived at the museum the next morning, eager to begin preparing for the auction. As she made her way to the display case, she noticed that something was off. The case was open, and the manuscript was gone. Clara's heart sank as she realized that the museum had been robbed.\n\nShe quickly called the security team, reporting the theft and asking them to review the security footage. As she waited for the team to arrive, Clara couldn't help but feel a sense of responsibility for the theft. She had been in charge of preparing the manuscript for the auction, and now it was gone.\n\nThe security team arrived, and together they reviewed the footage, searching for any sign of the thief. But The Fox had been careful, avoiding the cameras and alarms with ease. Clara knew that she had a long day ahead of her, working to track down the thief and recover the stolen manuscript.\n\n--- Plot Point 7: Clara realizes that the thief must have had inside help to bypass the museum's security system. ---\nAs Clara reviewed the security footage, she realized that the thief must have had inside help to bypass the museum's security system. The Fox had moved with ease, avoiding the cameras and alarms as if they had a detailed knowledge of the museum's layout. Clara's eyes narrowed as she thought about the possibilities.\n\nShe knew that the museum's security system was state-of-the-art, and it would have been impossible for The Fox to breach it without help. Clara began to think about the museum's staff, wondering if anyone could have been involved in the theft. She made a mental note to interview the staff members, looking for anyone who might have been acting suspiciously.\n\nThe more Clara thought about it, the more she became convinced that The Fox had had inside help. The question was, who had helped them, and how had they managed to keep it a secret? Clara was determined to find out, and she began to make a list of suspects, starting with the museum's staff members.\n\n--- Plot Point 8: Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft. ---\nClara began to investigate the museum staff, looking for anyone who may have been involved in the theft. She started by interviewing the staff members, asking them about their whereabouts the night before. As she spoke to each person, Clara watched their body language, looking for any sign of nervousness or deception.\n\nThe staff members seemed shaken by the theft, but Clara noticed that one of them, a quiet and reserved woman named Sarah, seemed particularly nervous. Clara made a mental note to speak to Sarah again, to ask her more questions about her whereabouts the night before.\n\nAs the day wore on, Clara continued to investigate, searching for any clues that might lead her to The Fox. She reviewed the security footage again, looking for any sign of the thief or their accomplice. Clara was determined to solve the case, and she was willing to do whatever it took to recover the stolen manuscript.\n\n--- Plot Point 9: The thief, now in possession of the valuable item, contacts a potential buyer on the black market. ---\nThe Fox, now in possession of the valuable item, contacted a potential buyer on the black market. The buyer, a wealthy collector, was known for his love of rare and valuable artifacts, and The Fox knew that he would be interested in the leather-bound book. The Fox sent the collector a message, describing the book and its contents, and asking for a meeting to discuss the sale.\n\nThe collector was intrigued, and he agreed to meet with The Fox. They arranged to meet at a secure location, a warehouse on the outskirts of the city. The Fox was cautious, knowing that the collector could be a trap, but they were also confident in their ability to negotiate a good price.\n\nAs The Fox waited for the meeting, they couldn't help but feel a sense of excitement. They had pulled off the impossible, stealing the manuscript and the valuable item, and now they were about to sell it to the highest bidder. The Fox knew that they would have to be careful, but they were confident in their ability to get away with the sale.\n\n--- Plot Point 10: Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript. ---\nClara discovered a cryptic message at the crime scene, a small piece of paper with a code written on it. The code was complex, but Clara was determined to crack it, knowing that it could lead her to The Fox's identity and the location of the stolen manuscript. She took the paper to the museum's cryptologist, who began to work on deciphering the code.\n\nAs they worked, Clara couldn't help but feel a sense of excitement. She had been searching for a lead, and now she had one. The code was the key to unlocking the mystery of the theft, and Clara was determined to solve it.\n\nThe cryptologist worked tirelessly, using their knowledge of codes and ciphers to decipher the message. Finally, after hours of work, they cracked the code, revealing a message that read: \"Look to the shadows for the truth.\" Clara's eyes narrowed as she thought about the message, wondering what it could mean.\n\n--- Plot Point 11: Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff. ---\nClara decoded the cryptic message, revealing a possible lead on The Fox's accomplice within the museum staff. The message had been a riddle, leading Clara to a specific staff member who had been acting suspiciously. Clara's eyes widened as she realized that the staff member was none other than Sarah, the quiet and reserved woman she had interviewed earlier.\n\nClara felt a sense of excitement and trepidation as she realized that she had been on the right track all along. She had suspected that Sarah might be involved, and now she had proof. Clara decided to bring Sarah in for further questioning, to see if she could get to the bottom of the mystery.\n\nAs Clara prepared to confront Sarah, she couldn't help but feel a sense of unease. She had been working with Sarah for months, and she had always thought of her as a friend. But now, Clara wasn't so sure. She wondered if Sarah had been playing her all along, using their friendship to further her own goals.\n\n--- Plot Point 12: Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft. ---\nClara interviewed the museum staff members, gathering information about potential suspects and their alibis for the night of the theft. She started with Sarah, asking her about her whereabouts the night before. Sarah seemed nervous, but she provided a solid alibi, saying that she had been at home, alone.\n\nClara wasn't convinced, and she decided to investigate further. She spoke to the other staff members, asking them if they had seen or heard anything suspicious. One of the staff members mentioned that they had seen Sarah arguing with one of the security guards earlier that day. Clara's ears perked up as she heard this, wondering if there might be a connection between the argument and the theft.\n\nAs Clara continued to investigate, she began to piece together a timeline of the events surrounding the theft. She discovered that Sarah had been in the museum late the night before, supposedly working on a project. But Clara wasn't sure if she believed this, and she decided to look deeper into Sarah's alibi.\n\n--- Plot Point 13: Clara identifies a discrepancy in the staff member's alibi. ---\nClara identified a discrepancy in Sarah's alibi, a small inconsistency that suggested she might not have been telling the truth. Sarah had said that she was at home alone the night before, but Clara had discovered that Sarah's neighbor had seen her leaving her apartment around 10 pm. Clara's eyes narrowed as she thought about this, wondering what Sarah might have been doing.\n\nClara decided to confront Sarah about the discrepancy, to see if she could get to the bottom of the mystery. She called Sarah into her office, asking her to explain the inconsistency in her alibi. Sarah seemed taken aback, but she tried to explain, saying that she had gone out for a walk to clear her head.\n\nClara wasn't convinced, and she decided to press Sarah further. She asked her about the argument with the security guard, wondering if there might be a connection between the argument and the theft. Sarah seemed hesitant, but she eventually opened up, telling Clara about the argument and how it had been about a misunderstanding.\n\n--- Plot Point 14: Clara obtains security footage of the staff member's suspicious activity. ---\nClara obtained security footage of Sarah's suspicious activity, a video that showed her entering the museum late the night before. The footage was grainy, but it clearly showed Sarah slipping into the museum, avoiding the security cameras. Clara's eyes widened as she watched the footage, realizing that she had finally found the proof she needed.\n\nThe footage showed Sarah making her way to the display case, where she seemed to be waiting for someone. Clara's heart racing with excitement, she realized that Sarah must have been working with The Fox, helping them to steal the manuscript. Clara decided to confront Sarah about the footage, to see if she could get her to confess.\n\nAs Clara prepared to confront Sarah, she couldn't help but feel a sense of satisfaction. She had been working on the case for days, and finally, she had found the break she needed. Clara was determined to solve the case, and she was willing to do whatever it took to recover the stolen manuscript.\n\n--- Plot Point 15: Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft. ---\nClara analyzed the security footage, discovering a staff member's suspicious activity near the display case on the night of the theft. The footage showed Sarah lingering around the case, glancing nervously at her watch. Clara's eyes narrowed as she thought about this, wondering what Sarah might have been waiting for.\n\nAs Clara continued to analyze the footage, she noticed that Sarah seemed to be communicating with someone, using a series of subtle hand gestures. Clara's heart racing with excitement, she realized that Sarah must have been working with The Fox, helping them to steal the manuscript. Clara decided to enhance the footage, to see if she could get a better look at Sarah's accomplice.\n\nThe enhanced footage revealed a shocking truth: Sarah had been working with one of the museum's security guards. Clara's eyes widened as she realized the extent of the betrayal, wondering how the guard could have been involved in the theft. Clara decided to bring the guard in for questioning, to see if she could get to the bottom of the mystery.\n\n--- Plot Point 16: Clara interviews the staff member, who provides an alibi that Clara suspects is false. ---\nClara interviewed the staff member, who provided an alibi that Clara suspected was false. The staff member, a quiet and reserved woman, seemed nervous and fidgety, avoiding eye contact. Clara's ears perked up as she listened to the alibi, wondering if the staff member was hiding something.\n\nThe staff member said that she had been at home, watching TV, at the time of the theft. But Clara noticed that the staff member seemed hesitant, and she decided to press her further. Clara asked the staff member about her whereabouts earlier that day, wondering if she might have been seen near the display case.\n\nThe staff member seemed taken aback, but she tried to explain, saying that she had been on a break. Clara wasn't convinced, and she decided to investigate further. She asked the staff member about her relationship with the security guard, wondering if there might be a connection between them.\n\n--- Plot Point 17: Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency. ---\nClara discovered a discrepancy in the staff member's alibi and confronted them about the inconsistency. The staff member seemed taken aback, but they tried to explain, saying that they had forgotten to mention a trip to the store. Clara's eyes narrowed as she thought about this, wondering if the staff member was telling the truth.\n\nClara decided to press the staff member further, to see if she could get to the bottom of the mystery. She asked the staff member about their relationship with the security guard, wondering if there might be a connection between them. The staff member seemed hesitant, but they eventually opened up, telling Clara about their friendship.\n\nClara's ears perked up as she listened to the staff member's story, wondering if she might be getting close to the truth. She decided to investigate further, to see if she could find any evidence of a connection between the staff member and the security guard. Clara's heart racing with excitement, she realized that she might be on the verge of solving the case.\n\n--- Plot Point 18: The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind. ---\nThe staff member cracked under pressure and revealed their involvement in the theft, but claimed they were coerced by the true mastermind. Clara's eyes widened as she listened to the staff member's confession, realizing that she had finally found a break in the case.\n\nThe staff member said that they had been approached by the security guard, who had offered them a large sum of money to help with the theft. The staff member claimed that they had been hesitant at first, but the guard had convinced them that it would be easy and that they would never get caught. Clara's ears perked up as she listened to the staff member's story, wondering if they might be telling the truth.\n\nClara decided to investigate further, to see if she could find any evidence of the security guard's involvement. She asked the staff member about the guard's identity, wondering if she might be able to track them down. The staff member provided a name, and Clara's heart racing with excitement, she realized that she might be on the verge of solving the case.\n\n--- Plot Point 19: Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer. ---\nClara obtained a list of the staff member's contacts and discovered a connection to a known black market dealer. The dealer, a notorious figure in the art world, was known for his ability to sell stolen goods to the highest bidder. Clara's eyes widened as she realized the extent of the dealer's involvement, wondering if she might be able to track him down.\n\nClara decided to investigate further, to see if she could find any evidence of the dealer's involvement in the theft. She asked the staff member about their relationship with the dealer, wondering if they might have been in contact with him recently. The staff member seemed hesitant, but they eventually opened up, telling Clara about their dealings with the dealer.\n\nClara's ears perked up as she listened to the staff member's story, realizing that she might be getting close to the truth. She decided to track down the dealer, to see if she could recover the stolen manuscript. Clara's heart racing with excitement, she realized that she might be on the verge of solving the case.\n\n--- Plot Point 20: Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript. ---\nClara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript. The operation was complex, involving multiple officers and a series of undercover agents. Clara's heart racing with excitement, she realized that she might be on the verge of solving the case.\n\nThe police had tracked the dealer to a warehouse on the outskirts of the city, where they suspected he was hiding the manuscript. Clara and the officers set up a sting, posing as buyers interested in purchasing the manuscript. The dealer, confident in his ability to sell the manuscript, agreed to meet with them.\n\nAs the meeting approached, Clara's nerves began to fray. She knew that the operation was risky, and that anything could go wrong. But she was determined to see it through, to recover the stolen manuscript and bring the dealer to justice. Clara's eyes locked onto the dealer, and she smiled, knowing that she had him right where she wanted him.\n\n--- Plot Point 21: The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person. ---\nThe sting operation was successful, and the black market dealer was arrested, but the manuscript was not found on their person. Clara's heart sank as she realized that the dealer must have hidden the manuscript elsewhere. But she was determined to find it, and she began to question the dealer, trying to get him to reveal the manuscript's location.\n\nThe dealer, however, was not cooperative. He refused to say anything, and Clara was forced to use her skills of persuasion to try and get him to talk. After hours of questioning, the dealer finally cracked, revealing that he had sold the manuscript to a private collector.\n\nClara's eyes widened as she listened to the dealer's confession, realizing that she had been one step behind the thief all along. But she was determined to recover the manuscript, and she set her sights on the private collector. Clara's heart racing with excitement, she realized that she might be on the verge of solving the case.\n\n--- Plot Point 22: The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity. ---\nThe black market dealer revealed that the manuscript was sold to a private collector, who was willing to return it in exchange for immunity. Clara's ears perked up as she listened to the dealer's confession, realizing that she might be able to recover the manuscript after all.\n\nThe private collector, a wealthy and influential figure, had been known to collect rare and valuable artifacts. Clara suspected that the collector might have been aware of the manuscript's stolen status, but she was willing to offer them immunity in exchange for the manuscript's return.\n\nClara's heart racing with excitement, she realized that she might be on the verge of solving the case. She contacted the private collector, offering them a deal: in exchange for the manuscript's return, the collector would receive immunity from prosecution. The collector agreed, and Clara arranged to meet with them to recover the manuscript.\n\n--- Plot Point 23: Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity. ---\nClara and the police negotiated with the private collector, and a deal was made to return the manuscript in exchange for immunity. The collector, a middle-aged man with a passion for rare artifacts, seemed reluctant to give up the manuscript, but he eventually agreed to the terms.\n\nClara's eyes locked onto the manuscript as it was handed over, feeling a sense of relief and satisfaction. She had solved the case, and the manuscript was finally back where it belonged. The collector, in turn, received immunity from prosecution, and Clara was willing to let him off with a warning.\n\nAs the deal was finalized, Clara couldn't help but feel a sense of pride and accomplishment. She had worked tirelessly to solve the case, and it had finally paid off. The manuscript was back, and the thief had been brought to justice. Clara's heart racing with excitement, she realized that she had done it \u2013 she had solved the case of the stolen manuscript.\n\n--- Plot Point 24: The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact. ---\nThe manuscript was returned, and Clara was hailed as a hero for solving the case and recovering the valuable artifact. The museum's staff and patrons were overjoyed, and Clara was praised for her dedication and expertise. The manuscript was put back on display, and Clara was invited to give a lecture on its history and significance.\n\nAs Clara stood in front of the crowd, she felt a sense of pride and satisfaction. She had solved the case, and the manuscript was finally back where it belonged. The crowd applauded, and Clara smiled, knowing that she had done something truly special. She had recovered a valuable piece of history, and she had brought a thief to justice.\n\nThe museum's director approached Clara, shaking her hand and congratulating her on a job well done. \"You are a true hero, Clara,\" the director said, smiling. \"Your dedication and expertise have recovered a priceless artifact, and we are forever grateful.\" Clara blushed, feeling a sense of pride and humility. She had done what she loved, and she had made a difference. The case of the stolen manuscript was closed, and Clara had emerged victorious.",
-  "usage": "TokenUsage(input=3,690, output=7,470, cost=$0.00 [Groq free tier])"
+  "prose": "Clara inspects the scene where the manuscript was kept and finds a torn piece of fabric caught in a display case\n\nClara's eyes scanned the dimly lit museum gallery, the soft hum of the air conditioning unit providing a soothing background melody. She crouched beside the display case, her eyes fixed on the torn piece of fabric caught in the intricate metalwork. The fabric seemed out of place among the carefully curated artifacts, and Clara's trained instincts kicked in. She gently plucked the fabric from the case, examining it for any telltale signs of its origin. The soft, silky texture seemed to whisper secrets in her ear, and Clara's mind began to whirl with possibilities.\n\nAs she carefully wrapped the fabric in a evidence bag, Clara's thoughts turned to the manuscript's disappearance. The museum's security team had been baffled, and Clara was no closer to finding the thief. But this small piece of fabric might be the break she needed. She tucked the bag into her pocket, her eyes scanning the gallery for any other potential leads.\n\nWith her gloves on, Clara carefully examined the display case, searching for any other hidden clues. Her gaze landed on a small, almost imperceptible gap between the case and the wall. It was a tiny opening, but Clara's mind was already racing with the possibilities. This could be the side door the thief used to gain access to the gallery...\n\nClara decides to investigate the side door where the thief entered\n\nClara made her way to the side door, her eyes fixed on the small gap she had discovered earlier. She carefully made her way around the gallery, avoiding the other visitors who were oblivious to the potential crime scene. As she approached the side door, Clara's heart quickened with excitement. This could be the break she needed to catch the thief.\n\nShe examined the door and its surroundings, searching for any other potential clues. The door was old, with a rusted lock and a small keyhole. Clara's trained eyes scanned the area, searching for any signs of forced entry. She knelt down to examine the ground, her fingers tracing the outlines of the lock. A small drop of fabric caught her attention, and Clara's eyes widened as she realized it matched the torn fabric from the display case.\n\nClara examines the side door and finds a dropped glove with a custom-made cufflink\n\nAs Clara carefully picked up the glove, she examined it for any signs of ownership. The glove was soft and expensive-looking, and Clara's eyes landed on a small, custom-made cufflink attached to the wrist. The cufflink was a delicate silver snake coiled around a miniature gemstone, and Clara's mind was already racing with the possibilities. This was no ordinary glove; it was a bespoke accessory, designed to be unique and eye-catching.\n\nClara's eyes scanned the area, searching for any other clues. She spotted a small trail of fabric leading away from the door, and Clara's heart quickened with excitement. This could be the thief's escape route. She knelt down to examine the fabric, her fingers tracing the outlines of the trail. The fabric seemed to be a match for the torn piece from the display case, and Clara was now convinced that she was on the right track.\n\nAlex, the thief, receives a text message from an unknown number warning him to keep quiet\n\nAlex's phone buzzed in his pocket, and he hesitated for a moment before answering. His eyes scanned the crowded streets, and he spotted a narrow alleyway between two buildings. He ducked into the alley, his phone at the ready. The text message on the screen was brief and to the point: \"Keep quiet. You know why.\" Alex's heart skipped a beat as he read the message. Who was behind this? And why were they warning him to keep quiet?\n\nAs he quickly deleted the message, Alex's mind was racing with possibilities. Was it a friend or a foe? And what did they want to keep quiet? Alex knew he had to be careful. He glanced around the alleyway, searching for any signs of surveillance. But he was alone, and the streets seemed deserted. For now.\n\nClara decides to review the security footage of Alex's alibi for the time of the theft\n\nClara sat in the cramped security office, her eyes fixed on the bank of monitors displaying the museum's security footage. She had reviewed the footage countless times, but something was nagging at her. Alex's alibi for the time of the theft seemed shaky at best, and Clara was determined to uncover the truth.\n\nShe fast-forwarded through the footage, her eyes scanning the crowded galleries for any sign of Alex. But he was nowhere to be seen. Clara's heart quickened with excitement as she realized that Alex's alibi was suspicious at best. She made a mental note to investigate further, her mind racing with possibilities.\n\nClara cross-references the security footage against the antique shop's staff schedule and finds a discrepancy\n\nClara's eyes scanned the spreadsheets in front of her, her mind cross-referencing the security footage against the antique shop's staff schedule. She had discovered a discrepancy between the two, and Clara's heart was racing with excitement. It looked like Alex had been in the antique shop at the time of the theft, but something didn't add up.\n\nClara's eyes landed on a specific time slot: 2:45 PM. Alex had been in the shop at that time, but the staff member was supposed to be on a break. Clara's mind was racing with possibilities. Was Alex the thief, or was there something more sinister at play?\n\nClara decides to interview the antique shop staff member who was supposed to be on a break during the theft\n\nClara stood outside the antique shop, her eyes fixed on the sign above the door. She took a deep breath before entering, her mind racing with possibilities. The staff member, a quiet young woman named Emma, was working behind the counter. Clara's eyes scanned the shop, searching for any signs of Alex.\n\n\"Hello,\" Clara said, her voice firm but polite. \"I'm Investigator Clara. I'd like to speak with Emma, please.\" The shopkeeper nodded, his eyes flicking to the back room before returning to Clara. \"Of course, Investigator. Emma will be right with you.\"\n\nEmma emerged from the back room, her eyes wide and nervous. Clara's trained eyes scanned her face, searching for any signs of deception. Emma seemed genuinely scared, but Clara wasn't convinced.\n\nClara interviews the antique shop staff member and finds them evasive about their whereabouts during the break\n\nClara sat across from Emma, her eyes fixed on the young woman's nervous face. She asked the same question repeatedly, trying to provoke a response. But Emma seemed evasive, her answers vague and non-committal.\n\n\"I was, uh, on a break,\" Emma stammered. \"I didn't do anything wrong.\" Clara's eyes narrowed, her mind racing with possibilities. Was Emma hiding something?\n\nClara pressed on, her questions becoming more pointed. But Emma's evasiveness only grew thicker, like a fog rolling in off the ocean. Clara's heart quickened with excitement. She was onto something.\n\nClara discovers a hidden safe in the curator's office and finds a note about a secret meeting with Alex\n\nClara's eyes scanned the curator's office, her trained eyes searching for any signs of hidden compartments. She had heard rumors of a secret safe, and Clara was determined to find it. She spotted a small panel on the wall, cleverly disguised as a bookshelf. Clara's fingers danced across the panel, searching for a hidden catch.\n\nFinally, the panel swung open, revealing a small safe. Clara's heart quickened with excitement as she opened the safe and pulled out a note. It was a brief message, scribbled in hasty handwriting: \"Meet Alex at 3 PM. Come alone.\" Clara's eyes scanned the note, her mind racing with possibilities. A secret meeting between the curator and Alex? This was getting interesting.\n\nClara decides to investigate the secret meeting between the curator and Alex\n\nClara sat at her desk, her eyes fixed on the note she had discovered in the curator's safe. She had a plan, and Clara was determined to see it through. She made a phone call to her informant, a discreet whisper of a voice on the other end.\n\n\"Alex,\" Clara said, her voice firm but polite. \"I know you had a secret meeting with the curator. I want to know what it was about.\" The voice on the other end hesitated before responding.\n\n\"Look for the email,\" the voice whispered. \"It's all there.\"\n\nClara's eyes scanned the museum's email logs, searching for any sign of the curator's correspondence with Alex. And then she saw it: a brief message, sent during the time of the secret meeting.\n\nClara discovers a suspicious email sent by the curator to Alex during the time of the meeting\n\nClara's eyes scanned the email on her screen, her mind racing with possibilities. It was a brief message, sent by the curator to Alex during the time of the secret meeting. The message read: \"Meet me at 3 PM. Come with the manuscript.\" Clara's heart quickened with excitement. This was getting interesting.\n\nBut Clara wasn't convinced. The email seemed too convenient, too well-timed. She decided to dig deeper, her eyes scanning the email headers for any signs of tampering. And then she saw it: a suspicious IP address, linked to the museum's computer.\n\nClara decides to interview the curator about the suspicious email\n\nClara stood outside the curator's office, her eyes fixed on the sign above the door. She took a deep breath before entering, her mind racing with possibilities. The curator, a well-respected figure in the museum world, looked up as Clara entered.\n\n\"Ah, Investigator Clara,\" the curator said, his voice smooth and confident. \"I see you've discovered the email. I can explain everything, if you'd like.\"\n\nClara raised an eyebrow, her eyes narrowing. \"Explain what?\" she asked, her voice firm but polite.\n\nClara interviews the curator and finds them evasive about their relationship with Alex\n\nClara sat across from the curator, her eyes fixed on his evasive face. She asked the same question repeatedly, trying to provoke a response. But the curator seemed reluctant, his answers vague and non-committal.\n\n\"I, uh, know him,\" the curator stammered. \"We're, uh, friends.\" Clara's eyes narrowed, her mind racing with possibilities. Was the curator lying?\n\nClara pressed on, her questions becoming more pointed. But the curator's evasiveness only grew thicker, like a fog rolling in off the ocean. Clara's heart quickened with excitement. She was onto something.\n\nClara discovers a hidden folder on the curator's computer with a document discussing the manuscript's true value\n\nClara's eyes scanned the curator's computer, her trained eyes searching for any signs of hidden folders. She had discovered a suspicious email, and Clara was determined to find the source of the document linked to the email. She spotted a small folder on the desktop, cleverly disguised as a system file. Clara's fingers danced across the keyboard, searching for a hidden password.\n\nFinally, the folder swung open, revealing a document. It was a brief memo, discussing the manuscript's true value. Clara's eyes scanned the document, her mind racing with possibilities. A secret sale? This was getting interesting.\n\nClara decides to investigate the source of the manuscript's true value\n\nClara sat at her desk, her eyes fixed on the document she had discovered on the curator's computer. She had a plan, and Clara was determined to see it through. She made a phone call to her informant, a discreet whisper of a voice on the other end.\n\n\"Follow the money,\" the voice whispered. \"It'll lead you straight to the source.\"\n\nClara's eyes scanned the museum's financial records, searching for any sign of the manuscript's true value. And then she saw it: a suspicious transaction, linked to the curator's account.\n\nClara discovers a suspicious transaction on the museum's accounts related to the manuscript's true value\n\nClara's eyes scanned the museum's financial records, her mind racing with possibilities. She had discovered a suspicious transaction, linked to the curator's account. The transaction was brief, but Clara's trained eyes picked up on the details.\n\nA large sum of money had been transferred to the curator's account, but the transaction was flagged as suspicious. Clara's heart quickened with excitement. This was getting interesting.\n\nClara decides to interview the curator's assistant about the suspicious transaction\n\nClara sat across from the curator's assistant, her eyes fixed on the young woman's nervous face. She asked the same question repeatedly, trying to provoke a response. But the assistant seemed evasive, her answers vague and non-committal.\n\n\"I, uh, don't know anything about it,\" the assistant stammered. \"I'm just a clerk.\" Clara's eyes narrowed, her mind racing with possibilities. Was the assistant hiding something?\n\nClara's eyes scanned the assistant's face, searching for any signs of deception. But the assistant seemed genuinely scared, like a rabbit caught in headlamps.\n\nClara discovers a hidden safe in the museum's storage room and finds a note about a secret meeting between the curator and the thief\n\nClara's eyes scanned the museum's storage room, her trained eyes searching for any signs of hidden compartments. She had discovered a suspicious transaction, and Clara was determined to find the source of the document linked to the transaction. She spotted a small panel on the wall, cleverly disguised as a storage unit. Clara's fingers danced across the panel, searching for a hidden catch.\n\nFinally, the panel swung open, revealing a small safe. Clara's heart quickened with excitement as she opened the safe and pulled out a note. It was a brief message, scribbled in hasty handwriting: \"Meet Alex at 3 PM. Come alone.\" Clara's eyes scanned the note, her mind racing with possibilities. A secret meeting between the curator and the thief? This was getting interesting.\n\nClara decides to investigate the secret meeting between the curator and the thief\n\nClara sat at her desk, her eyes fixed on the note she had discovered in the museum's storage room. She had a plan, and Clara was determined to see it through. She made a phone call to her informant, a discreet whisper of a voice on the other end.\n\n\"Look for the email,\" the voice whispered. \"It's all there.\"\n\nClara's eyes scanned the museum's email logs, searching for any sign of the curator's correspondence with Alex. And then she saw it: a brief message, sent during the time of the secret meeting.\n\nClara discovers a suspicious email sent by the curator to Alex during the time of the meeting\n\nClara's eyes scanned the email on her screen, her mind racing with possibilities. It was a brief message, sent by the curator to Alex during the time of the secret meeting. The message read: \"Meet me at 3 PM. Come with the manuscript.\" Clara's heart quickened with excitement. This was getting interesting.\n\nBut Clara wasn't convinced. The email seemed too convenient, too well-timed. She decided to dig deeper, her eyes scanning the email headers for any signs of tampering. And then she saw it: a suspicious IP address, linked to the museum's computer.\n\nClara decides to interview the curator about the suspicious email\n\nClara stood outside the curator's office, her eyes fixed on the sign above the door. She took a deep breath before entering, her mind racing with possibilities. The curator, a well-respected figure in the museum world, looked up as Clara entered.\n\n\"Ah, Investigator Clara,\" the curator said, his voice smooth and confident. \"I see you've discovered the email. I can explain everything, if you'd like.\"\n\nClara raised an eyebrow, her eyes narrowing. \"Explain what?\" she asked, her voice firm but polite.\n\nClara confronts the curator about the evidence she has uncovered and the curator confesses to the crime\n\nClara stood in the curator's office, her eyes fixed on the man's guilty face. She had uncovered a web of deceit, and Clara was determined to see justice served.\n\n\"You're under arrest, curator,\" Clara said, her voice firm but polite. \"You've been involved in the theft of the manuscript, and I have the evidence to prove it.\"\n\nThe curator's eyes widened, his face pale. \"I...I don't know what you're talking about,\" he stammered.\n\nClara smiled, her eyes glinting with triumph. \"Don't play dumb, curator. I have the emails, the suspicious transactions, the hidden safes. It's all here. You're going down for this.\"\n\nThe curator's face crumpled, his shoulders sagging in defeat. \"I...I did it,\" he whispered. \"I was in debt, and I saw the manuscript as a way out. I didn't mean to hurt anyone.\"\n\nClara's eyes narrowed, her mind racing with possibilities. But the evidence spoke for itself. The curator was guilty, and Clara had brought him to justice.",
+  "prose_source": "solving_story_events",
+  "usage": "TokenUsage(input=4,378, output=8,969, cost=$0.00 [Groq free tier])",
+  "world": {
+    "player_name": "Clara",
+    "player_start_location": "Museum Gallery",
+    "objectives": [
+      "raise public awareness",
+      "conceal the failure",
+      "investigate the theft",
+      "uncover museum employee's involvement",
+      "confirm the thief's identity"
+    ],
+    "rooms": {
+      "Museum Gallery": {
+        "description": "Display cases, polished floors, and the crime scene itself dominate the gallery.",
+        "exits": {
+          "forward": "Curator's Office"
+        },
+        "objects": [
+          "display case",
+          "manuscript",
+          "Fabric"
+        ],
+        "npcs": [
+          "Curator",
+          "Security"
+        ],
+        "clues": [
+          "Torn fabric, possibly from a black jumpsuit"
+        ]
+      },
+      "Curator's Office": {
+        "description": "Curator's Office is an important story location.",
+        "exits": {
+          "back": "Museum Gallery",
+          "forward": "Security Room"
+        },
+        "objects": [
+          "key access system",
+          "hidden document",
+          "hidden safe",
+          "Safe",
+          "Note",
+          "Meeting location",
+          "Email",
+          "Witness",
+          "Curator testimony",
+          "Document",
+          "True value",
+          "Evidence",
+          "Culprit"
+        ],
+        "npcs": [
+          "Curator Rachel",
+          "Curator"
+        ],
+        "clues": [
+          "A cryptic note is found next to the system",
+          "A suspicious alibi is mentioned",
+          "A cryptic message is decoded",
+          "Secret meeting planned between curator and Alex",
+          "Curator claimed to have been in a meeting with Alex for a completely different reason",
+          "Curator's motive was to steal the manuscript and sell it for its true value"
+        ]
+      },
+      "Security Room": {
+        "description": "Security Room is an important story location.",
+        "exits": {
+          "back": "Curator's Office",
+          "forward": "Archivist's Office"
+        },
+        "objects": [
+          "security camera",
+          "security camera footage",
+          "Security footage",
+          "Staff schedule"
+        ],
+        "npcs": [
+          "Maintenance",
+          "Security",
+          "Archivist"
+        ],
+        "clues": [
+          "The camera angle is partially obstructed",
+          "A distinctive tattoo is visible on the thief's hand",
+          "Person seen entering the antique shop at 11:45 PM",
+          "Staff member claimed to be on a break at the time of the theft"
+        ]
+      },
+      "Archivist's Office": {
+        "description": "Archivist's Office is an important story location.",
+        "exits": {
+          "back": "Security Room",
+          "forward": "Rachel's Personal Phone"
+        },
+        "objects": [
+          "catalog"
+        ],
+        "npcs": [
+          "Curator Rachel"
+        ],
+        "clues": [
+          "A torn page with a handwritten note is found"
+        ]
+      },
+      "Rachel's Personal Phone": {
+        "description": "Rachel's Personal Phone is an important story location.",
+        "exits": {
+          "back": "Archivist's Office",
+          "forward": "Museum Police Station"
+        },
+        "objects": [
+          "phone"
+        ],
+        "npcs": [
+          "Alex",
+          "Curator Rachel"
+        ],
+        "clues": [
+          "The message is encrypted"
+        ]
+      },
+      "Museum Police Station": {
+        "description": "Museum Police Station is an important story location.",
+        "exits": {
+          "back": "Rachel's Personal Phone",
+          "forward": "Black Market Bazaar"
+        },
+        "objects": [
+          "police report"
+        ],
+        "npcs": [
+          "Police",
+          "Curator Rachel"
+        ],
+        "clues": [
+          "A suspicious character is mentioned in the testimonies"
+        ]
+      },
+      "Black Market Bazaar": {
+        "description": "Black Market Bazaar is an important story location.",
+        "exits": {
+          "back": "Museum Police Station",
+          "forward": "Police station"
+        },
+        "objects": [
+          "police"
+        ],
+        "npcs": [
+          "Police",
+          "Alex"
+        ],
+        "clues": [
+          "The manuscript is recovered"
+        ]
+      },
+      "Police station": {
+        "description": "Police station is an important story location.",
+        "exits": {
+          "back": "Black Market Bazaar",
+          "forward": "Labs and offices"
+        },
+        "objects": [],
+        "npcs": [
+          "Detective",
+          "Alex"
+        ],
+        "clues": [
+          "Documented timeline"
+        ]
+      },
+      "Labs and offices": {
+        "description": "Labs and offices is an important story location.",
+        "exits": {
+          "back": "Police station",
+          "forward": "Police Station"
+        },
+        "objects": [
+          "Stolen manuscript"
+        ],
+        "npcs": [
+          "Rachel",
+          "Detective",
+          "Expert forger"
+        ],
+        "clues": [
+          "Examination results"
+        ]
+      },
+      "Police Station": {
+        "description": "Police Station is an important story location.",
+        "exits": {
+          "back": "Labs and offices",
+          "forward": "Museum Office"
+        },
+        "objects": [
+          "The cryptic message",
+          "Police resources"
+        ],
+        "npcs": [
+          "Curator",
+          "Police Expert"
+        ],
+        "clues": [
+          "Hidden safe"
+        ]
+      },
+      "Museum Office": {
+        "description": "Museum Office is an important story location.",
+        "exits": {
+          "back": "Police Station",
+          "forward": "Side Door"
+        },
+        "objects": [
+          "Meeting, Museum resources"
+        ],
+        "npcs": [
+          "Rachel",
+          "Museum Director"
+        ],
+        "clues": [
+          "Missing manuscript section"
+        ]
+      },
+      "Side Door": {
+        "description": "Side Door is an important story location.",
+        "exits": {
+          "back": "Museum Office",
+          "forward": "Alex's Phone"
+        },
+        "objects": [
+          "Hidden camera footage",
+          "Glove",
+          "Cufflink"
+        ],
+        "npcs": [],
+        "clues": [
+          "Custom-made cufflink on the glove"
+        ]
+      },
+      "Alex's Phone": {
+        "description": "Alex's Phone is an important story location.",
+        "exits": {
+          "back": "Side Door",
+          "forward": "Antique Shop Office"
+        },
+        "objects": [
+          "Phone"
+        ],
+        "npcs": [
+          "Alex"
+        ],
+        "clues": [
+          "Unknown sender IP address"
+        ]
+      },
+      "Antique Shop Office": {
+        "description": "Antique Shop Office is an important story location.",
+        "exits": {
+          "back": "Alex's Phone",
+          "forward": "Curator's Computer"
+        },
+        "objects": [
+          "Staff schedule",
+          "Witness",
+          "Staff member testimony"
+        ],
+        "npcs": [
+          "Staff Member"
+        ],
+        "clues": [
+          "Staff member claimed to be in the back room during the break"
+        ]
+      },
+      "Curator's Computer": {
+        "description": "Curator's Computer is an important story location.",
+        "exits": {
+          "back": "Antique Shop Office",
+          "forward": "Museum Accounts"
+        },
+        "objects": [
+          "Email",
+          "Email server",
+          "Document",
+          "Computer"
+        ],
+        "npcs": [],
+        "clues": [
+          "Curator sent a password-protected attachment to Alex",
+          "True value of the manuscript is over 10 times its estimated worth"
+        ]
+      },
+      "Museum Accounts": {
+        "description": "Museum Accounts is an important story location.",
+        "exits": {
+          "back": "Curator's Computer",
+          "forward": "Assistant's Office"
+        },
+        "objects": [
+          "Transaction",
+          "Accounts"
+        ],
+        "npcs": [],
+        "clues": [
+          "Curator's assistant made a large withdrawal related to the manuscript's true value"
+        ]
+      },
+      "Assistant's Office": {
+        "description": "Assistant's Office is an important story location.",
+        "exits": {
+          "back": "Museum Accounts",
+          "forward": "Storage Room"
+        },
+        "objects": [
+          "Transaction",
+          "Witness",
+          "Assistant testimony"
+        ],
+        "npcs": [
+          "Assistant"
+        ],
+        "clues": [
+          "Assistant claimed to have been in a meeting with the curator at the time of the transaction"
+        ]
+      },
+      "Storage Room": {
+        "description": "Shelves and sealed crates create plenty of places to hide evidence.",
+        "exits": {
+          "back": "Assistant's Office"
+        },
+        "objects": [
+          "Safe",
+          "Note",
+          "Meeting location"
+        ],
+        "npcs": [],
+        "clues": [
+          "Secret meeting planned between curator and Alex"
+        ]
+      }
+    }
+  }
 }

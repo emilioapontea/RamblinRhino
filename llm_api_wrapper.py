@@ -34,6 +34,21 @@ def _as_bool(value: object) -> bool:
     return bool(value)
 
 
+def _as_optional_str(value: object) -> Optional[str]:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        for item in value:
+            text = _as_optional_str(item)
+            if text:
+                return text
+        return None
+    if isinstance(value, dict):
+        return None
+    text = str(value).strip()
+    return text or None
+
+
 # Data Structures
 @dataclass
 class PlotEvent:
@@ -77,7 +92,7 @@ class PlotEvent:
             goals=list(data.get("goals", [])),
             caused_by=list(data.get("caused_by", [])),
             causes=list(data.get("causes", [])),
-            goal_type=data.get("goal_type"),
+            goal_type=_as_optional_str(data.get("goal_type")),
             location=data.get("location"),
             preconditions=list(data.get("preconditions", [])),
             effects=list(data.get("effects", [])),
@@ -420,6 +435,23 @@ You are an action interpreter for an interactive detective story game.
 Convert the player's natural-language command into a single JSON object.
 Use one of these action types only:
 "move", "inspect", "talk", "take", "use", "damage", "block", "accuse", "wait", "unknown".
+Prefer a playable interpretation over "unknown" when the command mentions any visible clue,
+known clue, object, person, location, objective, or next story event in the world context.
+Only use "accuse" when the player explicitly accuses, blames, arrests, identifies a culprit,
+or says a specific person "did it". Do not use "accuse" for commands that ask to find,
+trace, follow, locate, investigate, or figure out where the thief came from.
+Treat commands like "find where the thief came from", "trace the thief's route",
+"figure out how the thief entered", or "find the entry point" as "inspect" or "move"
+toward the most relevant known location/lead.
+Treat "look at", "look closer at", "look further at", "examine", "study", "search",
+"check", "review", and "investigate" as "inspect".
+If the player asks to inspect a known location, set action_type to "inspect",
+target and target_location to that location, and intent_summary to inspecting that lead.
+If the player asks to inspect an object or clue that appears in another known location or
+the next story event, set action_type to "inspect", target_object to that object or clue,
+and include the associated location in target_location when the context makes it clear.
+Resolve small typos and partial names using the world context, such as "fabri" -> "fabric"
+or "hidden camera" -> "Hidden camera footage".
 Return only valid JSON with double-quoted strings and no markdown.
 """
 
@@ -567,6 +599,11 @@ Player command:
 {command}
 
 Interpret the command for the game engine.
+Choose the closest executable action from the world context. Do not return "unknown" for
+commands that are trying to inspect, examine, search, follow, or review a known lead.
+For commands like "look at the side door", return an inspect action targeting Side Door.
+For commands like "look at the hidden camera", return an inspect action targeting
+Hidden camera footage, and set target_location to its location if the context shows one.
 Return exactly one JSON object with these fields:
 {{
   "action_type": string,
@@ -603,13 +640,19 @@ The player performed an exceptional action:
 These events were threatened or invalidated:
 {affected_text}
 
-Generate 1-2 replacement plot events that preserve solvability.
+Generate 2-4 replacement continuation plot events that preserve solvability from this exact moment.
 Rules:
 - Keep the story coherent and playable
 - Introduce alternate clues, witnesses, or evidence if needed
+- The first replacement event must be immediately actionable from the current location or clearly tell the player where to go next
+- Do not simply describe "an alternate lead"; name a concrete in-world object, witness, record, message, or location
+- Do not point back to the same blocked or destroyed evidence as the only next step
+- Continue the investigation forward toward a different clue chain that can reconnect to the case
 - Keep each event at abstract plot level
 - Use the same event schema as the rest of the system
 - Prefer locations already mentioned in the world context
+- Give every event a concrete "location", "required_objects", "effects", and "clue" when possible
+- Use goal_type "initiate" for the new lead and "resolve" for the follow-up discovery
 
 Output only the JSON array, nothing else.
 """
@@ -760,7 +803,7 @@ def _parse_plot_events(raw: str) -> list[PlotEvent]:
             characters=  list(rec.get("characters", [])),
             goals=       list(rec.get("goals",      [])),
             caused_by=   list(rec.get("caused_by",  [])),
-            goal_type=   rec.get("goal_type"),
+            goal_type=   _as_optional_str(rec.get("goal_type")),
             location=    rec.get("location"),
             preconditions=list(rec.get("preconditions", [])),
             effects=       list(rec.get("effects", [])),

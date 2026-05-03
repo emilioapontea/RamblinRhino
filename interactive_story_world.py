@@ -43,6 +43,26 @@ def _match_name(target: str, candidates: list[str]) -> Optional[str]:
         norm_candidate = _normalize(candidate)
         if norm_target and (norm_target in norm_candidate or norm_candidate in norm_target):
             return candidate
+    if not norm_target:
+        return None
+    candidate_map = {
+        _normalize(candidate): candidate
+        for candidate in candidates
+        if _normalize(candidate)
+    }
+    close_matches = get_close_matches(norm_target, candidate_map.keys(), n=1, cutoff=0.72)
+    if close_matches:
+        return candidate_map[close_matches[0]]
+    target_tokens = set(norm_target.split())
+    for candidate in candidates:
+        candidate_tokens = set(_normalize(candidate).split())
+        if target_tokens and any(
+            target_token in candidate_token or candidate_token in target_token
+            for target_token in target_tokens
+            for candidate_token in candidate_tokens
+            if len(target_token) >= 4 and len(candidate_token) >= 4
+        ):
+            return candidate
     return None
 
 
@@ -110,6 +130,8 @@ class WorldState:
     suspect_name: Optional[str] = None
     last_action_signature: str = ""
     repeated_action_count: int = 0
+    last_inspected_target: str = ""
+    last_guidance_signature: str = ""
 
     def current_room(self) -> Room:
         return self.rooms[self.player_location]
@@ -357,6 +379,7 @@ class InteractiveStoryGame:
             "discovers": "discover",
             "finds": "find",
             "identifies": "identify",
+            "inspects": "inspect",
             "interviews": "interview",
             "learns": "learn",
             "notices": "notice",
@@ -418,7 +441,7 @@ class InteractiveStoryGame:
             f"{room_phrase}{people_phrase}{description_text[0].lower() + description_text[1:] if description_text else ''}".strip(),
         ]
         if event.clue:
-            lines.append(f"The moment leaves behind a telling detail: {event.clue}.")
+            lines.append(f"The moment leaves behind a telling detail: {event.clue.rstrip('.')}.")
         elif event.effects:
             lines.append(f"The development changes the investigation in a concrete way: {', '.join(event.effects)}.")
         return " ".join(line for line in lines if line).strip()
@@ -449,8 +472,41 @@ class InteractiveStoryGame:
             corrected_command = re.sub(pattern, replacement, corrected_command, flags=re.IGNORECASE)
 
         lower = corrected_command.lower().strip()
+        route_intent_terms = (
+            "where",
+            "came from",
+            "come from",
+            "entered",
+            "entry",
+            "route",
+            "path",
+            "follow",
+            "trace",
+            "locate",
+            "track",
+            "investigate",
+            "figure out",
+        )
+        if any(term in lower for term in route_intent_terms) and any(
+            person in lower for person in ("thief", "culprit", "perpetrator", "killer")
+        ):
+            next_event = self.world.next_story_event()
+            target = command.strip()
+            if next_event and next_event.event.location:
+                return InterpretedAction(
+                    action_type="move",
+                    target=next_event.event.location,
+                    target_location=next_event.event.location,
+                    intent_summary=f"pursue route lead: {target}",
+                )
+            return InterpretedAction(
+                action_type="inspect",
+                target=target,
+                target_object=target,
+                intent_summary=f"investigate route lead: {target}",
+            )
         if any(word in lower for word in ("perpetrator", "culprit", "thief", "killer")) and any(
-            word in lower for word in ("find", "caught", "catch", "identify", "it's", "is ")
+            word in lower for word in ("caught", "catch", "identify", "it's", " is ")
         ):
             return InterpretedAction(
                 action_type="accuse",
@@ -466,6 +522,51 @@ class InteractiveStoryGame:
         if any(lower.startswith(prefix) for prefix in ("walk ", "move ", "head ")):
             target = re.sub(r"^(go|walk|move|head)\s+(to\s+)?", "", lower, count=1).strip()
             return InterpretedAction(action_type="move", target=target, target_location=target)
+        if lower.startswith((
+            "look ",
+            "inspect ",
+            "examine ",
+            "search ",
+            "study ",
+            "analyze ",
+            "analyse ",
+            "investigate ",
+            "check ",
+            "review ",
+            "read ",
+        )):
+            target = re.sub(
+                r"^(look|inspect|examine|search|study|analyze|analyse|investigate|check|review|read)\s+",
+                "",
+                corrected_command,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+            target = re.sub(
+                r"^(further|farther|closer|more|carefully|closely)\s+",
+                "",
+                target,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+            target = re.sub(
+                r"^(at|into|for|around|over|the|a|an)\s+",
+                "",
+                target,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+            target = re.sub(
+                r"^(further|farther|closer|more|carefully|closely)\s+",
+                "",
+                target,
+                count=1,
+                flags=re.IGNORECASE,
+            ).strip()
+            target = re.sub(r"^(at|the|a|an)\s+", "", target, count=1, flags=re.IGNORECASE).strip()
+            target = re.sub(r"^what\s+is\s+on\s+(the\s+)?", "", target, count=1, flags=re.IGNORECASE).strip()
+            if target:
+                return InterpretedAction(action_type="inspect", target=target, target_object=target)
         if lower.startswith("inspect "):
             target = command[8:].strip()
             return InterpretedAction(action_type="inspect", target=target, target_object=target)
@@ -528,6 +629,9 @@ class InteractiveStoryGame:
 
     def _interpret_action(self, command: str) -> InterpretedAction:
         lower = command.lower().strip()
+        local_action = self._heuristic_action(command)
+        if local_action.action_type in {"damage", "block", "move"}:
+            return local_action
         if any(phrase in lower for phrase in ("go there", "go to this location", "go to that location", "go to the lead")):
             next_event = self.world.next_story_event()
             if next_event and next_event.event.location:
@@ -538,14 +642,21 @@ class InteractiveStoryGame:
                     intent_summary=f"go to {next_event.event.location}",
                 )
         if not self.llm:
-            return self._heuristic_action(command)
+            return local_action
         try:
-            return self.llm.interpret_player_action(
+            action = self.llm.interpret_player_action(
                 command=command,
                 world_context=self._build_context_summary(),
             )
+            if action.action_type == "accuse":
+                if local_action.action_type in {"move", "inspect"}:
+                    return local_action
+            if action.action_type == "unknown":
+                if local_action.action_type != "unknown":
+                    return local_action
+            return action
         except Exception:
-            return self._heuristic_action(command)
+            return local_action
 
     def _current_targets(self) -> tuple[list[str], list[str]]:
         room = self.world.current_room()
@@ -577,7 +688,10 @@ class InteractiveStoryGame:
             return None
 
         event = next_event.event
-        parts = [f"No new story beat opens from that. The next lead is tied to {event.location}."]
+        if event.location == self.world.player_location:
+            parts = [f"No new story beat opens yet. The next lead is here in {event.location}."]
+        else:
+            parts = [f"No new story beat opens here. The next lead is tied to {event.location}."]
 
         path = self.world.path_to_room(event.location or "")
         if path and len(path) > 1:
@@ -591,6 +705,105 @@ class InteractiveStoryGame:
             parts.append(f"Someone relevant here: {', '.join(people[:2])}.")
 
         return " ".join(parts)
+
+    def _clue_followup_guidance(self, clue: str) -> Optional[str]:
+        next_event = self.world.next_story_event()
+        if not next_event:
+            return None
+
+        event = next_event.event
+        signature = f"{_normalize(clue)}->{event.event_id}"
+        if signature == self.world.last_guidance_signature:
+            return "That clue is already recorded; try acting on the current lead instead."
+        self.world.last_guidance_signature = signature
+
+        details: list[str] = []
+        if event.required_objects:
+            details.append(f"look for {', '.join(event.required_objects[:2])}")
+        elif event.characters:
+            details.append(f"question {', '.join(event.characters[:2])}")
+        elif event.goals:
+            details.append(event.goals[0])
+
+        if event.location == self.world.player_location:
+            lead = "Studying it keeps your attention on this room"
+        else:
+            lead = f"Studying it points you toward {event.location}"
+        if details:
+            lead += f" to {details[0]}"
+        lead += "."
+
+        path = self.world.path_to_room(event.location or "")
+        if path and len(path) > 1:
+            lead += f" Route: {' -> '.join(path)}."
+        return lead
+
+    def _visual_evidence_answer(self) -> Optional[str]:
+        room = self.world.current_room()
+        inspected = _normalize(self.world.last_inspected_target)
+        if not any(term in inspected for term in ("footage", "camera", "video", "still")):
+            return None
+
+        visual_clues = [
+            clue for clue in [*room.clues, *self.world.known_clues]
+            if any(term in _normalize(clue) for term in (
+                "camera",
+                "footage",
+                "seen",
+                "visible",
+                "tattoo",
+                "person",
+                "thief",
+                "angle",
+                "entering",
+            ))
+        ]
+        visual_clues = list(dict.fromkeys(visual_clues))
+
+        lines = [f"In the {self.world.last_inspected_target}, you do not get a clean face."]
+        if visual_clues:
+            lines.append("What you can make out:")
+            lines.extend(f"- {clue.rstrip('.')}" for clue in visual_clues[:4])
+        else:
+            lines.append("The image is unclear, but it confirms someone moved through this part of the case.")
+
+        next_event = self.world.next_story_event()
+        if next_event and next_event.event.location:
+            lines.append(f"The useful follow-up is {next_event.event.location}.")
+        return "\n".join(lines)
+
+    def _readable_evidence_answer(self, target: str = "") -> Optional[str]:
+        room = self.world.current_room()
+        inspected = _normalize(target or self.world.last_inspected_target)
+        readable_terms = ("document", "note", "email", "message", "record", "file", "folder", "accounts", "transaction")
+        if not any(term in inspected for term in readable_terms):
+            return None
+
+        clues = list(dict.fromkeys([*room.clues, *self.world.known_clues]))
+        matched_clue = _match_name(target or self.world.last_inspected_target, clues)
+        if not matched_clue:
+            documentish_clues = [
+                clue for clue in clues
+                if any(term in _normalize(clue) for term in (
+                    "note",
+                    "message",
+                    "email",
+                    "document",
+                    "meeting",
+                    "alibi",
+                    "value",
+                    "transaction",
+                    "attachment",
+                    "cryptic",
+                    "motive",
+                ))
+            ]
+            matched_clue = documentish_clues[0] if documentish_clues else None
+
+        label = target or self.world.last_inspected_target or "it"
+        if matched_clue:
+            return f"The {label} says: {matched_clue.rstrip('.')}."
+        return f"The {label} looks important, but you cannot make out a specific detail yet."
 
     def _person_lead_guidance(self, target: str) -> Optional[str]:
         lead = self._person_lead(target)
@@ -614,6 +827,32 @@ class InteractiveStoryGame:
 
             location = event_state.event.location or infer_location_from_text(event_state.event.description)
             return matched, location
+        return None
+
+    def _inspectable_lead(self, target: str) -> Optional[tuple[str, str, str]]:
+        resolved_room = self.world.resolve_room_name(target)
+        if resolved_room:
+            return resolved_room, resolved_room, "location"
+
+        for event_state in self.world.remaining_story_events():
+            event = event_state.event
+            event_location = event.location or infer_location_from_text(event.description)
+            if event_location and _match_name(target, [event_location]):
+                return event_location, event_location, "location"
+            matched_required = _match_name(target, event.required_objects)
+            if matched_required:
+                return matched_required, event_location, "object"
+            if event.clue and _match_name(target, [event.clue]):
+                return event.clue, event_location, "clue"
+
+        for room_name, room in self.world.rooms.items():
+            matched_object = _match_name(target, room.objects)
+            if matched_object:
+                return matched_object, room_name, "object"
+            matched_clue = _match_name(target, room.clues)
+            if matched_clue:
+                return matched_clue, room_name, "clue"
+
         return None
 
     def _validate_action(self, action: InterpretedAction) -> tuple[bool, str]:
@@ -640,6 +879,8 @@ class InteractiveStoryGame:
                 return False, "That action needs a target."
             matched = _match_name(target, objects + room.clues + list(room.exits.keys()))
             if matched:
+                return True, ""
+            if action.action_type == "inspect" and self._inspectable_lead(target):
                 return True, ""
             return False, f"You do not have access to '{target}' here."
 
@@ -684,9 +925,28 @@ class InteractiveStoryGame:
             ]
             event_targets.extend(_normalize(char) for char in event_state.event.characters)
             event_targets.append(_normalize(event_state.event.location or ""))
+            if event_state.event.clue:
+                event_targets.append(_normalize(event_state.event.clue))
             if target and any(target in candidate or candidate in target for candidate in event_targets if candidate):
                 affected.append(event_state)
         return affected
+
+    def _destructive_action_hits_evidence(self, action: InterpretedAction) -> bool:
+        target = action.target_object or action.target
+        if action.action_type == "block":
+            return bool(self.world.current_room().exits)
+        if not target:
+            return False
+
+        room = self.world.current_room()
+        evidence_pool = [
+            *room.objects,
+            *room.clues,
+            *self.world.inventory,
+            *self.world.known_clues,
+            *self._remaining_required_objects(),
+        ]
+        return _match_name(target, evidence_pool) is not None
 
     def _exception_anchor_events(self, action: InterpretedAction) -> list[StoryEventState]:
         affected_events = self._find_affected_events(action)
@@ -704,8 +964,11 @@ class InteractiveStoryGame:
         next_event = self.world.next_story_event()
         affected_events = self._find_affected_events(action)
 
-        if action.action_type in {"damage", "block"} and affected_events:
-            return "exceptional", affected_events
+        if action.action_type in {"damage", "block"}:
+            if affected_events:
+                return "exceptional", affected_events
+            if self._destructive_action_hits_evidence(action):
+                return "exceptional", []
 
         if action.action_type == "accuse":
             if self.world.suspect_name and _match_name(action.target_character or action.target, [self.world.suspect_name]):
@@ -724,6 +987,11 @@ class InteractiveStoryGame:
                 target_pool.append(next_event.event.clue)
             target = action.target or ""
             intent = action.intent_summary or ""
+            if action.action_type == "inspect":
+                inspection_target = action.target_object or action.target
+                room = self.world.current_room()
+                if _match_name(inspection_target, room.clues + self.world.known_clues):
+                    return "constituent", affected_events
             if self.world.player_location == next_event.event.location:
                 if action.action_type in {"inspect", "talk", "take", "use"}:
                     return "constituent", affected_events
@@ -759,15 +1027,92 @@ class InteractiveStoryGame:
 
         if action.action_type == "inspect":
             target = action.target_object or action.target
+            matched_visual_object = None
+            if any(term in _normalize(target) for term in ("footage", "camera", "video", "still")):
+                matched_visual_object = _match_name(target, room.objects + self.world.inventory)
+            if matched_visual_object:
+                self.world.last_inspected_target = matched_visual_object
+                self.world.add_fact(f"inspected {matched_visual_object}")
+                answer = self._visual_evidence_answer()
+                if answer:
+                    return f"You review the {matched_visual_object}.\n{answer}"
+
+            location_lead = self._inspectable_lead(target)
+            if location_lead and location_lead[2] == "location":
+                matched_target, location, _ = location_lead
+                path = self.world.travel_player(location)
+                room = self.world.current_room()
+                self.world.add_fact(f"player followed lead to {location}")
+                route = f"Route taken: {' -> '.join(path)}\n" if path and len(path) > 1 else ""
+                self.world.last_inspected_target = matched_target
+                self.world.add_fact(f"inspected {location}")
+                event_text = self._trigger_story_segment()
+                if event_text:
+                    return f"{route}{event_text}"
+                return f"{route}{self.world.describe_current_room()}\nYou inspect {location} for the next lead."
+
             matched_clue = _match_name(target, room.clues)
             if matched_clue:
+                self.world.last_inspected_target = target or matched_clue
                 self.world.add_clue(matched_clue)
                 self.world.add_fact(f"inspected {matched_clue}")
+                followup = self._clue_followup_guidance(matched_clue)
+                if followup:
+                    return f"You inspect the {target}. {matched_clue.rstrip('.')}. {followup}"
                 return f"You inspect {matched_clue} and notice: {matched_clue}"
+            matched_known_clue = _match_name(target, self.world.known_clues)
+            if matched_known_clue:
+                self.world.last_inspected_target = target or matched_known_clue
+                self.world.add_fact(f"reexamined {matched_known_clue}")
+                followup = self._clue_followup_guidance(matched_known_clue)
+                if followup:
+                    return f"You reexamine {matched_known_clue}. {followup}"
+                return f"You reexamine {matched_known_clue}, but it does not reveal a new lead yet."
             matched_object = _match_name(target, room.objects + self.world.inventory)
             if matched_object:
+                self.world.last_inspected_target = matched_object
                 self.world.add_fact(f"inspected {matched_object}")
+                if any(term in _normalize(matched_object) for term in ("footage", "camera", "video", "still")):
+                    answer = self._visual_evidence_answer()
+                    if answer:
+                        return f"You review the {matched_object}.\n{answer}"
+                readable_answer = self._readable_evidence_answer(matched_object)
+                if readable_answer:
+                    return f"You read the {matched_object}.\n{readable_answer}"
                 return f"You inspect the {matched_object}. It seems relevant to the case."
+
+            lead = self._inspectable_lead(target)
+            if lead:
+                matched_target, location, lead_kind = lead
+                path = self.world.travel_player(location)
+                room = self.world.current_room()
+                self.world.add_fact(f"player followed lead to {location}")
+                route = f"Route taken: {' -> '.join(path)}\n" if path and len(path) > 1 else ""
+
+                if lead_kind == "location":
+                    self.world.last_inspected_target = location
+                    self.world.add_fact(f"inspected {location}")
+                    event_text = self._trigger_story_segment()
+                    if event_text:
+                        return f"{route}{event_text}"
+                    return f"{route}{self.world.describe_current_room()}\nYou inspect {location} for the next lead."
+
+                if lead_kind == "clue":
+                    room_clue = _match_name(matched_target, room.clues)
+                    clue = room_clue or matched_target
+                    self.world.last_inspected_target = clue
+                    self.world.add_clue(clue)
+                    self.world.add_fact(f"inspected {clue}")
+                    return f"{route}You follow the lead to {location} and inspect {clue}."
+
+                room_object = _match_name(matched_target, room.objects + self.world.inventory)
+                obj = room_object or matched_target
+                self.world.last_inspected_target = obj
+                self.world.add_fact(f"inspected {obj}")
+                event_text = self._trigger_story_segment()
+                if event_text:
+                    return f"{route}You follow the lead to {location} and inspect the {obj}.\n\n{event_text}"
+                return f"{route}You follow the lead to {location} and inspect the {obj}."
             return f"You do not see anything matching '{target}' here."
 
         if action.action_type == "talk":
@@ -935,6 +1280,27 @@ class InteractiveStoryGame:
     def _open_decision_prompt(self, event_state: StoryEventState) -> str:
         return "What do you do?"
 
+    def _is_case_resolution_event(self, event: PlotEvent) -> bool:
+        resolution_text = " ".join([
+            event.description,
+            " ".join(event.goals),
+            " ".join(event.effects),
+            event.clue or "",
+            " ".join(event.hidden_expected_intents),
+        ]).lower()
+        case_resolution_terms = (
+            "accuse culprit",
+            "culprit confessed",
+            "confesses to the crime",
+            "confessed to the crime",
+            "case closed",
+            "case resolved",
+            "under arrest",
+            "arrest is made",
+            "solved the case",
+        )
+        return any(term in resolution_text for term in case_resolution_terms)
+
     def _trigger_ready_event(self) -> Optional[str]:
         next_event = self.world.next_story_event()
         if not next_event or not self._event_is_ready(next_event):
@@ -949,7 +1315,7 @@ class InteractiveStoryGame:
         if event.clue:
             self.world.add_clue(event.clue)
 
-        if event.goal_type == "resolve":
+        if event.goal_type == "resolve" and self._is_case_resolution_event(event):
             self.world.story_status = "solved"
             self.world.ending_reason = f"Case resolved: {event.description}"
 
@@ -992,13 +1358,30 @@ class InteractiveStoryGame:
             repair_objects = ["witness statement"]
             repair_effects = ["new witness statement is available", "investigation regains direction"]
         else:
-            repair_description = "An alternate lead emerges, giving the investigation a new way forward."
-            repair_clue = (
-                f"A backup record preserves the lead after the loss of {action_target(anchor.required_objects)}."
-                if anchor.required_objects else
-                "A secondary witness account restores the investigation's direction."
-            )
-            repair_objects = ["backup record"]
+            lost_target = _normalize((action.target_object or action.target) if action else "")
+            if "fabric" in lost_target:
+                repair_description = (
+                    "Clara finds a backup security still from the gallery camera showing a dark sleeve "
+                    "snagging on the display case."
+                )
+                repair_clue = "A still image shows the thief's dark sleeve catching near the display case."
+                repair_objects = ["backup security still"]
+            elif "footage" in lost_target or "camera" in lost_target:
+                repair_description = (
+                    "Clara finds an archived access log that recorded the side door opening during the theft."
+                )
+                repair_clue = "The access log shows the side door opened during the theft window."
+                repair_objects = ["archived access log"]
+            elif "email" in lost_target:
+                repair_description = (
+                    "Clara finds a synced copy of the curator's message in the mail server archive."
+                )
+                repair_clue = "The archived email links the curator to Alex before the theft."
+                repair_objects = ["archived email"]
+            else:
+                repair_description = "Clara uncovers a secondary witness note that restores the investigation's direction."
+                repair_clue = "The witness note points back to the next lead in the evidence chain."
+                repair_objects = ["witness note"]
             repair_effects = ["alternate lead is available"]
         return [
             PlotEvent(
@@ -1025,26 +1408,38 @@ class InteractiveStoryGame:
             event_state.invalidated = True
             event_state.invalid_reason = f"Player action made {event_state.event.event_id} unreliable."
 
+        anchor_events = affected_events[:]
+        if not anchor_events:
+            next_event = self.world.next_story_event()
+            if next_event:
+                anchor_events = [next_event]
+
         repairs: list[PlotEvent] = []
-        if self.llm and affected_events:
+        if self.llm and anchor_events:
             try:
                 repairs = self.llm.accommodate_story_break(
                     exception_action=action.target or action.action_type,
                     world_context=self._build_context_summary(),
-                    affected_events=[event_state.event for event_state in affected_events],
+                    affected_events=[event_state.event for event_state in anchor_events],
                 )
             except Exception:
                 repairs = []
 
         if not repairs:
-            repairs = self._fallback_accommodation(affected_events, action=action)
+            repairs = self._fallback_accommodation(anchor_events, action=action)
 
         if repairs:
-            insertion_index = max(
-                self.world.event_states.index(affected_events[0]),
-                0,
-            )
+            if anchor_events:
+                anchor_index = max(
+                    self.world.event_states.index(anchor_events[0]),
+                    0,
+                )
+            else:
+                anchor_index = 0
             for offset, repair in enumerate(repairs, start=1):
+                repair.event_id = repair.event_id or f"R_{anchor_events[0].event.event_id}_{offset}" if anchor_events else f"R_{offset}"
+                if not repair.event_id.startswith("R_"):
+                    repair.event_id = f"R_{repair.event_id}"
                 repair.location = repair.location or self.world.player_location
                 if repair.location not in self.world.rooms:
                     self.world.rooms[repair.location] = Room(
@@ -1058,10 +1453,11 @@ class InteractiveStoryGame:
                         repair_room.objects.append(obj)
                 if repair.clue and repair.clue not in repair_room.clues:
                     repair_room.clues.append(repair.clue)
-                self.world.event_states.insert(
-                    insertion_index + offset,
-                    StoryEventState(event=repair),
-                )
+                if affected_events:
+                    insertion_index = anchor_index + offset
+                else:
+                    insertion_index = anchor_index + offset - 1
+                self.world.event_states.insert(insertion_index, StoryEventState(event=repair))
 
             if action.action_type == "accuse":
                 self.world.last_intervention = (
@@ -1071,7 +1467,34 @@ class InteractiveStoryGame:
                 self.world.last_intervention = (
                     "Drama manager intervention: the original plan was repaired with an alternate lead."
                 )
-            return self.world.last_intervention
+
+            next_repair = self.world.next_story_event()
+            repair_guidance = None
+            if next_repair and next_repair.event.event_id.startswith("R_"):
+                repair = next_repair.event
+                parts = [
+                    f"New lead: {repair.description}",
+                    f"Location: {repair.location}.",
+                ]
+                if repair.required_objects:
+                    parts.append(f"Look for: {', '.join(repair.required_objects[:2])}.")
+                if repair.clue:
+                    parts.append(f"Possible clue: {repair.clue}")
+                path = self.world.path_to_room(repair.location or "")
+                if path and len(path) > 1:
+                    parts.append(f"Route: {' -> '.join(path)}.")
+                repair_guidance = " ".join(parts)
+
+            ready_text = self._trigger_story_segment()
+            response_parts = [self.world.last_intervention]
+            if ready_text:
+                response_parts.append(ready_text)
+                if "What do you do?" not in ready_text:
+                    response_parts.append("What do you do?")
+            elif repair_guidance:
+                response_parts.append(repair_guidance)
+                response_parts.append("What do you do?")
+            return "\n\n".join(response_parts)
 
         self.world.story_status = "unsolvable"
         self.world.ending_reason = (
@@ -1172,6 +1595,21 @@ class InteractiveStoryGame:
             return "quit"
 
         if lower.startswith(("who ", "why ", "what ")):
+            if lower.startswith("who ") and any(word in lower for word in ("see", "seen", "visible", "footage", "camera")):
+                visual_answer = self._visual_evidence_answer()
+                if visual_answer:
+                    return visual_answer
+            if any(word in lower for word in ("document", "note", "email", "message", "record", "file", "folder", "transaction")):
+                target = re.sub(
+                    r"^(what|why|who)\s+(is|was|do|does|did)?\s*(on|in|inside|about)?\s*(the\s+)?",
+                    "",
+                    raw,
+                    count=1,
+                    flags=re.IGNORECASE,
+                ).strip()
+                readable_answer = self._readable_evidence_answer(target)
+                if readable_answer:
+                    return readable_answer
             room = self.world.current_room()
             next_event = self.world.next_story_event()
             lines = [self.world.describe_current_room()]
@@ -1236,7 +1674,7 @@ class InteractiveStoryGame:
             event_text = self._trigger_story_segment()
             if event_text:
                 response_parts.append(event_text)
-            elif classification == "constituent" and repeat_count >= 1:
+            elif classification in {"consistent", "constituent"}:
                 guidance = self._next_lead_guidance()
                 if guidance:
                     response_parts.append(guidance)
