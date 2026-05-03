@@ -1,85 +1,146 @@
-# Reading Model Driven Story Generation
+# Rambling Rhino Story Engine
 > **System Name:** Rambling Rhino Story Engine
 
-> **Project Template:** Reader Model Driven Story Generation
+> **Project Template:** Intervention and Accommodation
 
 > Team Rambling Rhino
 
-To install our conda environment (`rhino`) with necessary dependencies:
+Rambling Rhino generates a crime mystery, separates the crime backstory from the playable investigation, and lets the user play through the solving story as an interactive text game. The system uses LLM-generated plot events, QUEST-style causal structure, a lightweight world model, and dynamic repair when the player derails the investigation.
+
+This repository now reflects our **Phase 2** project: an interactive mystery system built around intervention and accommodation.
+
+## Current Project Behavior
+- The crime story is treated as backstory and world context.
+- The solving story is treated as the playable investigation sequence.
+- The default run targets at least 15 solving-story plot events.
+- Interactive mode accepts open-ended text input.
+- Player actions are interpreted as constituent, consistent, or exceptional.
+- Exceptional actions can trigger accommodation, which repairs the investigation with alternate leads.
+- `story_prose.txt` is generated from the solving story, not the full crime timeline.
+
+## Setup
+Create and activate the project environment:
+
 ```bash
-conda env create -file environment.yml
+conda env create -f environment.yml
 conda activate rhino
 ```
 
-Then install spaCy and download the language model:
+Install spaCy and the English model:
+
 ```bash
 pip install spacy
 python -m spacy download en_core_web_sm
 ```
 
-If you have pip dependencies to add (be sure you are in the `rhino` environment):
+If `networkx` is missing in your current Python, install it in the same environment you use to run the project:
+
 ```bash
-conda install <package> pip
-conda env export > environment.yml
+python -m pip install networkx
 ```
 
-## API Key Setup
-Our system uses the free tier of the Groq API. To get a Groq API key:
-1. Go to [https://console.groq.com/keys](https://console.groq.com/keys)
-2. Log in with your Google account
-3. Click "Create API Key," create an API key, and copy it.
-4. In llm_api_wrapper.py, replace API_KEY_HERE with your API key, so that it reads:
-> python GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "gsk_YOUR_KEY_HERE
+## Groq API Key
+The project uses the Groq API for:
+- story generation
+- reflection / repair generation
+- interactive action interpretation
+- interactive event narration
+- full prose generation
 
-or in terminal enter:
+Set your key in the terminal before running:
+
 ```bash
 export GROQ_API_KEY="YOUR_GROQ_API_KEY"
 ```
-## How to Run the System
-Run 'python main_system_script.py' in the terminal.
-### With a custom premise and genre:
-Run 'python main_system_script.py --premise "Your premise goes here" --genre "Your genre goes here"'
-### With more events or reflection passes
-Run ''python main_system_script.py --events m --reflection-passes n', replacing m and n with numbers
-### Saving output to files
-Run 'python main_system_script.py --output-dir ./output', which saves 2 files to the output directory: story_events.json (all plot events with QUEST metadata), and story_prose.txt (the final generated story)
-### Verbose mode (which prints the raw LLM responses)
-Run 'python main_system_script.py --verbose'
+
+You only need a Groq key when generating a new story or using the LLM-backed interactive features. If you load a previously saved story, the project can still run with local fallbacks.
+
+## How to Run
+Generate a new story:
+
+```bash
+python main_system_script.py
+```
+
+Generate a new story with custom premise and genre:
+
+```bash
+python main_system_script.py --premise "Your premise goes here" --genre "crime mystery"
+```
+
+Generate a new story and save outputs:
+
+```bash
+python main_system_script.py --output-dir ./output
+```
+
+Run the interactive investigation:
+
+```bash
+python main_system_script.py --interactive
+```
+
+Load a previously saved story and skip regeneration:
+
+```bash
+python main_system_script.py --load-story ./output/run_summary.json --interactive
+```
+
+Generate with more events or reflection passes:
+
+```bash
+python main_system_script.py --events 30 --reflection-passes 3
+```
+
+Verbose mode:
+
+```bash
+python main_system_script.py --verbose
+```
+
+## Saved Outputs
+When you run with `--output-dir`, the project writes:
+- `crime_story_events.json`: structured crime backstory events
+- `solving_story_events.json`: structured playable solving events
+- `run_summary.json`: premise, events, world summary, and prose metadata
+- `story_prose.txt`: prose generated from the solving story
+
+By default, the system generates `30` total pre-reflection events, which splits into `15` crime-story events and `15` solving-story events before reflection adds any repairs or bridge events.
 
 ## Repository Structure
-main_system_script.py (the top-level driver)
+- `main_system_script.py`: top-level driver for story generation, reflection, saving, loading, and interactive mode
+- `llm_api_wrapper.py`: Groq client, event generation, reflection, action interpretation, accommodation prompts, and prose generation
+- `interactive_story_world.py`: world model, room graph, interactive loop, action validation, classification, dynamic repair, and event prose rendering
+- `environment.yml`: environment definition
+- `complexity_checking/complexity_checker.py`: QUEST coherence checks
+- `quest_parsing/knowledge_graph.py`: graph representation used by the system
+- `quest_parsing/narrative_ingestor.py`: text-to-graph ingestion
+- `quest_parsing/narrative_schema.py`: node and arc schema
+- `quest_parsing/arc_classifier.py`: narrative arc classification
+- `quest_parsing/node_classifier.py`: narrative node classification
 
-llm_api_wrapper.py (Groq API warpper, engagement + reflection + prose)
+## Core Modules
+### LLMClient
+Handles:
+- crime story event generation
+- solving story event generation
+- reflection / bridging events
+- interactive action interpretation
+- accommodation event generation
+- event narration
+- full solving-story prose generation
 
-environment.yml
-
-Graesser-Question-answering.pdf
-
-complexity_checking/
-
-> complexity_checker.py (QUEST coherence checker, node/arc requirements)
-
-quest_parsing/
-
-> arc_classifier.py (classifies arc types between narrative nodes)
-
-> knowledge_graph.py
-
-> narrative_ingestor.py (end-to-end text --> KG pipeline)
-
-> narrative_schema.py (node and arc data structures (ex. EventNode, GoalNode))
-
-> node_classifier.py (classifies clauses into Event/Action/Goal/State nodes)
-
-## Engagement Modules
-### ContextPrompter
-A class that manages feedback from the `ComplexityChecker` and generates an engineered prompt to pass on to the LLM.
-### LLM
-A wrapper class to handle API requests to our chosen LLM and receive output in the form of QUEST events, goals, etc. to be parsed into the QUEST `KnowledgeGraph`.
-
-## Reflection Modules
 ### KnowledgeGraph
-A class (`quest_parsing.KnowledgeGraph`) to support `(subject --predicate--> object)` relationships in our QUEST graph. We will primarily be using the `NarrativeIngestor` (`quest_parsing.narrative_ingestor`) class which uses `spaCy`'s [`en_core_web_sm`](https://spacy.io/models/en#en_core_web_sm) (12 MB) CPU pipeline for tokenization, part of speech tagging, named entity recognition, etc., to build up the knowledge graph from our LLM's text responses.
+A graph structure used to store story relationships and support reflection/coherence checks. The project uses `NarrativeIngestor` and the QUEST-related parsing modules to derive additional structure from event text.
+
+### InteractiveStoryGame
+Builds the playable investigation world and manages:
+- room traversal
+- clue discovery
+- inventory
+- open-ended player commands
+- classification of actions
+- dynamic repair of broken story paths
 
 > Example usage
 ```python
@@ -162,206 +223,34 @@ c = ComplexityChecker(kg, node_reqs={NodeType.EVENT : (10, -1)})
 c()
 ```
 
-## Example Output
-> genre: crime mystery (default)
+## Phase 2 Notes
+This repository is organized around the **Phase 2** version of the project.
 
-> 20 events (default)
+What that means in practice:
+- the crime story is generated as backstory and case context
+- the solving story is the playable investigation
+- the default target is at least 15 solving-story plot points
+- `story_prose.txt` is written from the solving story, not the crime backstory
+- interactive play supports open-ended commands, action classification, and dynamic repair
 
-> 5 reflection passes (default)
+## Example Usage
+Generate and save a Phase 2 story package:
 
-> Premise: "A small-town archivist discovers that a priceless 18th-century manuscript has been stolen from the local museum the night before its auction. She is the only one who knows what was truly hidden inside it."
-
+```bash
 python main_system_script.py --output-dir ./output
+```
 
-════════════════════════════════════════════════════════════
-  RAMBLING RHINO: Story Generation System
-  Team Rambling Rhino | Reader-Model-Driven Generation
-════════════════════════════════════════════════════════════
-  Premise : A small-town archivist discovers that a priceless [...]
-  Genre   : crime mystery
-  Events  : 20 total (10 crime + 10 solving)
-  Batches : 1 per event phase
-  Reflect : 2 pass(es)
+Run the interactive investigation using a saved story:
 
-════════════════════════════════════════════════════════════
-PHASE 1: CRIME STORY EVENTS
-════════════════════════════════════════════════════════════
+```bash
+python main_system_script.py --load-story ./output/run_summary.json --interactive
+```
 
-[Crime story batch 1/1]
-  Generated 10 events (crime story total: 10)
+Generate a larger story if you want more than the default:
 
-Crime story generation complete: 10 plot events.
-
-Current event list:
-  [E1] (SETUP) The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours.
-  [E2] (INCITING INCIDENT) The thief uses a custom-made lockpick to bypass the display case's security lock.
-           caused_by: ['E1']
-  [E3] (RISING ACTION) The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment.
-           caused_by: ['E2']
-  [E4] (RISING ACTION) A small, valuable item is found hidden within the manuscript, which was the true target of the theft.
-           caused_by: ['E3']
-  [E5] (MIDPOINT) The thief escapes the museum without triggering any alarms, using a pre-planned route.
-           caused_by: ['E4']
-  [E6] (MIDPOINT) The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.
-           caused_by: ['E5']
-  [->E7] (MIDPOINT) Clara realizes that the thief must have had inside help to bypass the museum's security system.
-           caused_by: ['E6']
-  [E8] (COMPLICATIONS) Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft.
-           caused_by: ['E7']
-  [E9] (CLIMAX) The thief, now in possession of the valuable item, contacts a potential buyer on the black market.
-           caused_by: ['E5']
-  [E10] (RESOLUTION) Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript.
-           caused_by: ['E6', 'E8']
-
-KnowledgeGraph: KnowledgeGraph(nodes=64, edges=87, by_source={'domain': 36, 'text': 51})
-
-════════════════════════════════════════════════════════════
-PHASE 2: REFLECTION (crime story)
-════════════════════════════════════════════════════════════
-
-[Reflection pass 1/2]
-  ComplexityChecker found 1 issue(s):
-    - Story has only 10 plot events — aim for at least 15 for a full narrative.
-
-  Repairing: Story has only 10 plot events — aim for at least 15 for a full narrative.
-    + Added [E_b1]: Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff
-    + Added [E_b2]: Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft
-
-KnowledgeGraph: KnowledgeGraph(nodes=73, edges=102, by_source={'domain': 43, 'text': 59})
-
-[Reflection pass 2/2]
-  ComplexityChecker found 1 issue(s):
-    - Story has only 12 plot events — aim for at least 15 for a full narrative.
-
-  Repairing: Story has only 12 plot events — aim for at least 15 for a full narrative.
-    + Added [E_b3]: Clara identifies a discrepancy in the staff member's alibi
-    + Added [E_b4]: Clara obtains security footage of the staff member's suspicious activity
-
-KnowledgeGraph: KnowledgeGraph(nodes=87, edges=120, by_source={'domain': 53, 'text': 67})
-
-Reflection complete: 14 total events.
-
-KnowledgeGraph: KnowledgeGraph(nodes=87, edges=120, by_source={'domain': 53, 'text': 67})
-
-════════════════════════════════════════════════════════════
-PHASE 3: SOLVING STORY EVENTS
-════════════════════════════════════════════════════════════
-
-[Solving batch 1/1]
-  Generated 10 events (solving story total: 10)
-
-Solving story generation complete: 10 plot events.
-
-Current event list:
-  [E11] (SETUP) Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft.
-           caused_by: ['E_b4']
-  [E12] (INCITING INCIDENT) Clara interviews the staff member, who provides an alibi that Clara suspects is false.
-           caused_by: ['E11']
-  [E13] (RISING ACTION) Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency.
-           caused_by: ['E12']
-  [E14] (RISING ACTION) The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind.
-           caused_by: ['E13']
-  [E15] (MIDPOINT) Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer.
-           caused_by: ['E14']
-  [E16] (MIDPOINT) Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript.
-           caused_by: ['E15']
-  [E17] (MIDPOINT) The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person.
-           caused_by: ['E16']
-  [E18] (COMPLICATIONS) The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity.
-           caused_by: ['E17']
-  [E19] (CLIMAX) Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity.
-           caused_by: ['E18']
-  [E20] (RESOLUTION) The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact.
-           caused_by: ['E19']
-
-KnowledgeGraph: KnowledgeGraph(nodes=137, edges=202, by_source={'domain': 93, 'text': 109})
-
-════════════════════════════════════════════════════════════
-PHASE 4: REFLECTION (solving)
-════════════════════════════════════════════════════════════
-
-[Reflection pass 1/2]
-  ComplexityChecker: all requirements satisfied — story is QUEST-coherent.
-
-Reflection complete: 24 total events.
-
-════════════════════════════════════════════════════════════
-PHASE 5: STORY GENERATION
-════════════════════════════════════════════════════════════
-  Generating story from 24 plot events...
-
-════════════════════════════════════════════════════════════
-GENERATED STORY
-════════════════════════════════════════════════════════════
-
-────────────────────────────────────────────────────────────
---- Plot Point 1: The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours. ---
-────────────────────────────────────────────────────────────
-The night before the auction, the museum was quiet, the only sound being
-the soft hum of the security systems. A figure, dressed in a janitor's
-uniform, slipped through the shadows, avoiding the few security cameras
-that were still active. The thief, known only by their alias, "The Fox,"
-had been planning this heist for months, studying the museum's security
-protocols and waiting for the perfect moment to strike. With a confident
-smile, The Fox made their way to the display case, their eyes fixed on
-the prized manuscript that lay within.
-
-The museum's staff had long since gone home, leaving The Fox to work
-uninterrupted. The janitor's uniform was a clever disguise, allowing The
-Fox to blend in with the museum's maintenance crew. As they worked, The
-Fox's mind was focused on the task at hand, their movements swift and
-precise.
-
-The darkness of the museum seemed to swallow The Fox whole, but they
-moved with ease, their senses heightened. The air was thick with the
-scent of old books and dust, a familiar smell that The Fox had grown to
-love. With each step, The Fox drew closer to their goal, their heart
-beating with anticipation.
-
-The display case loomed before them, its glass surface glinting in the
-dim light. The Fox's eyes locked onto the manuscript, their prize, and
-with a steady hand, they set to work.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 2: The thief uses a custom-made lockpick to bypass the display case's security lock. ---
-────────────────────────────────────────────────────────────
-The Fox pulled out a custom-made lockpick, its slender shape glinting in
-the dim light. With a deft touch, The Fox inserted the lockpick into the
-display case's security lock, feeling for the subtle clicks that would
-signal the lock's release. The mechanism was complex, but The Fox had
-spent months studying its intricacies, practicing the delicate dance of
-lockpicking until it became second nature.
-
-As the lock disengaged, The Fox felt a thrill of excitement. The display
-case's security system was state-of-the-art, but The Fox had anticipated
-this, designing the lockpick specifically to bypass its safeguards. With
-a soft click, the lock released, and The Fox swung the case open,
-revealing the manuscript in all its glory.
-
-The Fox's eyes feasted on the manuscript's yellowed pages, the intricate
-script a testament to the craftsmanship of a bygone era. For a moment,
-The Fox forgot about the theft, lost in the beauty of the artifact. But
-the moment passed, and with a swift motion, The Fox reached in and
-claimed the manuscript as their own.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 3: The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment. ---
-────────────────────────────────────────────────────────────
-With the manuscript in hand, The Fox carefully opened the display case,
-revealing a hidden compartment that lay beneath. The compartment was
-small, barely large enough to hold a few sheets of paper, but The Fox
-knew that it was here that the true treasure lay. As they reached in,
-their fingers closed around a small, valuable item that had been hidden
-within the manuscript.
-
-The item was a tiny, leather-bound book, adorned with strange symbols
-and markings. The Fox's eyes widened as they realized the significance
-of their find. This was no ordinary book, but a rare and valuable
-artifact that would fetch a handsome price on the black market.
-
-The Fox's heart racing with excitement, they carefully placed the
+```bash
+python main_system_script.py --events 36 --reflection-passes 3 --output-dir ./output
+```
 manuscript and the leather-bound book into a specially designed bag,
 taking care not to damage either artifact. As they sealed the bag, The
 Fox felt a sense of pride and accomplishment, knowing that they had
