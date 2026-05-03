@@ -216,7 +216,7 @@ class RamblingRhinoDriver:
     def _require_llm(self) -> LLMClient:
         if self.llm is None:
             raise RuntimeError(
-                "This action requires a Groq API key. Set GROQ_API_KEY or load a saved story for offline replay."
+                "This action requires a Cerebras API key. Set CEREBRAS_API_KEY or load a saved story for offline replay."
             )
         return self.llm
 
@@ -677,10 +677,10 @@ def main() -> None:
     args = parser.parse_args()
 
     # Validate API key only when story generation is required
-    api_key = os.environ.get("GROQ_API_KEY", "API_KEY")
-    if not args.load_story and (not api_key or api_key == "YOUR_GROQ_API_KEY_HERE"):
+    api_key = os.environ.get("CEREBRAS_API_KEY", "API_KEY")
+    if not args.load_story and (not api_key or api_key == "YOUR_CEREBRAS_API_KEY_HERE"):
         print(
-            "\n[ERROR] No Groq API key found.",
+            "\n[ERROR] No Cerebras API key found.",
             file=sys.stderr,
         )
         sys.exit(1)

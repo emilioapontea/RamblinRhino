@@ -145,8 +145,8 @@ class LLMClient:
         request_delay: float = 0.5,
         verbose:       bool  = False,
     ) -> None:
-        if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
-            raise ValueError("No Groq API key found.")
+        if not api_key or api_key == "YOUR_CEREBRAS_API_KEY_HERE":
+            raise ValueError("No Cerebras API key found.")
         self.api_key       = api_key
         self.model         = model
         self.max_tokens    = max_tokens
@@ -304,6 +304,9 @@ class LLMClient:
             f"Plot points to cover:\n{plot_points}\n\n"
             "Begin the story now, and make sure the final paragraph is a complete, "
             "satisfying ending that wraps up all loose threads:\n"
+            "- All characters must have real proper names, such as 'Marcus Webb' or 'Director Holloway'.\n"
+            "- Do NOT use generic labels like 'The Thief', 'The Culprit', or 'The Buyer' as character names.\n"
+            "- The perpetrator must have a real name and a plausible cover role in the story world.\n"
         )
 
         # Use a higher token limit for prose generation

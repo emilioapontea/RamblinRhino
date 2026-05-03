@@ -244,14 +244,48 @@ def _room_description(name: str) -> str:
 
 
 def _connect_rooms(rooms: dict[str, Room]) -> None:
-    # ordered = [name for name in DEFAULT_ROOM_ORDER if name in rooms]
-    ordered = list(rooms.keys())
-    for idx, name in enumerate(ordered):
+    museum_internal = {
+        "Museum Entrance",
+        "Museum Gallery",
+        "Archive Office",
+        "Security Office",
+        "Staff Hallway",
+        "Storage Room",
+        "Museum Storage",
+        "Museum Staff Offices",
+        "Museum Board Room",
+        "Museum Security Room",
+        "Museum Staff Office",
+        "Security Room",
+        "Security System Room",
+    }
+    external = {
+        "Parking Lot",
+        "Warehouse",
+        "Historical Society Office",
+        "Bank Safe-Deposit Box",
+        "Clara's Office",
+    }
+
+    internal_rooms = [
+        name
+        for name in rooms
+        if any(label in name for label in museum_internal) or name not in external
+    ]
+    external_rooms = [name for name in rooms if name in external]
+
+    for idx, name in enumerate(internal_rooms):
         room = rooms[name]
         if idx > 0:
-            room.exits["back"] = ordered[idx - 1]
-        if idx < len(ordered) - 1:
-            room.exits["forward"] = ordered[idx + 1]
+            room.exits["back"] = internal_rooms[idx - 1]
+        if idx < len(internal_rooms) - 1:
+            room.exits["forward"] = internal_rooms[idx + 1]
+
+    gateway = "Museum Entrance" if "Museum Entrance" in rooms else (internal_rooms[0] if internal_rooms else None)
+    for name in external_rooms:
+        if gateway:
+            rooms[name].exits["back"] = gateway
+            rooms[gateway].exits[f"to {name}"] = name
 
 
 def _infer_primary_suspect(events: list[PlotEvent]) -> Optional[str]:
