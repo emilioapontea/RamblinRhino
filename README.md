@@ -2,11 +2,28 @@
 
 > **System Name:** Rambling Rhino Story Engine  
 > **Project Template:** Intervention and Accommodation  
-> Team Rambling Rhino
+> Team Rambling Rhino: Emilio Aponte, Neja Atapattu, Nandini Ramakrishnan
 
 Rambling Rhino generates a crime mystery, separates the crime backstory from the playable investigation, and lets the user play through the solving story as an interactive text game. The system uses LLM-generated plot events, QUEST-style causal structure, a lightweight world model, and dynamic repair when the player derails the investigation.
 
 This repository reflects the Phase 2 version of the project: an interactive mystery system built around intervention and accommodation.
+
+An example run through is listed in (`demo_command_trace.md`)
+## To run the reproducible demo
+
+The interactive system is able to bypass the initial story generation stage by loading a previously generated story structure. For demo purposes and to reduce the amount of API requests, we recommend using our generated story (`./output/solving_story_events`). This way the interactive element will be as close as possible to our own testing runs.
+> The interactive Drama Manager still makes API requests to write the story and to make adjustments as the user feedback loop executes, so the exact output may differ between runs.
+
+To run the interactive system:
+
+1. Create and activate our `conda` environment (see [Setup](#setup) section)
+2. Generate a [Cerebras](https://cloud.cerebras.ai/) API key (free tier should be sufficient) and set the environment variable (see [API Key](#api-key) section)
+3. Run our main system script with the `--interactive` and `--load-story` flags.
+```bash
+python main_system_script.py --load-story ./output/run_summary.json --interactive
+```
+
+See [How to Run](#how-to-run) for more run configurations and read the remaining document for additional information about our system.
 
 ## Current Behavior
 
