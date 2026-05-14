@@ -1,858 +1,231 @@
-# Reading Model Driven Story Generation
-> **System Name:** Rambling Rhino Story Engine
+# Rambling Rhino Story Engine
 
-> **Project Template:** Reader Model Driven Story Generation
+> **System Name:** Rambling Rhino Story Engine  
+> **Project Template:** Intervention and Accommodation  
+> Team Rambling Rhino: Emilio Aponte, Neja Atapattu, Nandini Ramakrishnan
 
-> Team Rambling Rhino
+Rambling Rhino generates a crime mystery, separates the crime backstory from the playable investigation, and lets the user play through the solving story as an interactive text game. The system uses LLM-generated plot events, QUEST-style causal structure, a lightweight world model, and dynamic repair when the player derails the investigation.
 
-To install our conda environment (`rhino`) with necessary dependencies:
+This repository reflects the Phase 2 version of the project: an interactive mystery system built around intervention and accommodation.
+
+An example run through is listed in (`demo_command_trace.md`)
+## To run the reproducible demo
+
+The interactive system is able to bypass the initial story generation stage by loading a previously generated story structure. For demo purposes and to reduce the amount of API requests, we recommend using our generated story (`./output/solving_story_events`). This way the interactive element will be as close as possible to our own testing runs.
+> The interactive Drama Manager still makes API requests to write the story and to make adjustments as the user feedback loop executes, so the exact output may differ between runs.
+
+To run the interactive system:
+
+1. Create and activate our `conda` environment (see [Setup](#setup) section)
+2. Generate a [Cerebras](https://cloud.cerebras.ai/) API key (free tier should be sufficient) and set the environment variable (see [API Key](#api-key) section)
+3. Run our main system script with the `--interactive` and `--load-story` flags.
 ```bash
-conda env create -file environment.yml
+python main_system_script.py --load-story ./output/run_summary.json --interactive
+```
+
+See [How to Run](#how-to-run) for more run configurations and read the remaining document for additional information about our system.
+
+## Current Behavior
+
+- The crime story is treated as backstory and world context.
+- The solving story is treated as the playable investigation sequence.
+- Interactive mode accepts open-ended text input.
+- Player actions are classified as `constituent`, `consistent`, or `exceptional`.
+- Exceptional actions can trigger accommodation and introduce alternate leads.
+- LLM-backed interactive mode interprets user actions, narrates events, and supports repair generation.
+- `story_prose.txt` is generated from the solving story, not the full crime timeline.
+
+## Setup
+
+Create and activate the project environment:
+
+```bash
+conda env create -f environment.yml
 conda activate rhino
 ```
 
-Then install spaCy and download the language model:
+Install spaCy and the English model:
+
 ```bash
-pip install spacy
+python -m pip install spacy
 python -m spacy download en_core_web_sm
 ```
 
-If you have pip dependencies to add (be sure you are in the `rhino` environment):
+If `networkx` is missing:
+
 ```bash
-conda install <package> pip
-conda env export > environment.yml
+python -m pip install networkx
 ```
 
-## API Key Setup
-Our system uses the free tier of the Groq API. To get a Groq API key:
-1. Go to [https://console.groq.com/keys](https://console.groq.com/keys)
-2. Log in with your Google account
-3. Click "Create API Key," create an API key, and copy it.
-4. In llm_api_wrapper.py, replace API_KEY_HERE with your API key, so that it reads:
-> python GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "gsk_YOUR_KEY_HERE
+If spaCy is not installed, the project can still run, but the `NarrativeIngestor` warning will appear and the knowledge graph will not include NLP-derived triples.
 
-or in terminal enter:
+## API Key
+
+The current LLM wrapper uses the Cerebras chat-completions API:
+
 ```bash
-export GROQ_API_KEY="YOUR_GROQ_API_KEY"
+export CEREBRAS_API_KEY="YOUR_CEREBRAS_API_KEY"
 ```
-## How to Run the System
-Run 'python main_system_script.py' in the terminal.
-### With a custom premise and genre:
-Run 'python main_system_script.py --premise "Your premise goes here" --genre "Your genre goes here"'
-### With more events or reflection passes
-Run ''python main_system_script.py --events m --reflection-passes n', replacing m and n with numbers
-### Saving output to files
-Run 'python main_system_script.py --output-dir ./output', which saves 2 files to the output directory: story_events.json (all plot events with QUEST metadata), and story_prose.txt (the final generated story)
-### Verbose mode (which prints the raw LLM responses)
-Run 'python main_system_script.py --verbose'
+
+Some older project checks still refer to Groq. If you see an API-key warning from the driver, also set:
+
+```bash
+export GROQ_API_KEY="YOUR_CEREBRAS_API_KEY"
+```
+
+The key is used for:
+
+- story generation
+- reflection and repair generation
+- interactive action interpretation
+- interactive event narration
+- full prose generation
+
+If the API key is missing or invalid, interactive mode falls back to local command parsing where possible. A `401 Unauthorized` error means the Cerebras key is missing, invalid, expired, or not authorized for the endpoint.
+
+## How to Run
+
+Generate a new story:
+
+```bash
+python main_system_script.py
+```
+
+Generate and save outputs:
+
+```bash
+python main_system_script.py --output-dir ./output
+```
+
+Run a fresh interactive investigation:
+
+```bash
+python main_system_script.py --interactive
+```
+
+Load a saved story and play interactively:
+
+```bash
+python main_system_script.py --load-story ./output/run_summary.json --interactive
+```
+
+Generate with a custom premise and genre:
+
+```bash
+python main_system_script.py --premise "Your premise goes here" --genre "crime mystery"
+```
+
+Generate with more events or reflection passes:
+
+```bash
+python main_system_script.py --events 36 --reflection-passes 3 --output-dir ./output
+```
+
+Verbose mode:
+
+```bash
+python main_system_script.py --verbose
+```
+
+## Interactive Commands
+
+Interactive mode accepts natural-language commands such as:
+
+```text
+inspect fabric
+look at side door
+inspect the cufflink
+look at alex's phone
+review the security footage
+question the staff member
+go to curator's computer
+read the email
+inspect computer
+look at transaction
+go to storage room
+open the safe
+confront curator about email
+```
+
+The game also supports disruptive actions for the accommodation demo:
+
+```text
+burn the fabric
+destroy the security footage
+delete the suspicious email
+accuse alex immediately
+```
+
+These should be classified as `exceptional` when they damage evidence or derail the investigation.
+
+## Demo Transcript Files
+
+Two transcript files are included for presenting the interactive run:
+
+- `demo_command_trace.md`: Markdown transcript with player commands bolded.
+- `demo_command_trace.html`: HTML transcript with player commands highlighted in color.
+
+Use the Markdown file for reports or GitHub. Use the HTML file when you want colored command highlighting in a browser.
+
+## Saved Outputs
+
+When you run with `--output-dir`, the project writes:
+
+- `crime_story_events.json`: structured crime backstory events
+- `solving_story_events.json`: structured playable solving events
+- `run_summary.json`: premise, events, world summary, and prose metadata
+- `story_prose.txt`: prose generated from the solving story
+
+By default, the system generates `30` total pre-reflection events, split into crime-story and solving-story events before reflection adds repairs or bridge events.
 
 ## Repository Structure
-main_system_script.py (the top-level driver)
 
-llm_api_wrapper.py (Groq API warpper, engagement + reflection + prose)
+- `main_system_script.py`: top-level driver for story generation, reflection, saving, loading, and interactive mode
+- `llm_api_wrapper.py`: Cerebras API wrapper, event generation, reflection, action interpretation, accommodation prompts, and prose generation
+- `interactive_story_world.py`: world model, room graph, interactive loop, action validation, classification, dynamic repair, and event prose rendering
+- `environment.yml`: environment definition
+- `complexity_checking/complexity_checker.py`: QUEST coherence checks
+- `quest_parsing/knowledge_graph.py`: graph representation used by the system
+- `quest_parsing/narrative_ingestor.py`: text-to-graph ingestion
+- `quest_parsing/narrative_schema.py`: node and arc schema
+- `quest_parsing/arc_classifier.py`: narrative arc classification
+- `quest_parsing/node_classifier.py`: narrative node classification
 
-environment.yml
+## Core Modules
 
-Graesser-Question-answering.pdf
+### LLMClient
 
-complexity_checking/
+Handles:
 
-> complexity_checker.py (QUEST coherence checker, node/arc requirements)
+- crime story event generation
+- solving story event generation
+- reflection and bridging events
+- interactive action interpretation
+- accommodation event generation
+- event narration
+- full solving-story prose generation
 
-quest_parsing/
+### InteractiveStoryGame
 
-> arc_classifier.py (classifies arc types between narrative nodes)
+Builds the playable investigation world and manages:
 
-> knowledge_graph.py
+- room traversal
+- clue discovery
+- inventory
+- open-ended player commands
+- action classification
+- dynamic repair of broken story paths
 
-> narrative_ingestor.py (end-to-end text --> KG pipeline)
-
-> narrative_schema.py (node and arc data structures (ex. EventNode, GoalNode))
-
-> node_classifier.py (classifies clauses into Event/Action/Goal/State nodes)
-
-## Engagement Modules
-### ContextPrompter
-A class that manages feedback from the `ComplexityChecker` and generates an engineered prompt to pass on to the LLM.
-### LLM
-A wrapper class to handle API requests to our chosen LLM and receive output in the form of QUEST events, goals, etc. to be parsed into the QUEST `KnowledgeGraph`.
-
-## Reflection Modules
 ### KnowledgeGraph
-A class (`quest_parsing.KnowledgeGraph`) to support `(subject --predicate--> object)` relationships in our QUEST graph. We will primarily be using the `NarrativeIngestor` (`quest_parsing.narrative_ingestor`) class which uses `spaCy`'s [`en_core_web_sm`](https://spacy.io/models/en#en_core_web_sm) (12 MB) CPU pipeline for tokenization, part of speech tagging, named entity recognition, etc., to build up the knowledge graph from our LLM's text responses.
 
-> Example usage
-```python
-from quest_parsing.narrative_ingestor import NarrativeIngestor
-from quest_parsing.knowledge_graph import KnowledgeGraph
-
-kg = KnowledgeGraph()
-ingestor = NarrativeIngestor(include_attr_triples=False)
-
-ingestor.from_file('testing/claude_lighthouse.txt', kg) # replace with .txt file containing LLM generated story points.
-
-# List KnowledgeGraph nodes
-list(kg._g.nodes(data=True))
-
-# List KnowledgeGraph edges
-list(kg._g.edges(data=True))
-
-# Use plt to plot KnowledgeGraph with node and edge labels.
-import matplotlib.pyplot as plt
-import networkx as nx
-
-G = kg._g
-pos = nx.spring_layout(G)
-# subax1 = plt.subplot(121)
-nx.draw(
-    G,
-    pos=pos,
-    font_weight='bold',
-    labels={n : f'{d['type']} : {d['label'][:10]}...' for n, d in G.nodes(data=True)},
-    node_size=100,
-    font_size=5,
-    horizontalalignment='left',
-)
-nx.draw_networkx_edge_labels(
-    G,
-    pos=pos,
-    edge_labels={(u,v) : f'{d['predicate']} ({d['weight']})' for u, v, d in G.edges(data=True)},
-    font_size=2
-)
-
-plt.show()
-```
+Stores story relationships and supports reflection/coherence checks. When spaCy is available, `NarrativeIngestor` can derive additional structure from event text.
 
 ### ComplexityChecker
-A class with defined methods to evaluate the complexity of the quest graph in order to determine the system's control flow. The `ComplexityChecker` class allows you to initialize a `ComplexityChecker` object with the following parameters, and then call the object to check against the defined complexity parameters.
 
-```python
-"""
-Args:
-    kg: The knowledge graph to check.
-    node_reqs: Optional dict mapping NodeType to (min_count, max_count) for that node type. Use max_count=-1 for no upper bound.
-    arc_reqs: Optional dict mapping ArcType to (min_count, max_count) for that arc type. Use max_count=-1 for no upper bound.
-    req_dag: If True, require that the graph is a directed acyclic graph (no circular events).
-    req_conn: If True, require that the graph is weakly connected (no story discontinuity).
+Evaluates structural properties of the quest graph, such as connectivity, DAG constraints, and node/arc requirements.
 
+## Notes
 
-Returns:
-    A list of feedback messages indicating any complexity requirement violations. An empty list indicates that all requirements are satisfied.
-"""
-```
-
-> Example usage
-```python
-from quest_parsing.narrative_ingestor import NarrativeIngestor
-from quest_parsing.knowledge_graph import KnowledgeGraph
-
-kg = KnowledgeGraph()
-ingestor = NarrativeIngestor(include_attr_triples=False)
-
-ingestor.from_file('testing/claude_lighthouse.txt', kg) # replace with .txt file containing LLM generated story points.
-
-
-from quest_parsing.narrative_schema import NodeType, ArcType
-from complexity_checking.complexity_checker import ComplexityChecker
-
-# Define ComplexityChecker with simple requirement: minimum 10 EVENT nodes and no max
-c = ComplexityChecker(kg, node_reqs={NodeType.EVENT : (10, -1)})
-
-# Call the ComplexityChecker to get feedback (list of strings)
-c()
-```
-
-## Example Output
-> genre: crime mystery (default)
-
-> 20 events (default)
-
-> 5 reflection passes (default)
-
-> Premise: "A small-town archivist discovers that a priceless 18th-century manuscript has been stolen from the local museum the night before its auction. She is the only one who knows what was truly hidden inside it."
-
-python main_system_script.py --output-dir ./output
-
-════════════════════════════════════════════════════════════
-  RAMBLING RHINO: Story Generation System
-  Team Rambling Rhino | Reader-Model-Driven Generation
-════════════════════════════════════════════════════════════
-  Premise : A small-town archivist discovers that a priceless [...]
-  Genre   : crime mystery
-  Events  : 20 total (10 crime + 10 solving)
-  Batches : 1 per event phase
-  Reflect : 2 pass(es)
-
-════════════════════════════════════════════════════════════
-PHASE 1: CRIME STORY EVENTS
-════════════════════════════════════════════════════════════
-
-[Crime story batch 1/1]
-  Generated 10 events (crime story total: 10)
-
-Crime story generation complete: 10 plot events.
-
-Current event list:
-  [E1] (SETUP) The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours.
-  [E2] (INCITING INCIDENT) The thief uses a custom-made lockpick to bypass the display case's security lock.
-           caused_by: ['E1']
-  [E3] (RISING ACTION) The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment.
-           caused_by: ['E2']
-  [E4] (RISING ACTION) A small, valuable item is found hidden within the manuscript, which was the true target of the theft.
-           caused_by: ['E3']
-  [E5] (MIDPOINT) The thief escapes the museum without triggering any alarms, using a pre-planned route.
-           caused_by: ['E4']
-  [E6] (MIDPOINT) The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.
-           caused_by: ['E5']
-  [->E7] (MIDPOINT) Clara realizes that the thief must have had inside help to bypass the museum's security system.
-           caused_by: ['E6']
-  [E8] (COMPLICATIONS) Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft.
-           caused_by: ['E7']
-  [E9] (CLIMAX) The thief, now in possession of the valuable item, contacts a potential buyer on the black market.
-           caused_by: ['E5']
-  [E10] (RESOLUTION) Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript.
-           caused_by: ['E6', 'E8']
-
-KnowledgeGraph: KnowledgeGraph(nodes=64, edges=87, by_source={'domain': 36, 'text': 51})
-
-════════════════════════════════════════════════════════════
-PHASE 2: REFLECTION (crime story)
-════════════════════════════════════════════════════════════
-
-[Reflection pass 1/2]
-  ComplexityChecker found 1 issue(s):
-    - Story has only 10 plot events — aim for at least 15 for a full narrative.
-
-  Repairing: Story has only 10 plot events — aim for at least 15 for a full narrative.
-    + Added [E_b1]: Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff
-    + Added [E_b2]: Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft
-
-KnowledgeGraph: KnowledgeGraph(nodes=73, edges=102, by_source={'domain': 43, 'text': 59})
-
-[Reflection pass 2/2]
-  ComplexityChecker found 1 issue(s):
-    - Story has only 12 plot events — aim for at least 15 for a full narrative.
-
-  Repairing: Story has only 12 plot events — aim for at least 15 for a full narrative.
-    + Added [E_b3]: Clara identifies a discrepancy in the staff member's alibi
-    + Added [E_b4]: Clara obtains security footage of the staff member's suspicious activity
-
-KnowledgeGraph: KnowledgeGraph(nodes=87, edges=120, by_source={'domain': 53, 'text': 67})
-
-Reflection complete: 14 total events.
-
-KnowledgeGraph: KnowledgeGraph(nodes=87, edges=120, by_source={'domain': 53, 'text': 67})
-
-════════════════════════════════════════════════════════════
-PHASE 3: SOLVING STORY EVENTS
-════════════════════════════════════════════════════════════
-
-[Solving batch 1/1]
-  Generated 10 events (solving story total: 10)
-
-Solving story generation complete: 10 plot events.
-
-Current event list:
-  [E11] (SETUP) Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft.
-           caused_by: ['E_b4']
-  [E12] (INCITING INCIDENT) Clara interviews the staff member, who provides an alibi that Clara suspects is false.
-           caused_by: ['E11']
-  [E13] (RISING ACTION) Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency.
-           caused_by: ['E12']
-  [E14] (RISING ACTION) The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind.
-           caused_by: ['E13']
-  [E15] (MIDPOINT) Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer.
-           caused_by: ['E14']
-  [E16] (MIDPOINT) Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript.
-           caused_by: ['E15']
-  [E17] (MIDPOINT) The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person.
-           caused_by: ['E16']
-  [E18] (COMPLICATIONS) The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity.
-           caused_by: ['E17']
-  [E19] (CLIMAX) Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity.
-           caused_by: ['E18']
-  [E20] (RESOLUTION) The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact.
-           caused_by: ['E19']
-
-KnowledgeGraph: KnowledgeGraph(nodes=137, edges=202, by_source={'domain': 93, 'text': 109})
-
-════════════════════════════════════════════════════════════
-PHASE 4: REFLECTION (solving)
-════════════════════════════════════════════════════════════
-
-[Reflection pass 1/2]
-  ComplexityChecker: all requirements satisfied — story is QUEST-coherent.
-
-Reflection complete: 24 total events.
-
-════════════════════════════════════════════════════════════
-PHASE 5: STORY GENERATION
-════════════════════════════════════════════════════════════
-  Generating story from 24 plot events...
-
-════════════════════════════════════════════════════════════
-GENERATED STORY
-════════════════════════════════════════════════════════════
-
-────────────────────────────────────────────────────────────
---- Plot Point 1: The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours. ---
-────────────────────────────────────────────────────────────
-The night before the auction, the museum was quiet, the only sound being
-the soft hum of the security systems. A figure, dressed in a janitor's
-uniform, slipped through the shadows, avoiding the few security cameras
-that were still active. The thief, known only by their alias, "The Fox,"
-had been planning this heist for months, studying the museum's security
-protocols and waiting for the perfect moment to strike. With a confident
-smile, The Fox made their way to the display case, their eyes fixed on
-the prized manuscript that lay within.
-
-The museum's staff had long since gone home, leaving The Fox to work
-uninterrupted. The janitor's uniform was a clever disguise, allowing The
-Fox to blend in with the museum's maintenance crew. As they worked, The
-Fox's mind was focused on the task at hand, their movements swift and
-precise.
-
-The darkness of the museum seemed to swallow The Fox whole, but they
-moved with ease, their senses heightened. The air was thick with the
-scent of old books and dust, a familiar smell that The Fox had grown to
-love. With each step, The Fox drew closer to their goal, their heart
-beating with anticipation.
-
-The display case loomed before them, its glass surface glinting in the
-dim light. The Fox's eyes locked onto the manuscript, their prize, and
-with a steady hand, they set to work.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 2: The thief uses a custom-made lockpick to bypass the display case's security lock. ---
-────────────────────────────────────────────────────────────
-The Fox pulled out a custom-made lockpick, its slender shape glinting in
-the dim light. With a deft touch, The Fox inserted the lockpick into the
-display case's security lock, feeling for the subtle clicks that would
-signal the lock's release. The mechanism was complex, but The Fox had
-spent months studying its intricacies, practicing the delicate dance of
-lockpicking until it became second nature.
-
-As the lock disengaged, The Fox felt a thrill of excitement. The display
-case's security system was state-of-the-art, but The Fox had anticipated
-this, designing the lockpick specifically to bypass its safeguards. With
-a soft click, the lock released, and The Fox swung the case open,
-revealing the manuscript in all its glory.
-
-The Fox's eyes feasted on the manuscript's yellowed pages, the intricate
-script a testament to the craftsmanship of a bygone era. For a moment,
-The Fox forgot about the theft, lost in the beauty of the artifact. But
-the moment passed, and with a swift motion, The Fox reached in and
-claimed the manuscript as their own.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 3: The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment. ---
-────────────────────────────────────────────────────────────
-With the manuscript in hand, The Fox carefully opened the display case,
-revealing a hidden compartment that lay beneath. The compartment was
-small, barely large enough to hold a few sheets of paper, but The Fox
-knew that it was here that the true treasure lay. As they reached in,
-their fingers closed around a small, valuable item that had been hidden
-within the manuscript.
-
-The item was a tiny, leather-bound book, adorned with strange symbols
-and markings. The Fox's eyes widened as they realized the significance
-of their find. This was no ordinary book, but a rare and valuable
-artifact that would fetch a handsome price on the black market.
-
-The Fox's heart racing with excitement, they carefully placed the
-manuscript and the leather-bound book into a specially designed bag,
-taking care not to damage either artifact. As they sealed the bag, The
-Fox felt a sense of pride and accomplishment, knowing that they had
-pulled off the impossible.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 4: A small, valuable item is found hidden within the manuscript, which was the true target of the theft. ---
-────────────────────────────────────────────────────────────
-The leather-bound book was the true target of the theft, a rare and
-valuable artifact that The Fox had been hired to steal. The manuscript,
-while valuable in its own right, was merely a distraction, a way to
-throw the museum's security team off The Fox's trail. As The Fox held
-the book, they felt a sense of satisfaction, knowing that they had
-completed their mission.
-
-The book was small, but its significance was immense. It was said to
-contain secrets and knowledge that had been lost for centuries, and The
-Fox knew that it would fetch a handsome price on the black market. With
-the book safely in hand, The Fox made their way back through the museum,
-avoiding the security cameras and alarms with ease.
-
-As they reached the exit, The Fox felt a sense of relief wash over them.
-The heist had been a success, and they had escaped undetected. But The
-Fox knew that the real challenge lay ahead, selling the book on the
-black market without getting caught.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 5: The thief escapes the museum without triggering any alarms, using a pre-planned route. ---
-────────────────────────────────────────────────────────────
-The Fox made their way back through the museum, using a pre-planned
-route to avoid the security cameras and alarms. They moved swiftly and
-silently, their senses on high alert as they navigated the dark and
-deserted halls. The Fox had spent months studying the museum's layout,
-planning the perfect escape route, and now they put that knowledge to
-use.
-
-As they reached the exit, The Fox felt a sense of relief wash over them.
-They had pulled off the impossible, stealing the manuscript and the
-valuable item without triggering a single alarm. The Fox slipped out
-into the night, disappearing into the shadows as they made their way
-back to their safe house.
-
-The city was alive and bustling, but The Fox moved through it unnoticed,
-a ghostly figure in the darkness. They knew that the museum's security
-team would be on high alert, searching for any sign of the thief, but
-The Fox was confident that they had covered their tracks. With the
-manuscript and the valuable item safely in hand, The Fox disappeared
-into the night, ready to sell their prize on the black market.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 6: The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft. ---
-────────────────────────────────────────────────────────────
-Clara arrived at the museum the next morning, eager to begin preparing
-for the auction. As she made her way to the display case, she noticed
-that something was off. The case was open, and the manuscript was gone.
-Clara's heart sank as she realized that the museum had been robbed.
-
-She quickly called the security team, reporting the theft and asking
-them to review the security footage. As she waited for the team to
-arrive, Clara couldn't help but feel a sense of responsibility for the
-theft. She had been in charge of preparing the manuscript for the
-auction, and now it was gone.
-
-The security team arrived, and together they reviewed the footage,
-searching for any sign of the thief. But The Fox had been careful,
-avoiding the cameras and alarms with ease. Clara knew that she had a
-long day ahead of her, working to track down the thief and recover the
-stolen manuscript.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 7: Clara realizes that the thief must have had inside help to bypass the museum's security system. ---
-────────────────────────────────────────────────────────────
-As Clara reviewed the security footage, she realized that the thief must
-have had inside help to bypass the museum's security system. The Fox had
-moved with ease, avoiding the cameras and alarms as if they had a
-detailed knowledge of the museum's layout. Clara's eyes narrowed as she
-thought about the possibilities.
-
-She knew that the museum's security system was state-of-the-art, and it
-would have been impossible for The Fox to breach it without help. Clara
-began to think about the museum's staff, wondering if anyone could have
-been involved in the theft. She made a mental note to interview the
-staff members, looking for anyone who might have been acting
-suspiciously.
-
-The more Clara thought about it, the more she became convinced that The
-Fox had had inside help. The question was, who had helped them, and how
-had they managed to keep it a secret? Clara was determined to find out,
-and she began to make a list of suspects, starting with the museum's
-staff members.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 8: Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft. ---
-────────────────────────────────────────────────────────────
-Clara began to investigate the museum staff, looking for anyone who may
-have been involved in the theft. She started by interviewing the staff
-members, asking them about their whereabouts the night before. As she
-spoke to each person, Clara watched their body language, looking for any
-sign of nervousness or deception.
-
-The staff members seemed shaken by the theft, but Clara noticed that one
-of them, a quiet and reserved woman named Sarah, seemed particularly
-nervous. Clara made a mental note to speak to Sarah again, to ask her
-more questions about her whereabouts the night before.
-
-As the day wore on, Clara continued to investigate, searching for any
-clues that might lead her to The Fox. She reviewed the security footage
-again, looking for any sign of the thief or their accomplice. Clara was
-determined to solve the case, and she was willing to do whatever it took
-to recover the stolen manuscript.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 9: The thief, now in possession of the valuable item, contacts a potential buyer on the black market. ---
-────────────────────────────────────────────────────────────
-The Fox, now in possession of the valuable item, contacted a potential
-buyer on the black market. The buyer, a wealthy collector, was known for
-his love of rare and valuable artifacts, and The Fox knew that he would
-be interested in the leather-bound book. The Fox sent the collector a
-message, describing the book and its contents, and asking for a meeting
-to discuss the sale.
-
-The collector was intrigued, and he agreed to meet with The Fox. They
-arranged to meet at a secure location, a warehouse on the outskirts of
-the city. The Fox was cautious, knowing that the collector could be a
-trap, but they were also confident in their ability to negotiate a good
-price.
-
-As The Fox waited for the meeting, they couldn't help but feel a sense
-of excitement. They had pulled off the impossible, stealing the
-manuscript and the valuable item, and now they were about to sell it to
-the highest bidder. The Fox knew that they would have to be careful, but
-they were confident in their ability to get away with the sale.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 10: Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript. ---
-────────────────────────────────────────────────────────────
-Clara discovered a cryptic message at the crime scene, a small piece of
-paper with a code written on it. The code was complex, but Clara was
-determined to crack it, knowing that it could lead her to The Fox's
-identity and the location of the stolen manuscript. She took the paper
-to the museum's cryptologist, who began to work on deciphering the code.
-
-As they worked, Clara couldn't help but feel a sense of excitement. She
-had been searching for a lead, and now she had one. The code was the key
-to unlocking the mystery of the theft, and Clara was determined to solve
-it.
-
-The cryptologist worked tirelessly, using their knowledge of codes and
-ciphers to decipher the message. Finally, after hours of work, they
-cracked the code, revealing a message that read: "Look to the shadows
-for the truth." Clara's eyes narrowed as she thought about the message,
-wondering what it could mean.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 11: Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff. ---
-────────────────────────────────────────────────────────────
-Clara decoded the cryptic message, revealing a possible lead on The
-Fox's accomplice within the museum staff. The message had been a riddle,
-leading Clara to a specific staff member who had been acting
-suspiciously. Clara's eyes widened as she realized that the staff member
-was none other than Sarah, the quiet and reserved woman she had
-interviewed earlier.
-
-Clara felt a sense of excitement and trepidation as she realized that
-she had been on the right track all along. She had suspected that Sarah
-might be involved, and now she had proof. Clara decided to bring Sarah
-in for further questioning, to see if she could get to the bottom of the
-mystery.
-
-As Clara prepared to confront Sarah, she couldn't help but feel a sense
-of unease. She had been working with Sarah for months, and she had
-always thought of her as a friend. But now, Clara wasn't so sure. She
-wondered if Sarah had been playing her all along, using their friendship
-to further her own goals.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 12: Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft. ---
-────────────────────────────────────────────────────────────
-Clara interviewed the museum staff members, gathering information about
-potential suspects and their alibis for the night of the theft. She
-started with Sarah, asking her about her whereabouts the night before.
-Sarah seemed nervous, but she provided a solid alibi, saying that she
-had been at home, alone.
-
-Clara wasn't convinced, and she decided to investigate further. She
-spoke to the other staff members, asking them if they had seen or heard
-anything suspicious. One of the staff members mentioned that they had
-seen Sarah arguing with one of the security guards earlier that day.
-Clara's ears perked up as she heard this, wondering if there might be a
-connection between the argument and the theft.
-
-As Clara continued to investigate, she began to piece together a
-timeline of the events surrounding the theft. She discovered that Sarah
-had been in the museum late the night before, supposedly working on a
-project. But Clara wasn't sure if she believed this, and she decided to
-look deeper into Sarah's alibi.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 13: Clara identifies a discrepancy in the staff member's alibi. ---
-────────────────────────────────────────────────────────────
-Clara identified a discrepancy in Sarah's alibi, a small inconsistency
-that suggested she might not have been telling the truth. Sarah had said
-that she was at home alone the night before, but Clara had discovered
-that Sarah's neighbor had seen her leaving her apartment around 10 pm.
-Clara's eyes narrowed as she thought about this, wondering what Sarah
-might have been doing.
-
-Clara decided to confront Sarah about the discrepancy, to see if she
-could get to the bottom of the mystery. She called Sarah into her
-office, asking her to explain the inconsistency in her alibi. Sarah
-seemed taken aback, but she tried to explain, saying that she had gone
-out for a walk to clear her head.
-
-Clara wasn't convinced, and she decided to press Sarah further. She
-asked her about the argument with the security guard, wondering if there
-might be a connection between the argument and the theft. Sarah seemed
-hesitant, but she eventually opened up, telling Clara about the argument
-and how it had been about a misunderstanding.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 14: Clara obtains security footage of the staff member's suspicious activity. ---
-────────────────────────────────────────────────────────────
-Clara obtained security footage of Sarah's suspicious activity, a video
-that showed her entering the museum late the night before. The footage
-was grainy, but it clearly showed Sarah slipping into the museum,
-avoiding the security cameras. Clara's eyes widened as she watched the
-footage, realizing that she had finally found the proof she needed.
-
-The footage showed Sarah making her way to the display case, where she
-seemed to be waiting for someone. Clara's heart racing with excitement,
-she realized that Sarah must have been working with The Fox, helping
-them to steal the manuscript. Clara decided to confront Sarah about the
-footage, to see if she could get her to confess.
-
-As Clara prepared to confront Sarah, she couldn't help but feel a sense
-of satisfaction. She had been working on the case for days, and finally,
-she had found the break she needed. Clara was determined to solve the
-case, and she was willing to do whatever it took to recover the stolen
-manuscript.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 15: Clara analyzes the security footage and discovers a staff member's suspicious activity near the display case on the night of the theft. ---
-────────────────────────────────────────────────────────────
-Clara analyzed the security footage, discovering a staff member's
-suspicious activity near the display case on the night of the theft. The
-footage showed Sarah lingering around the case, glancing nervously at
-her watch. Clara's eyes narrowed as she thought about this, wondering
-what Sarah might have been waiting for.
-
-As Clara continued to analyze the footage, she noticed that Sarah seemed
-to be communicating with someone, using a series of subtle hand
-gestures. Clara's heart racing with excitement, she realized that Sarah
-must have been working with The Fox, helping them to steal the
-manuscript. Clara decided to enhance the footage, to see if she could
-get a better look at Sarah's accomplice.
-
-The enhanced footage revealed a shocking truth: Sarah had been working
-with one of the museum's security guards. Clara's eyes widened as she
-realized the extent of the betrayal, wondering how the guard could have
-been involved in the theft. Clara decided to bring the guard in for
-questioning, to see if she could get to the bottom of the mystery.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 16: Clara interviews the staff member, who provides an alibi that Clara suspects is false. ---
-────────────────────────────────────────────────────────────
-Clara interviewed the staff member, who provided an alibi that Clara
-suspected was false. The staff member, a quiet and reserved woman,
-seemed nervous and fidgety, avoiding eye contact. Clara's ears perked up
-as she listened to the alibi, wondering if the staff member was hiding
-something.
-
-The staff member said that she had been at home, watching TV, at the
-time of the theft. But Clara noticed that the staff member seemed
-hesitant, and she decided to press her further. Clara asked the staff
-member about her whereabouts earlier that day, wondering if she might
-have been seen near the display case.
-
-The staff member seemed taken aback, but she tried to explain, saying
-that she had been on a break. Clara wasn't convinced, and she decided to
-investigate further. She asked the staff member about her relationship
-with the security guard, wondering if there might be a connection
-between them.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 17: Clara discovers a discrepancy in the staff member's alibi and confronts them about the inconsistency. ---
-────────────────────────────────────────────────────────────
-Clara discovered a discrepancy in the staff member's alibi and
-confronted them about the inconsistency. The staff member seemed taken
-aback, but they tried to explain, saying that they had forgotten to
-mention a trip to the store. Clara's eyes narrowed as she thought about
-this, wondering if the staff member was telling the truth.
-
-Clara decided to press the staff member further, to see if she could get
-to the bottom of the mystery. She asked the staff member about their
-relationship with the security guard, wondering if there might be a
-connection between them. The staff member seemed hesitant, but they
-eventually opened up, telling Clara about their friendship.
-
-Clara's ears perked up as she listened to the staff member's story,
-wondering if she might be getting close to the truth. She decided to
-investigate further, to see if she could find any evidence of a
-connection between the staff member and the security guard. Clara's
-heart racing with excitement, she realized that she might be on the
-verge of solving the case.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 18: The staff member cracks under pressure and reveals their involvement in the theft, but claims they were coerced by the true mastermind. ---
-────────────────────────────────────────────────────────────
-The staff member cracked under pressure and revealed their involvement
-in the theft, but claimed they were coerced by the true mastermind.
-Clara's eyes widened as she listened to the staff member's confession,
-realizing that she had finally found a break in the case.
-
-The staff member said that they had been approached by the security
-guard, who had offered them a large sum of money to help with the theft.
-The staff member claimed that they had been hesitant at first, but the
-guard had convinced them that it would be easy and that they would never
-get caught. Clara's ears perked up as she listened to the staff member's
-story, wondering if they might be telling the truth.
-
-Clara decided to investigate further, to see if she could find any
-evidence of the security guard's involvement. She asked the staff member
-about the guard's identity, wondering if she might be able to track them
-down. The staff member provided a name, and Clara's heart racing with
-excitement, she realized that she might be on the verge of solving the
-case.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 19: Clara obtains a list of the staff member's contacts and discovers a connection to a known black market dealer. ---
-────────────────────────────────────────────────────────────
-Clara obtained a list of the staff member's contacts and discovered a
-connection to a known black market dealer. The dealer, a notorious
-figure in the art world, was known for his ability to sell stolen goods
-to the highest bidder. Clara's eyes widened as she realized the extent
-of the dealer's involvement, wondering if she might be able to track him
-down.
-
-Clara decided to investigate further, to see if she could find any
-evidence of the dealer's involvement in the theft. She asked the staff
-member about their relationship with the dealer, wondering if they might
-have been in contact with him recently. The staff member seemed
-hesitant, but they eventually opened up, telling Clara about their
-dealings with the dealer.
-
-Clara's ears perked up as she listened to the staff member's story,
-realizing that she might be getting close to the truth. She decided to
-track down the dealer, to see if she could recover the stolen
-manuscript. Clara's heart racing with excitement, she realized that she
-might be on the verge of solving the case.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 20: Clara and the police set up a sting operation to catch the black market dealer and recover the stolen manuscript. ---
-────────────────────────────────────────────────────────────
-Clara and the police set up a sting operation to catch the black market
-dealer and recover the stolen manuscript. The operation was complex,
-involving multiple officers and a series of undercover agents. Clara's
-heart racing with excitement, she realized that she might be on the
-verge of solving the case.
-
-The police had tracked the dealer to a warehouse on the outskirts of the
-city, where they suspected he was hiding the manuscript. Clara and the
-officers set up a sting, posing as buyers interested in purchasing the
-manuscript. The dealer, confident in his ability to sell the manuscript,
-agreed to meet with them.
-
-As the meeting approached, Clara's nerves began to fray. She knew that
-the operation was risky, and that anything could go wrong. But she was
-determined to see it through, to recover the stolen manuscript and bring
-the dealer to justice. Clara's eyes locked onto the dealer, and she
-smiled, knowing that she had him right where she wanted him.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 21: The sting operation is successful, and the black market dealer is arrested, but the manuscript is not found on their person. ---
-────────────────────────────────────────────────────────────
-The sting operation was successful, and the black market dealer was
-arrested, but the manuscript was not found on their person. Clara's
-heart sank as she realized that the dealer must have hidden the
-manuscript elsewhere. But she was determined to find it, and she began
-to question the dealer, trying to get him to reveal the manuscript's
-location.
-
-The dealer, however, was not cooperative. He refused to say anything,
-and Clara was forced to use her skills of persuasion to try and get him
-to talk. After hours of questioning, the dealer finally cracked,
-revealing that he had sold the manuscript to a private collector.
-
-Clara's eyes widened as she listened to the dealer's confession,
-realizing that she had been one step behind the thief all along. But she
-was determined to recover the manuscript, and she set her sights on the
-private collector. Clara's heart racing with excitement, she realized
-that she might be on the verge of solving the case.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 22: The black market dealer reveals that the manuscript was sold to a private collector, who is willing to return it in exchange for immunity. ---
-────────────────────────────────────────────────────────────
-The black market dealer revealed that the manuscript was sold to a
-private collector, who was willing to return it in exchange for
-immunity. Clara's ears perked up as she listened to the dealer's
-confession, realizing that she might be able to recover the manuscript
-after all.
-
-The private collector, a wealthy and influential figure, had been known
-to collect rare and valuable artifacts. Clara suspected that the
-collector might have been aware of the manuscript's stolen status, but
-she was willing to offer them immunity in exchange for the manuscript's
-return.
-
-Clara's heart racing with excitement, she realized that she might be on
-the verge of solving the case. She contacted the private collector,
-offering them a deal: in exchange for the manuscript's return, the
-collector would receive immunity from prosecution. The collector agreed,
-and Clara arranged to meet with them to recover the manuscript.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 23: Clara and the police negotiate with the private collector, and a deal is made to return the manuscript in exchange for immunity. ---
-────────────────────────────────────────────────────────────
-Clara and the police negotiated with the private collector, and a deal
-was made to return the manuscript in exchange for immunity. The
-collector, a middle-aged man with a passion for rare artifacts, seemed
-reluctant to give up the manuscript, but he eventually agreed to the
-terms.
-
-Clara's eyes locked onto the manuscript as it was handed over, feeling a
-sense of relief and satisfaction. She had solved the case, and the
-manuscript was finally back where it belonged. The collector, in turn,
-received immunity from prosecution, and Clara was willing to let him off
-with a warning.
-
-As the deal was finalized, Clara couldn't help but feel a sense of pride
-and accomplishment. She had worked tirelessly to solve the case, and it
-had finally paid off. The manuscript was back, and the thief had been
-brought to justice. Clara's heart racing with excitement, she realized
-that she had done it – she had solved the case of the stolen manuscript.
-
-
-────────────────────────────────────────────────────────────
---- Plot Point 24: The manuscript is returned, and Clara is hailed as a hero for solving the case and recovering the valuable artifact. ---
-────────────────────────────────────────────────────────────
-The manuscript was returned, and Clara was hailed as a hero for solving
-the case and recovering the valuable artifact. The museum's staff and
-patrons were overjoyed, and Clara was praised for her dedication and
-expertise. The manuscript was put back on display, and Clara was invited
-to give a lecture on its history and significance.
-
-As Clara stood in front of the crowd, she felt a sense of pride and
-satisfaction. She had solved the case, and the manuscript was finally
-back where it belonged. The crowd applauded, and Clara smiled, knowing
-that she had done something truly special. She had recovered a valuable
-piece of history, and she had brought a thief to justice.
-
-The museum's director approached Clara, shaking her hand and
-congratulating her on a job well done. "You are a true hero, Clara," the
-director said, smiling. "Your dedication and expertise have recovered a
-priceless artifact, and we are forever grateful." Clara blushed, feeling
-a sense of pride and humility. She had done what she loved, and she had
-made a difference. The case of the stolen manuscript was closed, and
-Clara had emerged victorious.
-
-════════════════════════════════════════════════════════════
-
-════════════════════════════════════════════════════════════
-RUN SUMMARY
-════════════════════════════════════════════════════════════
-  Elapsed time  : 27.4 s
-  Total events  : 24
-  KG stats      : {'nodes': 137, 'edges': 202, 'edges_by_source': {'domain': 93, 'text': 109}}
-  Token usage   : TokenUsage(input=3,690, output=7,470, cost=$0.00 [Groq free tier])
-
-  Crime story events saved to : output/crime_story_events.json
-  Solving story events saved to : output/solving_story_events.json
-  Run summary saved to    : output/run_summary.json
-  Prose saved to  : output/story_prose.txt
-## Rambling Rhino Driver
-This is main_system_script.py in the main directory.
+- `story_prose.txt` is a polished linear version of the solving story. Interactive mode does not directly play through that prose; it builds a playable world from the structured JSON events.
+- The interactive world may expose rooms and objects derived from future events. The next-lead guidance tells the player which location/object currently matters.
+- Restart the script after code changes so Python reloads the updated files.

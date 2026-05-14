@@ -1,208 +1,429 @@
 [
   {
     "event_id": "E1",
-    "description": "The night before the auction, a skilled thief, disguised as a janitor, gains access to the museum after hours.",
+    "description": "The priceless 18th-century manuscript is put on display at the local museum for the final time before the auction.",
     "characters": [
-      "The Thief",
-      "Museum Staff"
+      "Curator",
+      "Security"
     ],
     "goals": [
-      "steal the manuscript"
+      "raise public awareness"
     ],
     "caused_by": [],
-    "goal_type": "initiate"
+    "goal_type": null,
+    "location": "Museum Gallery",
+    "preconditions": [
+      "auction is imminent",
+      "security is on duty"
+    ],
+    "effects": [
+      "public is informed about the auction"
+    ],
+    "required_objects": [
+      "display case",
+      "manuscript"
+    ],
+    "clue": null,
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   },
   {
     "event_id": "E2",
-    "description": "The thief uses a custom-made lockpick to bypass the display case's security lock.",
+    "description": "The curator, Rachel, discovers that the museum's key access system fails that night.",
     "characters": [
-      "The Thief"
+      "Curator Rachel"
     ],
     "goals": [
-      "steal the manuscript"
+      "conceal the failure"
     ],
     "caused_by": [
       "E1"
     ],
-    "goal_type": "obstruct"
+    "goal_type": "initiate",
+    "location": "Curator's Office",
+    "preconditions": [
+      "key access system is online"
+    ],
+    "effects": [
+      "key access system fails",
+      "potential security breach"
+    ],
+    "required_objects": [
+      "key access system"
+    ],
+    "clue": "A cryptic note is found next to the system",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   },
   {
     "event_id": "E3",
-    "description": "The display case is carefully opened, and the manuscript is removed, revealing a hidden compartment.",
+    "description": "A hidden camera in the museum captures footage of a suspicious person entering through a side door.",
     "characters": [
-      "The Thief"
+      "Maintenance",
+      "Security"
     ],
     "goals": [
-      "discover the manuscript's secrets"
+      "investigate the theft"
     ],
     "caused_by": [
       "E2"
     ],
-    "goal_type": "obstruct"
+    "goal_type": "initiate",
+    "location": "Security Room",
+    "preconditions": [
+      "surveillance is enabled"
+    ],
+    "effects": [
+      "security team is alerted to the incident"
+    ],
+    "required_objects": [
+      "security camera"
+    ],
+    "clue": "The camera angle is partially obstructed",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   },
   {
     "event_id": "E4",
-    "description": "A small, valuable item is found hidden within the manuscript, which was the true target of the theft.",
+    "description": "Clara, the archivist, discovers a hidden document in the curator's office that suggests a former museum employee might be involved.",
     "characters": [
-      "The Thief"
+      "Clara",
+      "Curator Rachel"
     ],
     "goals": [
-      "sell the valuable item"
+      "uncover museum employee's involvement"
     ],
     "caused_by": [
-      "E3"
+      "E2"
     ],
-    "goal_type": "initiate"
+    "goal_type": "initiate",
+    "location": "Curator's Office",
+    "preconditions": [
+      "hidden document is found"
+    ],
+    "effects": [
+      "potential suspects are identified"
+    ],
+    "required_objects": [
+      "hidden document"
+    ],
+    "clue": "A suspicious alibi is mentioned",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   },
   {
     "event_id": "E5",
-    "description": "The thief escapes the museum without triggering any alarms, using a pre-planned route.",
+    "description": "The museum's security team reviews the security footage and identifies the thief as a former employee, now a local antique dealer.",
     "characters": [
-      "The Thief"
+      "Security",
+      "Archivist"
     ],
     "goals": [
-      "avoid detection"
+      "confirm the thief's identity"
+    ],
+    "caused_by": [
+      "E3",
+      "E4"
+    ],
+    "goal_type": "initiate",
+    "location": "Security Room",
+    "preconditions": [
+      "security footage is reviewed"
+    ],
+    "effects": [
+      "theft is confirmed, and thief's identity is known"
+    ],
+    "required_objects": [
+      "security camera footage"
+    ],
+    "clue": "A distinctive tattoo is visible on the thief's hand",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
+  },
+  {
+    "event_id": "E6",
+    "description": "The archivist notices that the museum's catalog of valuable items is incomplete and that a specific section related to the manuscript is missing.",
+    "characters": [
+      "Clara",
+      "Curator Rachel"
+    ],
+    "goals": [
+      "investigate the catalog theft"
+    ],
+    "caused_by": [
+      "E1"
+    ],
+    "goal_type": "initiate",
+    "location": "Archivist's Office",
+    "preconditions": [
+      "catalog is available"
+    ],
+    "effects": [
+      "incomplete catalog is discovered"
+    ],
+    "required_objects": [
+      "catalog"
+    ],
+    "clue": "A torn page with a handwritten note is found",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
+  },
+  {
+    "event_id": "E7",
+    "description": "The thief, Alex, sends a threatening message to the curator, Rachel, warning her not to investigate further.",
+    "characters": [
+      "Alex",
+      "Curator Rachel"
+    ],
+    "goals": [
+      "intimidate the curator"
+    ],
+    "caused_by": [
+      "E5"
+    ],
+    "goal_type": "initiate",
+    "location": "Rachel's Personal Phone",
+    "preconditions": [
+      "thief's identity is known"
+    ],
+    "effects": [
+      "curator is intimidated",
+      "investigation is slowed"
+    ],
+    "required_objects": [
+      "phone"
+    ],
+    "clue": "The message is encrypted",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
+  },
+  {
+    "event_id": "E8",
+    "description": "Clara discovers a hidden safe in the curator's office that contains a cryptic message and a note about the manuscript's true value.",
+    "characters": [
+      "Clara"
+    ],
+    "goals": [
+      "uncover the manuscript's true value"
     ],
     "caused_by": [
       "E4"
     ],
-    "goal_type": "obstruct"
-  },
-  {
-    "event_id": "E6",
-    "description": "The archivist, Clara, arrives at the museum the next morning to prepare for the auction and discovers the theft.",
-    "characters": [
-      "Clara",
-      "The Thief"
+    "goal_type": "initiate",
+    "location": "Curator's Office",
+    "preconditions": [
+      "hidden safe is found"
     ],
-    "goals": [
-      "recover the manuscript",
-      "discover the thief's identity"
+    "effects": [
+      "manuscript's true value is revealed"
     ],
-    "caused_by": [
-      "E5"
+    "required_objects": [
+      "hidden safe"
     ],
-    "goal_type": "initiate"
-  },
-  {
-    "event_id": "->E7",
-    "description": "Clara realizes that the thief must have had inside help to bypass the museum's security system.",
-    "characters": [
-      "Clara"
-    ],
-    "goals": [
-      "identify the insider"
-    ],
-    "caused_by": [
-      "E6"
-    ],
-    "goal_type": "initiate"
-  },
-  {
-    "event_id": "E8",
-    "description": "Clara begins to investigate the museum staff, looking for anyone who may have been involved in the theft.",
-    "characters": [
-      "Clara",
-      "Museum Staff"
-    ],
-    "goals": [
-      "identify the insider"
-    ],
-    "caused_by": [
-      "E7"
-    ],
-    "goal_type": "obstruct"
+    "clue": "A cryptic message is decoded",
+    "is_decision_point": true,
+    "decision_context": "Player must choose how to proceed with this new information",
+    "hidden_expected_intents": [
+      "obtain more information about the manuscript"
+    ]
   },
   {
     "event_id": "E9",
-    "description": "The thief, now in possession of the valuable item, contacts a potential buyer on the black market.",
+    "description": "The police arrive at the museum and take statements from the staff, including Clara and Rachel, about the theft.",
     "characters": [
-      "The Thief",
-      "The Buyer"
+      "Police",
+      "Clara",
+      "Curator Rachel"
     ],
     "goals": [
-      "sell the valuable item"
+      "collect evidence and testimonies"
     ],
     "caused_by": [
-      "E5"
+      "E8"
     ],
-    "goal_type": "obstruct"
+    "goal_type": "initiate",
+    "location": "Museum Police Station",
+    "preconditions": [
+      "police are notified"
+    ],
+    "effects": [
+      "evidence is collected",
+      "testimonies are recorded"
+    ],
+    "required_objects": [
+      "police report"
+    ],
+    "clue": "A suspicious character is mentioned in the testimonies",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   },
   {
     "event_id": "E10",
-    "description": "Clara discovers a cryptic message at the crime scene, which may lead her to the thief's identity and the location of the stolen manuscript.",
+    "description": "The thief, Alex, is caught by the police while trying to sell the manuscript on the black market.",
     "characters": [
-      "Clara"
+      "Police",
+      "Alex"
     ],
     "goals": [
-      "track down the thief",
-      "recover the manuscript"
+      "bring the thief to justice"
     ],
     "caused_by": [
-      "E6",
-      "E8"
+      "E9"
     ],
-    "goal_type": "initiate"
+    "goal_type": "resolve",
+    "location": "Black Market Bazaar",
+    "preconditions": [
+      "thief is identified"
+    ],
+    "effects": [
+      "thief is arrested",
+      "case is solved"
+    ],
+    "required_objects": [
+      "police"
+    ],
+    "clue": "The manuscript is recovered",
+    "is_decision_point": true,
+    "decision_context": "Player must choose how to conclude the story",
+    "hidden_expected_intents": [
+      "achieve a satisfying resolution"
+    ]
   },
   {
     "event_id": "E_b1",
-    "description": "Clara decodes the cryptic message, revealing a possible lead on the thief's accomplice within the museum staff",
+    "description": "The police investigate Alex's alibi for the time of the theft.",
     "characters": [
-      "Clara"
+      "Detective",
+      "Alex"
     ],
     "goals": [
-      "uncover the thief's identity"
+      "Verify thief's identity",
+      "Reconstruct crime scene"
     ],
     "caused_by": [
-      "E10"
+      "E",
+      "1",
+      "0"
     ],
-    "goal_type": "investigation"
+    "goal_type": "Investigation",
+    "location": "Police station",
+    "preconditions": [],
+    "effects": [
+      "New lead on Alex's accomplice",
+      "Falsified alibi detection"
+    ],
+    "required_objects": [],
+    "clue": "Documented timeline",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   },
   {
     "event_id": "E_b2",
-    "description": "Clara interviews museum staff members, gathering information about potential suspects and their alibis for the night of the theft",
+    "description": "The museum staff and police collaborate to analyze the stolen manuscript for forgery.",
     "characters": [
-      "Clara",
-      "museum staff"
+      "Rachel",
+      "Detective",
+      "Expert forger"
     ],
     "goals": [
-      "identify the accomplice"
+      "Verify manuscript authenticity",
+      "Identify forger"
     ],
     "caused_by": [
-      "E_b1"
+      "E",
+      "_",
+      "b",
+      "1"
     ],
-    "goal_type": "investigation"
+    "goal_type": "Investigation",
+    "location": "Labs and offices",
+    "preconditions": [],
+    "effects": [
+      "Manuscript authenticity confirmed",
+      "Forger identified"
+    ],
+    "required_objects": [
+      "Stolen manuscript"
+    ],
+    "clue": "Examination results",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   },
   {
     "event_id": "E_b3",
-    "description": "Clara identifies a discrepancy in the staff member's alibi",
+    "description": "The cryptic message in the curator's safe is analyzed by the police expert.",
     "characters": [
-      "Clara",
-      "museum staff member"
+      "Curator",
+      "Police Expert"
     ],
     "goals": [
-      "investigate theft",
-      "uncover accomplice"
+      "Understand the message",
+      "Uncover a lead"
     ],
     "caused_by": [
-      "E_b2"
+      "E",
+      "8"
     ],
-    "goal_type": "investigative"
+    "goal_type": "Information",
+    "location": "Police Station",
+    "preconditions": [
+      "The message exists",
+      "The police expert is present"
+    ],
+    "effects": [
+      "The police have a new lead"
+    ],
+    "required_objects": [
+      "The cryptic message",
+      "Police resources"
+    ],
+    "clue": "Hidden safe",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   },
   {
     "event_id": "E_b4",
-    "description": "Clara obtains security footage of the staff member's suspicious activity",
+    "description": "Rachel and Clara discuss their next steps with the museum director.",
     "characters": [
+      "Rachel",
       "Clara",
-      "security team"
+      "Museum Director"
     ],
     "goals": [
-      "gather evidence",
-      "build case against accomplice"
+      "Plan a course of action",
+      "Secure resources"
     ],
     "caused_by": [
-      "E_b3"
+      "E",
+      "1",
+      "0"
     ],
-    "goal_type": "evidential"
+    "goal_type": "Collaboration",
+    "location": "Museum Office",
+    "preconditions": [
+      "The thief is caught",
+      "The museum director is present"
+    ],
+    "effects": [
+      "The staff have a plan"
+    ],
+    "required_objects": [
+      "Meeting, Museum resources"
+    ],
+    "clue": "Missing manuscript section",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   }
 ]

@@ -63,6 +63,7 @@ _ROOT = Path(__file__).resolve().parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from interactive_story_world import InteractiveStoryGame, WorldState, build_world_from_events
 from llm_api_wrapper import LLMClient, PlotEvent
 from quest_parsing.knowledge_graph import KnowledgeGraph, KBSource, Triple
 
@@ -185,7 +186,7 @@ class RamblingRhinoDriver:
         self,
         premise:            str,
         genre:              str   = "crime mystery",
-        events_per_batch:   int   = 20,
+        events_per_batch:   int   = 30,
         engagement_batches: int   = 1,
         reflection_passes:  int   = 2,
         output_dir:         Optional[str] = None,
@@ -199,16 +200,30 @@ class RamblingRhinoDriver:
         self.output_dir         = Path(output_dir) if output_dir else None
         self.verbose            = verbose
 
-        self.llm     = LLMClient(verbose=verbose)
+        try:
+            self.llm = LLMClient(verbose=verbose)
+        except ValueError:
+            self.llm = None
         self.kg      = KnowledgeGraph()
         # ComplexityChecker is created after KG is built (it requires a KG instance)
         self._checker = None
         self.crime_story_events: list[PlotEvent] = []
         self.solving_story_events: list[PlotEvent] = []
         self.events: list[PlotEvent] = []
+        self.world_state: Optional[WorldState] = None
+        self.loaded_story_replay = False
+
+    def _require_llm(self) -> LLMClient:
+        if self.llm is None:
+            raise RuntimeError(
+                "This action requires a Cerebras API key. Set CEREBRAS_API_KEY or load a saved story for offline replay."
+            )
+        return self.llm
 
     def _split_stage_event_counts(self) -> tuple[int, int]:
-        crime_count = max(1, self.events_per_batch // 2)
+        # In interactive mode we want more solving events (richer gameplay)
+        # Default split: 1/3 crime backstory, 2/3 solving
+        crime_count = max(1, self.events_per_batch // 3)
         solving_count = max(1, self.events_per_batch - crime_count)
         return crime_count, solving_count
 
@@ -224,6 +239,54 @@ class RamblingRhinoDriver:
     def _sync_events(self) -> None:
         self.events = [*self.crime_story_events, *self.solving_story_events]
 
+    def _build_world_state(self) -> None:
+        playable_events = self.solving_story_events if self.solving_story_events else self.events
+        self.world_state = build_world_from_events(
+            self.events,
+            self.premise,
+            playable_events=playable_events,
+        )
+
+    def load_story_from_file(self, story_file: str) -> None:
+        self.loaded_story_replay = True
+        story_path = Path(story_file)
+        with open(story_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if isinstance(data, list):
+            loaded_events = [PlotEvent.from_dict(item) for item in data if isinstance(item, dict)]
+            self.events = loaded_events
+            self.crime_story_events = loaded_events
+            self.solving_story_events = []
+        elif isinstance(data, dict):
+            self.premise = data.get("premise", self.premise)
+            self.genre = data.get("genre", self.genre)
+            crime_data = data.get("crime_story_events")
+            solving_data = data.get("solving_story_events")
+            event_data = data.get("events")
+
+            if isinstance(crime_data, list):
+                self.crime_story_events = [
+                    PlotEvent.from_dict(item) for item in crime_data if isinstance(item, dict)
+                ]
+            if isinstance(solving_data, list):
+                self.solving_story_events = [
+                    PlotEvent.from_dict(item) for item in solving_data if isinstance(item, dict)
+                ]
+            if self.crime_story_events or self.solving_story_events:
+                self._sync_events()
+            elif isinstance(event_data, list):
+                self.events = [PlotEvent.from_dict(item) for item in event_data if isinstance(item, dict)]
+                self.crime_story_events = self.events
+                self.solving_story_events = []
+            else:
+                raise ValueError(f"No loadable story events found in {story_file}")
+        else:
+            raise ValueError(f"Unsupported story file format in {story_file}")
+
+        self.build_knowledge_graph()
+        self._build_world_state()
+
     ## Phase 1: Crime Story Events
     def run_crime_story_events(self) -> None:
         # Generates the crime-story event sequence using LLM calls. Multiple batches let the
@@ -237,7 +300,7 @@ class RamblingRhinoDriver:
 
         for batch_num, batch_size in enumerate(batch_counts, start=1):
             print(f"\n[Crime story batch {batch_num}/{len(batch_counts)}]")
-            new_events = self.llm.generate_crime_plot_events(
+            new_events = self._require_llm().generate_crime_plot_events(
                 premise=         self.premise,
                 num_events=      batch_size,
                 existing_events= self.crime_story_events if self.crime_story_events else None,
@@ -263,7 +326,7 @@ class RamblingRhinoDriver:
 
         for batch_num, batch_size in enumerate(batch_counts, start=1):
             print(f"\n[Solving batch {batch_num}/{len(batch_counts)}]")
-            new_events = self.llm.generate_solving_plot_events(
+            new_events = self._require_llm().generate_solving_plot_events(
                 premise=self.premise,
                 existing_events=self.events,
                 num_events=batch_size,
@@ -340,7 +403,7 @@ class RamblingRhinoDriver:
                 )
                 print(f"\n  Repairing: {fb_msg}")
                 time.sleep(2)   # avoid Groq 429 rate-limit between reflection calls
-                bridging = self.llm.reflect_on_quest_gap(
+                bridging = self._require_llm().reflect_on_quest_gap(
                     gap_description=       gap_description,
                     story_so_far=          story_summary,
                     insert_after_event_id= self.events[-1].event_id if self.events else None,
@@ -365,13 +428,14 @@ class RamblingRhinoDriver:
     def run_prose(self) -> str:
         # Converts the final event list into narrative prose, with each plot
         # point clearly labeled in the output.
+        prose_events = self.solving_story_events if self.solving_story_events else self.events
         print("\n" + "═"*60)
         print("PHASE 5: STORY GENERATION")
         print("═"*60)
-        print(f"  Generating story from {len(self.events)} plot events...")
+        print(f"  Generating story from {len(prose_events)} plot events...")
 
-        prose = self.llm.generate_prose(
-            events=self.events,
+        prose = self._require_llm().generate_prose(
+            events=prose_events,
             genre= self.genre,
         )
 
@@ -395,18 +459,34 @@ class RamblingRhinoDriver:
         print("\n" + "═"*60)
         return prose
 
-    def run(self) -> dict:
+    def run_interactive_story(self) -> None:
+        self._build_world_state()
+        if not self.world_state:
+            print("[interactive] World state could not be created.")
+            return
+        InteractiveStoryGame(self.world_state, llm=self.llm).run()
+
+    def run(self, interactive: bool = False, load_story_file: Optional[str] = None) -> dict:
         # Executes the full pipeline and returns a results dict.
         # Returns a dict with keys: premise, genre, events, kg_stats, prose, usage
         start_time = time.time()
-        self.run_crime_story_events()
-        self.build_knowledge_graph()
-        self.run_reflection("crime story")
-        self.build_knowledge_graph()
-        self.run_solving_story_events()
-        self.build_knowledge_graph()
-        self.run_reflection("solving")
-        prose   = self.run_prose()
+        if load_story_file:
+            self.load_story_from_file(load_story_file)
+            print(f"\nLoaded story from: {load_story_file}")
+        else:
+            self.run_crime_story_events()
+            self.build_knowledge_graph()
+            self.run_reflection("crime story")
+            self.build_knowledge_graph()
+            self.run_solving_story_events()
+            self.build_knowledge_graph()
+            self.run_reflection("solving")
+            self._build_world_state()
+        prose = ""
+        if interactive:
+            self.run_interactive_story()
+        else:
+            prose = self.run_prose()
         elapsed = time.time() - start_time
 
         print("\n" + "═"*60)
@@ -415,7 +495,7 @@ class RamblingRhinoDriver:
         print(f"  Elapsed time  : {elapsed:.1f} s")
         print(f"  Total events  : {len(self.events)}")
         print(f"  KG stats      : {self.kg.stats()}")
-        print(f"  Token usage   : {self.llm.usage}")
+        print(f"  Token usage   : {self.llm.usage if self.llm else 'TokenUsage(unavailable: no API key)'}")
 
         result = {
             "premise":  self.premise,
@@ -428,6 +508,14 @@ class RamblingRhinoDriver:
                     "goals":       ev.goals,
                     "caused_by":   ev.caused_by,
                     "goal_type":   ev.goal_type,
+                    "location":    ev.location,
+                    "preconditions": ev.preconditions,
+                    "effects":     ev.effects,
+                    "required_objects": ev.required_objects,
+                    "clue":        ev.clue,
+                    "is_decision_point": ev.is_decision_point,
+                    "decision_context": ev.decision_context,
+                    "hidden_expected_intents": ev.hidden_expected_intents,
                 }
                 for ev in self.crime_story_events
             ],
@@ -439,6 +527,14 @@ class RamblingRhinoDriver:
                     "goals":       ev.goals,
                     "caused_by":   ev.caused_by,
                     "goal_type":   ev.goal_type,
+                    "location":    ev.location,
+                    "preconditions": ev.preconditions,
+                    "effects":     ev.effects,
+                    "required_objects": ev.required_objects,
+                    "clue":        ev.clue,
+                    "is_decision_point": ev.is_decision_point,
+                    "decision_context": ev.decision_context,
+                    "hidden_expected_intents": ev.hidden_expected_intents,
                 }
                 for ev in self.solving_story_events
             ],
@@ -450,16 +546,45 @@ class RamblingRhinoDriver:
                     "goals":       ev.goals,
                     "caused_by":   ev.caused_by,
                     "goal_type":   ev.goal_type,
+                    "location":    ev.location,
+                    "preconditions": ev.preconditions,
+                    "effects":     ev.effects,
+                    "required_objects": ev.required_objects,
+                    "clue":        ev.clue,
+                    "is_decision_point": ev.is_decision_point,
+                    "decision_context": ev.decision_context,
+                    "hidden_expected_intents": ev.hidden_expected_intents,
                 }
                 for ev in self.events
             ],
             "kg_stats": self.kg.stats(),
             "prose":    prose,
-            "usage":    str(self.llm.usage),
+            "prose_source": "solving_story_events" if self.solving_story_events else "events",
+            "usage":    str(self.llm.usage) if self.llm else "TokenUsage(unavailable: no API key)",
+            "world":    self._world_summary(),
         }
         if self.output_dir:
             self._save_outputs(result)
         return result
+
+    def _world_summary(self) -> dict:
+        if not self.world_state:
+            return {}
+        return {
+            "player_name": self.world_state.player_name,
+            "player_start_location": self.world_state.player_location,
+            "objectives": self.world_state.objectives,
+            "rooms": {
+                name: {
+                    "description": room.description,
+                    "exits": room.exits,
+                    "objects": room.objects,
+                    "npcs": room.npcs,
+                    "clues": room.clues,
+                }
+                for name, room in self.world_state.rooms.items()
+            },
+        }
 
     # Helper Functions
     def _print_events(self, events: list[PlotEvent]) -> None:
@@ -508,6 +633,8 @@ def main() -> None:
               python main_system_script.py
               python main_system_script.py --premise "A spy goes rogue in Berlin." --genre "spy thriller"
               python main_system_script.py --events 10 --reflection-passes 3 --output-dir ./output
+              python main_system_script.py --interactive
+              python main_system_script.py --load-story ./output/run_summary.json --interactive
               python main_system_script.py --verbose
         """),
     )
@@ -520,8 +647,8 @@ def main() -> None:
         help="Genre hint for the LLM (default: 'crime mystery').",
     )
     parser.add_argument(
-        "--events", type=int, default=20, dest="events_per_batch",
-        help="Total pre-reflection plot events across story and solving phases (default: 20).",
+        "--events", type=int, default=30, dest="events_per_batch",
+        help="Total pre-reflection plot events across story and solving phases (default: 30, which targets 15 solving events).",
     )
     parser.add_argument(
         "--batches", type=int, default=1, dest="engagement_batches",
@@ -539,16 +666,34 @@ def main() -> None:
         "--verbose", action="store_true",
         help="Print raw LLM responses for debugging.",
     )
+    parser.add_argument(
+        "--interactive", action="store_true",
+        help="Launch the generated story as a text game instead of producing prose output.",
+    )
+    parser.add_argument(
+        "--load-story", type=str, default=None,
+        help="Load a previously saved story JSON file and skip regeneration.",
+    )
     args = parser.parse_args()
 
-    # Validate API key
-    api_key = os.environ.get("GROQ_API_KEY", "API_KEY")
-    if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
+    # Validate API key only when story generation is required
+    api_key = os.environ.get("CEREBRAS_API_KEY", "API_KEY")
+    if not args.load_story and (not api_key or api_key == "YOUR_CEREBRAS_API_KEY_HERE"):
         print(
-            "\n[ERROR] No Groq API key found.",
+            "\n[ERROR] No Cerebras API key found.",
             file=sys.stderr,
         )
         sys.exit(1)
+
+    # Adjust defaults for interactive mode (fresh generation, not loading)
+    # Interactive mode benefits from more solving events and room variety
+    if args.interactive and not args.load_story:
+        # Increase total events for more diverse locations and richer gameplay
+        if args.events_per_batch == 30:  # Only adjust if using default
+            args.events_per_batch = 60  # 30 crime + 30 solving events
+        # Increase reflection passes for better narrative coherence in an interactive setting
+        if args.reflection_passes == 2:  # Only adjust if using default
+            args.reflection_passes = 3
 
     print("\n" + "═"*60)
     print("  RAMBLING RHINO: Story Generation System")
@@ -561,6 +706,8 @@ def main() -> None:
     print(f"  Events  : {args.events_per_batch} total ({crime_count} crime + {solving_count} solving)")
     print(f"  Batches : {args.engagement_batches} per event phase")
     print(f"  Reflect : {args.reflection_passes} pass(es)")
+    if args.interactive:
+        print(f"  Mode    : Interactive (room connectivity ensured)")
 
     driver = RamblingRhinoDriver(
         premise=            args.premise,
@@ -571,7 +718,7 @@ def main() -> None:
         output_dir=         args.output_dir,
         verbose=            args.verbose,
     )
-    driver.run()
+    driver.run(interactive=args.interactive, load_story_file=args.load_story)
 
 
 if __name__ == "__main__":

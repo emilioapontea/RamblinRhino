@@ -13,12 +13,40 @@ from dataclasses import dataclass, field
 from typing import Optional
 import requests
 
-GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "API_KEY_HERE")
+# GROQ_API_KEY: str = os.environ.get("GROQ_API_KEY", "API_KEY_HERE")
 
-_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+# _API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# There are 2 model options: "llama-3.3-70b-versatile", "llama-3.1-8b-instant"
-_MODEL = "llama-3.3-70b-versatile"
+# # There are 2 model options: "llama-3.3-70b-versatile", "llama-3.1-8b-instant"
+# _MODEL = "llama-3.3-70b-versatile"
+
+CEREBRAS_API_KEY: str = os.environ.get("CEREBRAS_API_KEY", "API_KEY_GOES_HERE")
+_API_URL = "https://api.cerebras.ai/v1/chat/completions"
+# _MODEL = "qwen-3-235b-a22b-instruct-2507"
+_MODEL = "llama3.1-8b"
+
+
+def _as_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "yes", "1"}
+    return bool(value)
+
+
+def _as_optional_str(value: object) -> Optional[str]:
+    if value is None:
+        return None
+    if isinstance(value, list):
+        for item in value:
+            text = _as_optional_str(item)
+            if text:
+                return text
+        return None
+    if isinstance(value, dict):
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 # Data Structures
@@ -31,6 +59,14 @@ class PlotEvent:
     caused_by:   list[str]     = field(default_factory=list)
     causes:      list[str]     = field(default_factory=list)
     goal_type:   Optional[str] = None
+    location:    Optional[str] = None
+    preconditions: list[str]   = field(default_factory=list)
+    effects:       list[str]   = field(default_factory=list)
+    required_objects: list[str] = field(default_factory=list)
+    clue:         Optional[str] = None
+    is_decision_point: bool = False
+    decision_context: str = ""
+    hidden_expected_intents: list[str] = field(default_factory=list)
 
     def __str__(self) -> str:
         return (
@@ -38,7 +74,33 @@ class PlotEvent:
             f"  characters : {self.characters}\n"
             f"  goals      : {self.goals}\n"
             f"  caused_by  : {self.caused_by}\n"
-            f"  goal_type  : {self.goal_type}"
+            f"  goal_type  : {self.goal_type}\n"
+            f"  location   : {self.location}\n"
+            f"  preconditions: {self.preconditions}\n"
+            f"  effects    : {self.effects}\n"
+            f"  required_objects: {self.required_objects}\n"
+            f"  clue       : {self.clue}\n"
+            f"  decision_point: {self.is_decision_point}"
+        )
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "PlotEvent":
+        return cls(
+            event_id=str(data.get("event_id", "")),
+            description=str(data.get("description", "")).strip(),
+            characters=list(data.get("characters", [])),
+            goals=list(data.get("goals", [])),
+            caused_by=list(data.get("caused_by", [])),
+            causes=list(data.get("causes", [])),
+            goal_type=_as_optional_str(data.get("goal_type")),
+            location=data.get("location"),
+            preconditions=list(data.get("preconditions", [])),
+            effects=list(data.get("effects", [])),
+            required_objects=list(data.get("required_objects", [])),
+            clue=data.get("clue"),
+            is_decision_point=_as_bool(data.get("is_decision_point", False)),
+            decision_context=str(data.get("decision_context", "") or ""),
+            hidden_expected_intents=list(data.get("hidden_expected_intents", [])),
         )
 
 
@@ -59,18 +121,32 @@ class TokenUsage:
         )
 
 
+@dataclass
+class InterpretedAction:
+    action_type: str
+    target: str = ""
+    target_location: Optional[str] = None
+    target_object: Optional[str] = None
+    target_character: Optional[str] = None
+    intent_summary: str = ""
+    implied_effects: list[str] = field(default_factory=list)
+    risk_flags: list[str] = field(default_factory=list)
+
+
+
+
 class LLMClient:
     def __init__(
         self,
-        api_key:       str   = GROQ_API_KEY,
+        api_key:       str   = CEREBRAS_API_KEY,
         model:         str   = _MODEL,
         max_tokens:    int   = 4096,   # increased for longer output
         temperature:   float = 0.85,
         request_delay: float = 0.5,
         verbose:       bool  = False,
     ) -> None:
-        if not api_key or api_key == "YOUR_GROQ_API_KEY_HERE":
-            raise ValueError("No Groq API key found.")
+        if not api_key or api_key == "YOUR_CEREBRAS_API_KEY_HERE":
+            raise ValueError("No Cerebras API key found.")
         self.api_key       = api_key
         self.model         = model
         self.max_tokens    = max_tokens
@@ -81,9 +157,9 @@ class LLMClient:
 
         self._session = requests.Session()
         self._session.headers.update({
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type":  "application/json",
-        })
+        "Authorization": f"Bearer {self.api_key}",
+        "Content-Type": "application/json",
+    })
 
     ## Engagement Phase
     def generate_crime_plot_events(
@@ -148,6 +224,40 @@ class LLMClient:
         )
         return events
 
+    def interpret_player_action(
+        self,
+        command: str,
+        world_context: str,
+    ) -> InterpretedAction:
+        prompt = _build_action_interpretation_prompt(command, world_context)
+        raw = self._complete(_ACTION_INTERPRETER_SYSTEM_PROMPT, prompt)
+        parsed = _parse_action_interpretation(raw)
+        if parsed:
+            return parsed
+        return _heuristic_interpreted_action(command)
+
+    def accommodate_story_break(
+        self,
+        exception_action: str,
+        world_context: str,
+        affected_events: list[PlotEvent],
+    ) -> list[PlotEvent]:
+        prompt = _build_accommodation_prompt(exception_action, world_context, affected_events)
+        events, _ = self._complete_events_with_repair(
+            system=_REFLECTION_SYSTEM_PROMPT,
+            user_prompt=prompt,
+            label="accommodation call",
+        )
+        return events
+
+    def narrate_interactive_event(
+        self,
+        event: PlotEvent,
+        world_context: str,
+    ) -> str:
+        prompt = _build_interactive_event_prose_prompt(event, world_context)
+        return self._complete(_INTERACTIVE_EVENT_PROSE_SYSTEM_PROMPT, prompt).strip()
+
     ## Prose Generation, produces a long, plot-point-labeled story
     def generate_prose(
         self,
@@ -194,6 +304,9 @@ class LLMClient:
             f"Plot points to cover:\n{plot_points}\n\n"
             "Begin the story now, and make sure the final paragraph is a complete, "
             "satisfying ending that wraps up all loose threads:\n"
+            "- All characters must have real proper names, such as 'Marcus Webb' or 'Director Holloway'.\n"
+            "- Do NOT use generic labels like 'The Thief', 'The Culprit', or 'The Buyer' as character names.\n"
+            "- The perpetrator must have a real name and a plausible cover role in the story world.\n"
         )
 
         # Use a higher token limit for prose generation
@@ -320,6 +433,40 @@ Do not include any explanation, preamble, or markdown formatting.
 Start your response with [ and end with ].
 """
 
+_ACTION_INTERPRETER_SYSTEM_PROMPT = """\
+You are an action interpreter for an interactive detective story game.
+Convert the player's natural-language command into a single JSON object.
+Use one of these action types only:
+"move", "inspect", "talk", "take", "use", "damage", "block", "accuse", "wait", "unknown".
+Prefer a playable interpretation over "unknown" when the command mentions any visible clue,
+known clue, object, person, location, objective, or next story event in the world context.
+Only use "accuse" when the player explicitly accuses, blames, arrests, identifies a culprit,
+or says a specific person "did it". Do not use "accuse" for commands that ask to find,
+trace, follow, locate, investigate, or figure out where the thief came from.
+Treat commands like "find where the thief came from", "trace the thief's route",
+"figure out how the thief entered", or "find the entry point" as "inspect" or "move"
+toward the most relevant known location/lead.
+Treat "look at", "look closer at", "look further at", "examine", "study", "search",
+"check", "review", and "investigate" as "inspect".
+If the player asks to inspect a known location, set action_type to "inspect",
+target and target_location to that location, and intent_summary to inspecting that lead.
+If the player asks to inspect an object or clue that appears in another known location or
+the next story event, set action_type to "inspect", target_object to that object or clue,
+and include the associated location in target_location when the context makes it clear.
+Resolve small typos and partial names using the world context, such as "fabri" -> "fabric"
+or "hidden camera" -> "Hidden camera footage".
+Return only valid JSON with double-quoted strings and no markdown.
+"""
+
+_INTERACTIVE_EVENT_PROSE_SYSTEM_PROMPT = """\
+You are a mystery game narrator.
+Turn a structured plot event into short, immersive prose for the player.
+Write 2-4 sentences in natural story language.
+Do not use bullets, labels, JSON, or meta commentary.
+Focus on what the player would perceive, infer, or feel as the event unfolds.
+If the event names Clara, write her actions as the player's actions in second person.
+"""
+
 
 def _build_engagement_prompt(
     premise: str,
@@ -345,6 +492,7 @@ The crime story should focus on:
 - the crime itself
 - How the crime is committed by the perpetrator(s).
 - The detail of the act and the method used.
+- Clara is the playable protagonist/archivist; do not make Clara the culprit.
 
 Rules:
 - One sentence per event, abstract plot level only
@@ -353,6 +501,9 @@ Rules:
 - Identify perpetrator characters involved
 - Note any story goals this event initiates, resolves, or obstructs
 - List which prior event_id(s) causally enable this event
+- Include a concrete story location for where the event happens
+- Include simple gameplay-friendly preconditions and effects
+- For crime backstory, set "is_decision_point" to false unless this event will also be played interactively.
 
 Your response must be ONLY a JSON array. Each element must have exactly these fields:
   "event_id": string (ex. "E1", "E2": if continuing, start from the next number)
@@ -361,6 +512,14 @@ Your response must be ONLY a JSON array. Each element must have exactly these fi
   "goals": list of short goal-phrase strings
   "caused_by": list of event_id strings that enable this event ([] for the first event)
   "goal_type": "initiate" or "resolve" or "obstruct" or null
+  "location": short room/location name string
+  "preconditions": list of short state strings needed before the event
+  "effects": list of short state strings caused by the event
+  "required_objects": list of important object strings used or needed in the event
+  "clue": short clue string revealed by this event, or null
+  "is_decision_point": boolean
+  "decision_context": hidden short description of why this is a meaningful open-ended intervention point, or ""
+  "hidden_expected_intents": hidden list of broad action intents that could advance this beat
 
 Example of correct output format, note only the output format and not the actual text in description:
 [
@@ -370,7 +529,15 @@ Example of correct output format, note only the output format and not the actual
     "characters": ["Clara"],
     "goals": ["discover what happened"],
     "caused_by": [],
-    "goal_type": "initiate"
+    "goal_type": "initiate",
+    "location": "Museum Gallery",
+    "preconditions": ["museum is open"],
+    "effects": ["display case is broken", "theft is discovered"],
+    "required_objects": ["display case"],
+    "clue": "Shards suggest the case was opened from inside",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   }},
   {{
     "event_id": "E2",
@@ -378,7 +545,15 @@ Example of correct output format, note only the output format and not the actual
     "characters": ["Clara"],
     "goals": ["recover the manuscript"],
     "caused_by": ["E1"],
-    "goal_type": "initiate"
+    "goal_type": "initiate",
+    "location": "Museum Gallery",
+    "preconditions": ["display case is broken"],
+    "effects": ["manuscript is confirmed missing"],
+    "required_objects": ["manuscript"],
+    "clue": "Only staff with access could approach unnoticed",
+    "is_decision_point": false,
+    "decision_context": "",
+    "hidden_expected_intents": []
   }}
 ]
 
@@ -412,9 +587,100 @@ Rules:
 
 Your response must be ONLY a JSON array using the same schema:
   "event_id" (use "E_b1", "E_b2", etc.), "description", "characters", "goals",
-  "caused_by", "goal_type"
+  "caused_by", "goal_type", "location", "preconditions", "effects",
+  "required_objects", "clue"
 
 Output only the JSON array, nothing else:"""
+
+
+def _build_action_interpretation_prompt(command: str, world_context: str) -> str:
+    return f"""\
+World context:
+{world_context}
+
+Player command:
+{command}
+
+Interpret the command for the game engine.
+Choose the closest executable action from the world context. Do not return "unknown" for
+commands that are trying to inspect, examine, search, follow, or review a known lead.
+For commands like "look at the side door", return an inspect action targeting Side Door.
+For commands like "look at the hidden camera", return an inspect action targeting
+Hidden camera footage, and set target_location to its location if the context shows one.
+Return exactly one JSON object with these fields:
+{{
+  "action_type": string,
+  "target": string,
+  "target_location": string or null,
+  "target_object": string or null,
+  "target_character": string or null,
+  "intent_summary": string,
+  "implied_effects": [string],
+  "risk_flags": [string]
+}}
+
+Use null where appropriate. Output only the JSON object.
+"""
+
+
+def _build_accommodation_prompt(
+    exception_action: str,
+    world_context: str,
+    affected_events: list[PlotEvent],
+) -> str:
+    affected_text = "\n".join(
+        f"[{event.event_id}] {event.description} @ {event.location or 'Unknown'}"
+        for event in affected_events
+    ) or "No explicit affected events were identified."
+
+    return f"""\
+World context:
+{world_context}
+
+The player performed an exceptional action:
+{exception_action}
+
+These events were threatened or invalidated:
+{affected_text}
+
+Generate 2-4 replacement continuation plot events that preserve solvability from this exact moment.
+Rules:
+- Keep the story coherent and playable
+- Introduce alternate clues, witnesses, or evidence if needed
+- The first replacement event must be immediately actionable from the current location or clearly tell the player where to go next
+- Do not simply describe "an alternate lead"; name a concrete in-world object, witness, record, message, or location
+- Do not point back to the same blocked or destroyed evidence as the only next step
+- Continue the investigation forward toward a different clue chain that can reconnect to the case
+- Keep each event at abstract plot level
+- Use the same event schema as the rest of the system
+- Prefer locations already mentioned in the world context
+- Give every event a concrete "location", "required_objects", "effects", and "clue" when possible
+- Use goal_type "initiate" for the new lead and "resolve" for the follow-up discovery
+
+Output only the JSON array, nothing else.
+"""
+
+
+def _build_interactive_event_prose_prompt(
+    event: PlotEvent,
+    world_context: str,
+) -> str:
+    return f"""\
+World context:
+{world_context}
+
+Structured event:
+- Event ID: {event.event_id}
+- Description: {event.description}
+- Location: {event.location or "Unknown"}
+- Characters: {", ".join(event.characters) if event.characters else "None"}
+- Goals: {", ".join(event.goals) if event.goals else "None"}
+- Effects: {", ".join(event.effects) if event.effects else "None"}
+- Clue: {event.clue or "None"}
+
+Write a short prose update that feels like the story is happening right now in the game.
+The player is Clara. If Clara appears in the event, address her actions as "you" instead of describing Clara as a separate person.
+"""
 
 
 def _build_solving_prompt(
@@ -433,50 +699,66 @@ Premise: {premise}
 {context}
 
 Generate exactly {num_events} new SOLVING STORY plot events.
-These events should continue directly from the existing crime-story events and focus on:
-- the investigation
-- the intellectual pursuit of justice
-- the methodical breakdown of evidence by detectives, investigators, or law enforcement
-- deduction, interviews, evidence analysis, confrontation, revelation, and case resolution
+These are the PLAYABLE investigation steps that Clara (the player) works through.
+
+CRITICAL: The solving story must feel like a real detective investigation with
+many small, concrete steps. Do NOT skip from discovery to solution. Every clue
+must be found, examined, followed up on, and connected to other clues before
+an accusation can be made.
+
+The events must follow this rough structure (spread across {num_events} events):
+  PHASE 1 - Scene assessment (2-3 events): Clara arrives, observes the crime scene,
+    notices initial anomalies, talks to first witnesses
+  PHASE 2 - First lead (3-4 events): Clara finds a specific physical clue or gets
+    a tip, goes to a specific location to investigate it, interviews someone there,
+    discovers that clue leads to a person or second location
+  PHASE 3 - Complication (2-3 events): Something makes the case harder — a suspect
+    lies, a clue is missing, a witness recants, or a red herring appears. Clara must
+    find a way around the obstacle.
+  PHASE 4 - Second lead (3-4 events): Clara finds a second strand of evidence
+    through a different route (document, contact, surveillance). Follows it to
+    a different location. Uncovers a connection between the first and second lead.
+  PHASE 5 - Confrontation & resolution (2-3 events): Clara has enough evidence to
+    confront the suspect or their accomplice. The confrontation produces a confession
+    or a final piece of proof. Case is resolved.
 
 Rules:
 - One sentence per event, abstract plot level only
-- Chronologically ordered and causally plausible
-- Continue from the last existing event above
-- Prioritize clues, evidence, inference, suspects, procedure, proof, and justice
-- Identify characters involved
-- Note any story goals this event initiates, resolves, or obstructs
-- List which prior event_id(s) causally enable this event
-- Every string value must be enclosed in double quotes
-- Output valid JSON only
+- Each event must happen in a SPECIFIC named location (room, building, area)
+- Each event must involve Clara doing something active: examining, questioning,
+  traveling, analyzing, confronting — not just "realizing" or "noticing" passively
+- AT LEAST 60%% of events must be marked is_decision_point: true (these are where
+  the player chooses what to do)
+- Every clue string must be concrete and specific (name a physical object, a
+  contradiction in testimony, a document detail — not "a suspicious detail")
+- Causal chain must be tight: each event's caused_by must genuinely enable it
+- preconditions must reflect what the player actually needs to have done or found
+- effects must reflect something that changes in the world state
+- Continue numbering event_ids from the last existing event above
 
 Your response must be ONLY a JSON array. Each element must have exactly these fields:
-  "event_id": string (continue numbering from the existing events)
-  "description": one-sentence abstract event
-  "characters": list of character name strings
+  "event_id": string (continue numbering from existing events)
+  "description": one-sentence abstract event, Clara as active agent
+  "characters": list of character name strings (always include "Clara")
   "goals": list of short goal-phrase strings
   "caused_by": list of event_id strings that enable this event
   "goal_type": "initiate" or "resolve" or "obstruct" or null
+  "location": short specific room/location name string
+  "preconditions": list of short state strings needed before this event
+  "effects": list of short state strings caused by the event
+  "required_objects": list of important object strings used or needed
+  "clue": a SPECIFIC, concrete clue string revealed by this event, or null
+  "is_decision_point": boolean (true if player has a real choice here)
+  "decision_context": why this is a meaningful player choice, or ""
+  "hidden_expected_intents": list of broad action intents that could advance this beat
 
-Example:
-[
-  {{
-    "event_id": "E11",
-    "description": "Detective Mora compares the museum security logs with witness timelines and identifies a gap matching the theft window.",
-    "characters": ["Detective Mora", "Clara"],
-    "goals": ["identify the thief's entry route"],
-    "caused_by": ["E10"],
-    "goal_type": "initiate"
-  }},
-  {{
-    "event_id": "E12",
-    "description": "Clara shows Detective Mora the manuscript's hidden-compartment notes, giving the investigation a motive tied to the map's secret.",
-    "characters": ["Clara", "Detective Mora"],
-    "goals": ["explain the theft motive"],
-    "caused_by": ["E11"],
-    "goal_type": "initiate"
-  }}
-]
+Example of a good concrete clue vs bad:
+  BAD:  "A suspicious detail points to the staff"
+  GOOD: "A keycard log shows Sarah badged into the archive at 11:47 PM"
+
+Example of a good active event description:
+  BAD:  "Clara realizes the thief had inside help"
+  GOOD: "Clara cross-references the keycard log against the staff roster and finds Sarah's name"
 
 Now generate exactly {num_events} solving-phase events in that format:"""
 
@@ -524,7 +806,89 @@ def _parse_plot_events(raw: str) -> list[PlotEvent]:
             characters=  list(rec.get("characters", [])),
             goals=       list(rec.get("goals",      [])),
             caused_by=   list(rec.get("caused_by",  [])),
-            goal_type=   rec.get("goal_type"),
+            goal_type=   _as_optional_str(rec.get("goal_type")),
+            location=    rec.get("location"),
+            preconditions=list(rec.get("preconditions", [])),
+            effects=       list(rec.get("effects", [])),
+            required_objects=list(rec.get("required_objects", [])),
+            clue=         rec.get("clue"),
+            is_decision_point=_as_bool(rec.get("is_decision_point", False)),
+            decision_context=str(rec.get("decision_context", "") or ""),
+            hidden_expected_intents=list(rec.get("hidden_expected_intents", [])),
         ))
 
     return events
+
+
+def _heuristic_interpreted_action(command: str) -> InterpretedAction:
+    lower = command.lower().strip()
+    if any(word in lower for word in ("perpetrator", "culprit", "thief", "killer")) and any(
+        word in lower for word in ("find", "caught", "catch", "identify", "it's", "is ")
+    ):
+        return InterpretedAction(
+            action_type="accuse",
+            target=command.strip(),
+            target_character=command.strip(),
+        )
+    if lower.startswith("go "):
+        target = command[3:].strip()
+        return InterpretedAction(action_type="move", target=target, target_location=target)
+    if lower.startswith("inspect "):
+        target = command[8:].strip()
+        return InterpretedAction(action_type="inspect", target=target, target_object=target)
+    if lower.startswith("talk "):
+        target = command[5:].strip()
+        return InterpretedAction(action_type="talk", target=target, target_character=target)
+    if lower.startswith("take "):
+        target = command[5:].strip()
+        return InterpretedAction(action_type="take", target=target, target_object=target)
+    if "steal" in lower:
+        target = re.sub(r".*steal(?:s|ing)?\s+", "", command, flags=re.IGNORECASE).strip()
+        target = target or "something valuable"
+        return InterpretedAction(action_type="take", target=target, target_object=target)
+    if lower.startswith("use "):
+        target = command[4:].strip()
+        return InterpretedAction(action_type="use", target=target, target_object=target)
+    if any(word in lower for word in ("break ", "destroy ", "smash ", "burn ", "tear ")):
+        target = command.split(" ", 1)[1] if " " in command else command
+        return InterpretedAction(action_type="damage", target=target, target_object=target)
+    if any(word in lower for word in ("block ", "jam ", "lock ")):
+        target = command.split(" ", 1)[1] if " " in command else command
+        return InterpretedAction(action_type="block", target=target, target_object=target)
+    if lower.startswith("accuse "):
+        target = command[7:].strip()
+        return InterpretedAction(action_type="accuse", target=target, target_character=target)
+    if lower in {"wait", "pass"}:
+        return InterpretedAction(action_type="wait", target="wait")
+    return InterpretedAction(action_type="unknown", target=command)
+
+
+def _parse_action_interpretation(raw: str) -> Optional[InterpretedAction]:
+    if not raw or not raw.strip():
+        return None
+    cleaned = re.sub(r"```(?:json)?", "", raw).strip().strip("`").strip()
+    start = cleaned.find("{")
+    end = cleaned.rfind("}") + 1
+    if start == -1 or end == 0:
+        return None
+    json_str = cleaned[start:end]
+    try:
+        data = json.loads(json_str)
+    except json.JSONDecodeError:
+        try:
+            fixed = re.sub(r",\s*([}\]])", r"\1", json_str)
+            data = json.loads(fixed)
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(data, dict):
+        return None
+    return InterpretedAction(
+        action_type=str(data.get("action_type", "unknown")),
+        target=str(data.get("target", "")),
+        target_location=data.get("target_location"),
+        target_object=data.get("target_object"),
+        target_character=data.get("target_character"),
+        intent_summary=str(data.get("intent_summary", "")),
+        implied_effects=list(data.get("implied_effects", [])),
+        risk_flags=list(data.get("risk_flags", [])),
+    )

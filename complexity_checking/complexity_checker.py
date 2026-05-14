@@ -1,35 +1,31 @@
 # complexity_checking/complexity_checker.py
+from __future__ import annotations
+
 from typing import Optional
 import networkx as nx
 
 from quest_parsing.narrative_schema import NodeType, ArcType
 from quest_parsing.knowledge_graph import KnowledgeGraph
 
-from typing import Optional
-import networkx as nx
-from quest_parsing.narrative_schema import NodeType, ArcType
-from quest_parsing.knowledge_graph import KnowledgeGraph
-
-# The set of valid node type values from NodeType enum
 _VALID_NODE_TYPES = {t.value for t in NodeType}
-# The set of valid arc/predicate values from ArcType enum
 _VALID_ARC_TYPES  = {t.value for t in ArcType}
 
 class ComplexityChecker:
     def __init__(
             self,
-            kg: KnowledgeGraph,
-            node_reqs : Optional[dict[NodeType, tuple[int, int]]] = None,
-            arc_reqs  : Optional[dict[ArcType,  tuple[int, int]]] = None,
-            req_dag   : Optional[bool] = True,
-            req_conn  : Optional[bool] = True,) -> None:
+            kg,
+            node_reqs=None,
+            arc_reqs=None,
+            req_dag=True,
+            req_conn=True,
+    ) -> None:
         self.kg         = kg
         self._node_reqs = node_reqs
         self._arc_reqs  = arc_reqs
         self._req_dag   = req_dag
         self._req_conn  = req_conn
 
-    def __call__(self) -> list[str]:
+    def __call__(self) -> list:
         node_breakdown = self._node_breakdown()
         arc_breakdown  = self._arc_breakdown()
         feedback = []
@@ -65,32 +61,16 @@ class ComplexityChecker:
         if self._req_conn and self.kg._g.number_of_nodes() > 0:
             if not nx.is_weakly_connected(self.kg._g):
                 feedback.append('Contains story discontinuity.')
-
         return feedback
 
-    def _check_complexity(self) -> dict[str, int]:
-        num_nodes  = self.kg._g.number_of_nodes()
-        num_edges  = self.kg._g.number_of_edges()
-        avg_degree = (
-            sum(dict(self.kg._g.degree()).values()) / num_nodes
-            if num_nodes > 0 else 0
-        )
-        return {
-            "num_nodes":  num_nodes,
-            "num_edges":  num_edges,
-            "avg_degree": avg_degree,
-        }
-
-    def _node_breakdown(self) -> dict[str, int]:
-        """Count nodes by NodeType value, skipping non-narrative node types."""
+    def _node_breakdown(self) -> dict:
         m = {t.value: 0 for t in NodeType}
         for _, node_type in self.kg._g.nodes(data='type'):
             if node_type in _VALID_NODE_TYPES:
                 m[node_type] += 1
         return m
 
-    def _arc_breakdown(self) -> dict[str, int]:
-        """Count arcs by ArcType value, skipping non-narrative predicates."""
+    def _arc_breakdown(self) -> dict:
         m = {t.value: 0 for t in ArcType}
         for _, _, edge_type in self.kg._g.edges(data='predicate'):
             if edge_type in _VALID_ARC_TYPES:
